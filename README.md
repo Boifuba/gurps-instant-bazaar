@@ -103,7 +103,7 @@ The purchase system is designed to be intuitive and safe:
 - You cannot purchase more items than are in stock
 - You cannot spend more money than you have
 - All purchases are processed through the GM for security
-- Items are automatically added to your character's inventory
+- Items are automatically added to your character's inventory after GM Approval.
 - Displayed prices are per unit; the full cost is calculated during checkout
 
 ## Game Master Guide
@@ -231,8 +231,7 @@ Fine-tune your vendor inventories by editing individual items:
 
 ### System Requirements
 - FoundryVTT v13 or higher
-- Compatible with most game systems
-- Requires GM permissions for vendor management
+
 
 ### Data Storage
 - Player wallet data is stored in user flags
@@ -260,7 +259,7 @@ Fine-tune your vendor inventories by editing individual items:
 ### Reporting Issues
 When reporting problems, please include:
 - FoundryVTT version
-- Game system being used
+- GGA Version being used
 - Steps to reproduce the issue
 - Any console error messages
 - Screenshots if applicable
@@ -270,14 +269,11 @@ We welcome suggestions for new features! Consider:
 - How the feature would benefit gameplay
 - Whether it fits the module's scope
 - Potential implementation complexity
+- Any donation will motivate me
 
 ---
 
-**Version**: 1.0.0  
-**Compatibility**: FoundryVTT v13+  
-**Author**: GM Tools  
 
-*Happy gaming! 🎲*
 
 
 <p align="center">
