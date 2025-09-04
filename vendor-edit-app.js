@@ -28,12 +28,12 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
     position: {
       width: 400,
     },
-    classes: ['gurps-birosca']
+    classes: ['gurps-instant-bazaar']
   };
 
   static PARTS = {
     content: {
-      template: 'modules/gurps-birosca/vendor-edit.hbs'
+      template: 'modules/gurps-instant-bazaar/vendor-edit.hbs'
     }
   };
 

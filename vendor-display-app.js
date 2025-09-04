@@ -38,12 +38,12 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     position: {
       width: 500
     },
-    classes: ['gurps-birosca'],
+    classes: ['gurps-instant-bazaar'],
   };
 
   static PARTS = {
     content: {
-      template: 'modules/gurps-birosca/vendor-display.hbs'
+      template: 'modules/gurps-instant-bazaar/vendor-display.hbs'
     }
   };
 

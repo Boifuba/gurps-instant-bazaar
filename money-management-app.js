@@ -19,12 +19,12 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
     position: {
       width: 400,
     },
-    classes: ['gurps-birosca']
+    classes: ['gurps-instant-bazaar']
   };
   
   static PARTS = {
     content: {
-      template: 'modules/gurps-birosca/money-management.hbs'
+      template: 'modules/gurps-instant-bazaar/money-management.hbs'
     }
   };
 
