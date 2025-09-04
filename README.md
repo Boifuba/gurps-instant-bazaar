@@ -53,18 +53,14 @@ https://raw.githubusercontent.com/Boifuba/gurps-instant-bazaar/refs/heads/main/m
 ## Quick Start Guide
 
 ### For Game Masters
-1. GM's use this macro to call the module 
-
-```new GMToolsApplication().render(true);```
+1. Type `/shop` in chat to open GM Tools
 
 2. Create your first vendor using **Create Vendor**
 3. Add money to player wallets using **Manage Money**
 4. Players can now browse and purchase from your vendors!
 
 ### For Players
-1. Users use this macro to call the module 
-
-```VendorWalletSystem.openAllAvailableVendors();```
+1. Type `/shop` in chat to open your wallet and browse vendors
 
 2. View your current wallet balance
 3. Browse available vendors and their items

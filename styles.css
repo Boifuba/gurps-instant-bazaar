@@ -553,3 +553,62 @@ button.secondary:hover {
   box-shadow: 0 4px 12px var(--color-shadow-primary);
   border-color: var(--color-border-highlight);
 }
+
+/* Currency Settings Styles */
+.coin-denominations-container {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.coin-denomination-item {
+  margin-bottom: 0.75rem;
+}
+
+.coin-denomination-item:last-child {
+  margin-bottom: 0;
+}
+
+.coin-denomination-item .form-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.coin-denomination-item .remove-coin-denomination {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border-dark);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: fit-content;
+}
+
+.coin-denomination-item .remove-coin-denomination:hover {
+  border-width: 2px;
+  background-color: var(--color-bg-danger);
+}
+
+.notes {
+  font-size: 0.9rem;
+  color: var(--color-text-light-secondary);
+  font-style: italic;
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.warning-message {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  color: #856404;
+}
+
+.warning-message p {
+  margin: 0;
+  font-size: 0.9rem;
+}

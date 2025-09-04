@@ -1,7 +1,17 @@
 <div class="player-wallet-content">
   <div class="wallet-display">
     Wallet: {{formatCurrency wallet}}
+    {{#unless useModuleCurrency}}
+    <br>
+    <small style="font-style: italic; color: #666;">From character sheet items</small>
+    {{/unless}}
   </div>
+
+  {{#unless useModuleCurrency}}
+  <div class="notes" style="margin-bottom: 1rem;">
+    <p><strong>Character Sheet Currency:</strong> Your wallet balance is calculated from currency items in your character sheet. Make sure your character has the correct currency items as configured by your GM.</p>
+  </div>
+  {{/unless}}
 
   <h3>Available Vendors</h3>
   <div class="vendor-list">

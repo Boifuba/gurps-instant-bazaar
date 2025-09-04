@@ -64,6 +64,24 @@ class VendorWalletSystem {
       type: Object,
       default: {}
     });
+    game.settings.register(this.ID, 'useModuleCurrencySystem', {
+      name: 'Use Module Currency System',
+      scope: 'world',
+      config: false,
+      type: Boolean,
+      default: true
+    });
+    game.settings.register(this.ID, 'currencyDenominations', {
+      name: 'Currency Denominations',
+      scope: 'world',
+      config: false,
+      type: Array,
+      default: [
+        { name: "Gold Coin", value: 80 },
+        { name: "Silver Coin", value: 4 },
+        { name: "Copper Farthing", value: 1 }
+      ]
+    });
     game.settings.register(this.ID, 'requirePurchaseApproval', {
       name: 'Require GM Purchase Approval',
       hint: 'If enabled, the GM must approve player purchase requests.',
@@ -98,8 +116,132 @@ class VendorWalletSystem {
    * @returns {number} The wallet amount
    */
   static getUserWallet(userId) {
+    console.log('💰 DEBUG getUserWallet - userId:', userId);
+    
+    // Check if module currency system is enabled
+    const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
+    console.log('💰 DEBUG getUserWallet - useModuleCurrency:', useModuleCurrency);
+    
+    if (!useModuleCurrency) {
+      // Use character sheet currency system
+      console.log('💰 DEBUG getUserWallet - Using character sheet currency system');
+      return this._getCharacterSheetCurrency(userId);
+    }
+    
+    console.log('💰 DEBUG getUserWallet - Using module currency system');
     const user = game.users.get(userId);
     return Number(user?.getFlag(this.ID, 'wallet')) || 0;
+  }
+
+  /**
+   * Recursively flattens an object to extract all item-like objects.
+   * Assumes an item-like object has at least a 'name' property.
+   * @param {Object} obj - The object to flatten.
+   * @returns {Array<Object>} An array of item-like objects.
+   */
+  static _flattenItemsFromObject(obj) {
+    const items = [];
+    if (typeof obj !== 'object' || obj === null) {
+      return items;
+    }
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const value = obj[key];
+        if (typeof value === 'object' && value !== null) {
+          // Heuristic: if it has a 'name' property, consider it an item.
+          // You might want to add more specific checks if your system has other unique item properties.
+          if (value.name !== undefined) {
+            items.push(value);
+          } else {
+            // If not an item, recurse into the nested object
+            items.push(...VendorWalletSystem._flattenItemsFromObject(value));
+          }
+        }
+      }
+    }
+    return items;
+  }
+
+  /**
+   * Gets the wallet amount from character sheet currency items
+   * @param {string} userId - The user ID
+   * @returns {number} The total wallet amount from character sheet
+   */
+  static _getCharacterSheetCurrency(userId) {
+    const coinBreakdown = this._getCharacterSheetCoinBreakdown(userId);
+    let totalValue = 0;
+    for (const coin of coinBreakdown) {
+      totalValue += coin.totalValue;
+    }
+    return totalValue;
+  }
+
+  /**
+   * Gets the breakdown of currency coins from character sheet
+   * @param {string} userId - The user ID
+   * @returns {Array<{name: string, totalValue: number}>} Array of coin breakdown objects
+   */
+  static _getCharacterSheetCoinBreakdown(userId) {
+    console.log('💰 DEBUG _getCharacterSheetCurrency - userId:', userId);
+    
+    const user = game.users.get(userId);
+    console.log('💰 DEBUG _getCharacterSheetCurrency - user:', user);
+    
+    if (!user?.character) {
+      console.warn(`No character assigned to user ${user?.name || userId}`);
+      return [];
+    }
+
+    const actor = user.character;
+    console.log('💰 DEBUG _getCharacterSheetCurrency - actor:', actor.name, 'ID:', actor.id);
+    
+    const carried = actor.system?.equipment?.carried;
+    console.log('💰 DEBUG _getCharacterSheetCurrency - carried:', carried);
+    
+    if (!carried) {
+      console.warn(`No equipment.carried found for character ${actor.name}`);
+      return [];
+    }
+
+    // Get currency denominations from settings
+    const denominations = game.settings.get(this.ID, 'currencyDenominations') || [];
+    console.log('💰 DEBUG _getCharacterSheetCurrency - denominations:', denominations);
+    
+    const coinBreakdown = [];
+
+    // Convert carried object to array for easier processing
+    // MODIFICAÇÃO AQUI: Use a nova função auxiliar para aplanar o objeto
+    const carriedItems = VendorWalletSystem._flattenItemsFromObject(carried);
+    console.log('💰 DEBUG _getCharacterSheetCurrency - carriedItems count (flattened):', carriedItems.length);
+
+    // For each denomination, find matching items in character sheet
+    for (const denom of denominations) {
+      console.log('💰 DEBUG _getCharacterSheetCurrency - Processing denomination:', denom.name, 'value:', denom.value);
+      console.log(`💰 DEBUG: Looking for item with name "${denom.name}"`);
+      
+      const matchingItems = carriedItems.filter(item => 
+        {
+          console.log(`💰 DEBUG: Comparing with character sheet item "${item.name}"`);
+          return item.name === denom.name && item.carried === true;
+        }
+      );
+      console.log('💰 DEBUG _getCharacterSheetCurrency - matchingItems for', denom.name, ':', matchingItems);
+
+      for (const item of matchingItems) {
+        const count = item.count || 0;
+        const value = denom.value || 0;
+        console.log('💰 DEBUG _getCharacterSheetCurrency - Item:', item.name, 'count:', count, 'value per unit:', value, 'total value:', count * value);
+        if (count > 0 && value > 0) {
+          coinBreakdown.push({
+            name: denom.name,
+            totalValue: count * value
+          });
+        }
+      }
+    }
+
+    console.log('💰 DEBUG _getCharacterSheetCoinBreakdown - Final coinBreakdown:', coinBreakdown);
+    return coinBreakdown;
   }
 
   /**
@@ -109,6 +251,13 @@ class VendorWalletSystem {
    * @returns {Promise<any>} The result of the flag update
    */
   static async setUserWallet(userId, amount) {
+    // Check if module currency system is enabled
+    const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
+    if (!useModuleCurrency) {
+      console.warn('Module currency system is disabled. Direct wallet changes are not allowed. Currency is managed through character sheet items.');
+      return false; // Don't allow wallet changes when module currency system is disabled
+    }
+    
     const user = game.users.get(userId);
     const result = await user?.setFlag(this.ID, 'wallet', Math.max(0, amount));
     return result;
@@ -659,7 +808,47 @@ Hooks.on('renderPlayerList', VendorWalletSystem.addPlayerWalletButton.bind(Vendo
 
 // Make GM Tools application available after ready
 Hooks.on('ready', () => {
-  VendorWalletSystem.GMToolsApplication = GMToolsApplication;
+  // Ensure GMToolsApplication is available
+  if (typeof GMToolsApplication !== 'undefined') {
+    VendorWalletSystem.GMToolsApplication = GMToolsApplication;
+  }
+  
+  // Register the /shop chat command
+  if (typeof game.chatCommands !== 'undefined' && game.chatCommands.register) {
+    game.chatCommands.register({
+      name: '/shop',
+      module: VendorWalletSystem.ID,
+      description: 'Opens vendor interface (GM Tools for GMs, Player Wallet for players)',
+      icon: '<i class="fas fa-store"></i>',
+      callback: () => {
+        if (game.user.isGM) {
+          if (typeof GMToolsApplication !== 'undefined') {
+            new GMToolsApplication().render(true);
+          } else {
+            ui.notifications.error('GM Tools not available');
+          }
+        } else {
+          VendorWalletSystem.openAllAvailableVendors();
+        }
+      }
+    });
+  } else {
+    // Fallback for systems without chatCommands API
+    Hooks.on('chatMessage', (chatLog, message, chatData) => {
+      if (message.trim() === '/shop') {
+        if (game.user.isGM) {
+          if (typeof GMToolsApplication !== 'undefined') {
+            new GMToolsApplication().render(true);
+          } else {
+            ui.notifications.error('GM Tools not available');
+          }
+        } else {
+          VendorWalletSystem.openAllAvailableVendors();
+        }
+        return false; // Prevent the message from being sent to chat
+      }
+    });
+  }
 });
 
 // Expose the main class globally

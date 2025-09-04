@@ -33,13 +33,17 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
    * @returns {Promise<Object>} Context object containing user wallet data
    */
   async _prepareContext() {
+    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     const users = game.users.filter(u => !u.isGM).map(user => ({
       id: user.id,
       name: user.name,
       wallet: VendorWalletSystem.getUserWallet(user.id)
     }));
 
-    return { users };
+    return { 
+      users,
+      useModuleCurrency
+    };
   }
 
   /**
@@ -60,6 +64,13 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
     // Only GMs can manage money
     if (!game.user.isGM) {
       ui.notifications.error('Only Game Masters can manage player money!');
+      return;
+    }
+
+    // Check if module currency system is enabled
+    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+    if (!useModuleCurrency) {
+      ui.notifications.warn('Module currency system is disabled. Player money is managed through character sheet items. Use the currency settings to configure denominations.');
       return;
     }
     

@@ -51,6 +51,9 @@ class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationM
       case 'vendor-manager':
         new VendorManagerApplication().render(true);
         break;
+      case 'currency-settings':
+        new CurrencySettingsApplication().render(true);
+        break;
     }
   }
 }

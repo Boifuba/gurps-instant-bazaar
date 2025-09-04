@@ -34,6 +34,7 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
    */
   async _prepareContext() {
     const wallet = VendorWalletSystem.getUserWallet(game.user.id);
+    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     const allVendors = VendorWalletSystem.getVendors();
     
     const vendors = Object.entries(allVendors)
@@ -44,9 +45,17 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
         itemCount: vendor.items.length
       }));
     
+    // Get coin breakdown when using character sheet currency
+    
+    // Get coin breakdown when using character sheet currency
+    const coinBreakdown = useModuleCurrency ? [] : VendorWalletSystem._getCharacterSheetCoinBreakdown(game.user.id);
+    
     return {
       wallet,
-      vendors
+      useModuleCurrency,
+      vendors,
+      coinBreakdown
+
     };
   }
 
