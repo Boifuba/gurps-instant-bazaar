@@ -19,12 +19,12 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     position: {
       width: 400
     },
-    classes: ['gurps-birosca'],
+    classes: ['gurps-instant-bazaar'],
   };
 
   static PARTS = {
     content: {
-      template: 'modules/gurps-birosca/player-wallet.hbs'
+      template: 'modules/gurps-instant-bazaar/player-wallet.hbs'
     }
   };
 

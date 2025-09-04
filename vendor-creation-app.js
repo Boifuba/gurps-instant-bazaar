@@ -19,12 +19,12 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     position: {
       width: 400,
     },
-    classes: ["gurps-birosca"]
+    classes: ["gurps-instant-bazaar"]
   };
 
   static PARTS = {
     content: {
-      template: 'modules/gurps-birosca/vendor-creation.hbs'
+      template: 'modules/gurps-instant-bazaar/vendor-creation.hbs'
     }
   };
 
