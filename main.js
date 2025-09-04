@@ -11,7 +11,7 @@ console.log("🔧 VENDOR WALLET SYSTEM: main.js loaded!");
  */
 class VendorWalletSystem {
   /** @type {string} Module identifier */
-  static ID = 'gurps-birosca';
+  static ID = 'gurps-instant-bazaar';
   
   /** @type {string} Socket identifier for module communication */
   static SOCKET = `module.${VendorWalletSystem.ID}`;
@@ -122,7 +122,7 @@ class VendorWalletSystem {
     try {
       return game.settings.get(this.ID, 'vendors');
     } catch (err) {
-      console.warn('Setting gurps-birosca.vendors ausente', err);
+      console.warn('Setting gurps-instant-bazaar.vendors ausente', err);
       return {};
     }
   }
