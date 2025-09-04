@@ -1,6 +1,6 @@
 [![Donate](https://img.shields.io/badge/Donate-Sponsor%20on%20GitHub-black?logo=github)](https://github.com/sponsors/Boifuba)
 
-# Vendor & Wallet System
+# GURPS Instant Bazaar
 
 A comprehensive FoundryVTT module that provides a complete vendor and wallet management system for Game Masters and players.
 
@@ -48,7 +48,7 @@ The Vendor & Wallet System transforms your FoundryVTT game by adding a complete 
 
 - **Use this manifest**
 
-https://raw.githubusercontent.com/Boifuba/gurps-birosca/refs/heads/main/module.json
+https://raw.githubusercontent.com/Boifuba/gurps-instant-bazaar/refs/heads/main/module.json
 
 ## Quick Start Guide
 
@@ -230,7 +230,7 @@ Fine-tune your vendor inventories by editing individual items:
 ## Technical Information
 
 ### System Requirements
-- FoundryVTT v11 or higher
+- FoundryVTT v13 or higher
 - Compatible with most game systems
 - Requires GM permissions for vendor management
 
@@ -274,7 +274,7 @@ We welcome suggestions for new features! Consider:
 ---
 
 **Version**: 1.0.0  
-**Compatibility**: FoundryVTT v11+  
+**Compatibility**: FoundryVTT v13+  
 **Author**: GM Tools  
 
 *Happy gaming! 🎲*
