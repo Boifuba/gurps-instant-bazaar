@@ -1,0 +1,25 @@
+<div>
+  <div class="user-list">
+  {{#each users}}
+  <div class="user-item" data-user-id="{{id}}">
+    <div>
+      <strong>{{name}}</strong>
+      <br>
+      <small>Wallet: {{formatCurrency wallet}}</small>
+    </div>
+    <div class="user-money-controls">
+      <input type="number" class="money-input" name="amount-{{id}}" value="0" step="1">
+    </div>
+  </div>
+  {{/each}}
+  
+  {{#unless users}}
+  <p>No players found.</p>
+  {{/unless}}
+  </div>
+
+  <div class="button-row">
+    <button type="button" class="primary" data-action="update-wallets">Update All Wallets</button>
+      <button type="button" class="secondary" onclick="const w = this.closest('.window-app'); w?.querySelector('.window-header .close')?.click();">Cancel</button>
+    </div>
+</div>

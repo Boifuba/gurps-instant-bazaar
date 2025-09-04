@@ -1,0 +1,26 @@
+<div class="player-wallet-content">
+  <div class="wallet-display">
+    Wallet: {{formatCurrency wallet}}
+  </div>
+
+  <h3>Available Vendors</h3>
+  <div class="vendor-list">
+    {{#each vendors}}
+      <div class="vendor-item" data-vendor-id="{{id}}">
+        <div>
+          <strong>{{name}}</strong>
+          <br>
+          <small>{{itemCount}} items available</small>
+        </div>
+        <button type="button" class="primary" data-vendor-id="{{id}}">View Items</button>
+      </div>
+      {{/each}}
+    
+    {{#unless vendors}}
+    <p>No vendors available at the moment.</p>
+    {{/unless}}
+    </div>
+  </div>
+
+</div>
+

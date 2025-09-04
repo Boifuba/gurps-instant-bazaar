@@ -1,0 +1,32 @@
+<div class="vendor-list">
+  {{#each vendors}}
+  <div class="vendor-item" data-vendor-id="{{id}}">
+    <div>
+      {{#if image}}
+      <div class="vendor-thumbnail">
+        <img src="{{image}}" alt="{{name}}">
+      </div>
+      {{/if}}
+      <strong>{{name}}</strong>
+      <br>
+      <small>{{items.length}} items</small>
+      <br>
+      <span class="vendor-status {{#if active}}active{{else}}inactive{{/if}}">
+        {{#if active}}Active{{else}}Inactive{{/if}}
+      </span>
+    </div>
+    <div class="vendor-actions">
+      <button type="button" class="primary" data-action="view">View</button>
+      <button type="button" class="secondary" data-action="edit">Edit</button>
+      <button type="button" class="secondary" data-action="toggle">
+        {{#if active}}Deactivate{{else}}Activate{{/if}}
+      </button>
+      <button type="button" class="secondary" data-action="delete">Delete</button>
+    </div>
+  </div>
+  {{/each}}
+  
+  {{#unless vendors}}
+  <p>No vendors created yet.</p>
+  {{/unless}}
+</div>

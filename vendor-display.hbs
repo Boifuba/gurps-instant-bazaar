@@ -1,0 +1,78 @@
+<div class="vendor-display-content">
+  {{#if vendor.image}}
+  <div class="vendor-header">
+    <img src="{{vendor.image}}" alt="{{vendor.name}}" class="vendor-image">
+    <h2>{{vendor.name}}</h2>
+  </div>
+  {{else}}
+  <div class="vendor-header">
+    <h2>{{vendor.name}}</h2>
+  </div>
+  {{/if}}
+
+  {{#unless isGM}}
+  <div class="wallet-display">
+    Your Wallet: {{formatCurrency wallet}}
+  </div>
+  {{/unless}}
+
+  {{#unless isGM}}
+  <div class="purchase-section">
+    <h3>Purchase Items</h3>
+    <div class="selected-items">
+      <p><span id="selectedCount">0</span> items selected | Total Price: <span id="totalPrice">{{formatCurrency 0}}</span></p>
+    </div>
+    <div class="purchase-controls">
+      <button type="button" class="primary" id="purchaseSelected" disabled>
+        <i class="fas fa-shopping-cart"></i> Purchase Selected
+      </button>
+      <button type="button" class="secondary" id="clearSelection">
+        <i class="fas fa-times"></i> Clear Selection
+      </button>
+    </div>
+  </div>
+  {{/unless}}
+
+  <div class="search-section">
+    <div class="search-input-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="itemSearch" class="search-input" placeholder="Search items..." value="{{searchTerm}}">
+      <button type="button" id="clearSearch" class="clear-search-btn" title="Clear search">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="item-list-container">
+    <div id="itemList">
+      {{#each vendor.items}}
+      <div class="vendor-item-card" data-item-uuid="{{uuid}}" data-vendor-item-id="{{id}}" data-item-price="{{price}}">
+        {{#if ../isGM}}
+        <div class="item-edit-button">
+          <button type="button" class="edit-item-btn" data-item-id="{{id}}" title="Edit Item">
+            <i class="fas fa-edit"></i>
+          </button>
+        </div>
+        {{/if}}
+        
+        <div class="item-details">
+          {{#unless ../isGM}}
+          <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}">
+          {{/unless}}
+          <span class="item-name">{{name}}</span>
+          <span class="item-price">{{formatCurrency price}}</span>
+          {{#unless ../isGM}}
+          <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" max="{{quantity}}">
+          {{/unless}}
+          <span class="item-stock">({{quantity}} available)</span>
+          {{#if pageref}}<span class="item-pageref pdflink">{{pageref}}</span>{{/if}}
+        </div>
+      </div>
+      {{/each}}
+      
+      {{#unless vendor.items}}
+      <div class="no-items">This vendor has no items available.</div>
+      {{/unless}}
+    </div>
+  </div>
+</div>
