@@ -245,6 +245,43 @@ class VendorWalletSystem {
   }
 
   /**
+   * Updates currency items on a character sheet based on provided counts.
+   * Each update will include the item `_id` and new quantity.
+   * @param {string} userId - The user whose character sheet will be updated
+   * @param {Array<{name:string, count:number}>} currencyData - Currency items with desired counts
+   * @returns {Promise<void>}
+   */
+  static async _setCharacterSheetCurrency(userId, currencyData) {
+    const user = game.users.get(userId);
+    if (!user?.character) {
+      console.warn(`No character assigned to user ${user?.name || userId}`);
+      return;
+    }
+
+    const actor = user.character;
+    const updates = [];
+
+    for (const coin of currencyData) {
+      const item = actor.items.find(i => i.name === coin.name);
+      if (!item?.id) {
+        console.warn(`Currency item "${coin.name}" not found or missing id.`);
+        continue;
+      }
+
+      const path = item.system?.eqt?.count !== undefined ? 'system.eqt.count' : 'system.quantity';
+      updates.push({ _id: item.id, [path]: coin.count });
+    }
+
+    if (updates.length === 0) return;
+
+    try {
+      await actor.updateEmbeddedDocuments('Item', updates);
+    } catch (error) {
+      console.error('Error updating character sheet currency items:', error);
+    }
+  }
+
+  /**
    * Sets the wallet amount for a specific user
    * @param {string} userId - The user ID
    * @param {number} amount - The amount to set (minimum 0)
