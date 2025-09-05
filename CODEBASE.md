@@ -1,801 +1,719 @@
-# GURPS Instant Bazaar – Full JSDoc Reference (Foundry VTT v13)
+# GURPS Instant Bazaar – API Reference (Foundry VTT v13)
 
-Extensive, auto-generated documentation for every major script.
-Each section provides JSDoc-style summaries for classes and functions.
-Use this file as a detailed reference when working with Foundry VTT v13.
+Comprehensive JSDoc-style reference for the entire codebase. Each section lists
+files, exported symbols, arguments, parameter types, and return values.
 
-## File: currency.js
+---
 
-Handles coin-based currency logic with Wallet and CurrencyManager classes.
+## File: `currency.js`
+
+Utility functions and classes for coin-based currency.
 
 ### Functions
 
 ```javascript
 /**
- * isNonNegInt(n)
- * Validates that the value is a non-negative integer.
+ * Check if a number is a non‑negative integer.
+ * @function isNonNegInt
+ * @param {number} n - Value to test.
+ * @returns {boolean} True if `n` is an integer ≥ 0.
  */
 ```
 
 ```javascript
 /**
- * valueFromCoins(coins, denominations?)
- * Converts a coin bag into total copper value.
+ * Convert a bag of coins into total copper.
+ * @function valueFromCoins
+ * @param {CoinBag} [coins] - Object with `ouro`, `prata`, and `cobre` counts.
+ * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
+ * @returns {number} Total value expressed in copper units.
+ * @throws {Error} When any coin count is not a non‑negative integer.
  */
 ```
 
 ```javascript
 /**
- * makeChange(total, denominations?)
- * Breaks down copper into minimal coin counts.
+ * Break a copper total into an optimal set of coins.
+ * @function makeChange
+ * @param {number} total - Amount in copper to decompose.
+ * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
+ * @returns {CoinBag} Bag with minimal coin counts.
+ * @throws {Error} If `total` is negative or non‑integer.
  */
 ```
 
 ```javascript
 /**
- * normalizeCoins(coins, denominations?)
- * Optimizes a coin bag by recomputing change.
+ * Normalize a coin bag by recomputing optimal change.
+ * @function normalizeCoins
+ * @param {CoinBag} coins - Bag of coins to normalize.
+ * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
+ * @returns {CoinBag} New bag using minimal coins.
  */
 ```
 
-### Class: Wallet
+### Class: `Wallet`
 
 ```javascript
 /**
- * Wallet.constructor(coins, opts, denominations)
- * Initializes wallet with optional normalization flags.
+ * Mutable purse that tracks coin counts.
+ * @class Wallet
+ * @param {CoinBag} [coins] - Starting coins.
+ * @param {WalletOptions} [opts] - Normalization options.
+ * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
  */
 ```
 
 ```javascript
 /**
- * Wallet.total()
- * Returns total copper value in the wallet.
+ * Get wallet total in copper.
+ * @method Wallet#total
+ * @returns {number} Copper value of all coins.
  */
 ```
 
 ```javascript
 /**
- * Wallet.add(arg)
- * Adds copper or coin bag to the wallet.
+ * Add coins or copper to the wallet.
+ * @method Wallet#add
+ * @param {number|CoinBag} arg - Copper amount or coin bag.
+ * @returns {Wallet} This wallet for chaining.
+ * @throws {Error} When the value is invalid.
  */
 ```
 
 ```javascript
 /**
- * Wallet.subtract(arg)
- * Spends copper or coin bag from the wallet.
+ * Remove coins or copper from the wallet.
+ * @method Wallet#subtract
+ * @param {number|CoinBag} arg - Copper amount or coin bag.
+ * @returns {Wallet} This wallet.
+ * @throws {Error} If funds are insufficient.
  */
 ```
 
 ```javascript
 /**
- * Wallet.normalize()
- * Re-optimizes the wallet's coin distribution.
+ * Recompute coin distribution using `normalizeCoins`.
+ * @method Wallet#normalize
+ * @returns {Wallet} This wallet.
  */
 ```
 
 ```javascript
 /**
- * Wallet.toObject()
- * Produces a plain object snapshot of coins.
+ * Convert wallet to a plain object.
+ * @method Wallet#toObject
+ * @returns {CoinBag} Bag representing current coins.
  */
 ```
 
 ```javascript
 /**
- * Wallet.toString()
- * Generates a formatted string of coin counts.
+ * Human‑readable string representation.
+ * @method Wallet#toString
+ * @returns {string} Formatted coin summary.
  */
 ```
 
-### Class: CurrencyManager
+### Class: `CurrencyManager`
 
 ```javascript
 /**
- * CurrencyManager.formatCurrency(amount)
- * Formats a copper amount as human-readable text.
+ * Integrates wallets with Foundry actors and settings.
+ * @class CurrencyManager
+ * @param {boolean} useModuleCurrency - Whether to override actor currency.
  */
 ```
 
 ```javascript
 /**
- * CurrencyManager.parseCurrency(value)
- * Parses formatted text into copper.
+ * Format a copper value using current denominations.
+ * @method CurrencyManager#formatCurrency
+ * @param {number} amount - Amount in copper.
+ * @returns {string} Formatted string.
  */
 ```
 
 ```javascript
 /**
- * CurrencyManager.getUserWallet(userId)
- * Retrieves the wallet associated with a user.
+ * Parse a currency string back into copper.
+ * @method CurrencyManager#parseCurrency
+ * @param {string} value - String to parse.
+ * @returns {number} Copper amount.
  */
 ```
 
 ```javascript
 /**
- * CurrencyManager.setCharacterSheetCurrency(userId, amount)
- * Writes a value directly onto a character sheet.
+ * Fetch a user’s wallet object.
+ * @method CurrencyManager#getUserWallet
+ * @param {string} userId - Foundry user id.
+ * @returns {Wallet} Wallet instance.
  */
 ```
 
 ```javascript
 /**
- * CurrencyManager.processItemPurchase(actor, item, vendorId, vendorItemId, quantity)
- * Handles full purchase workflow.
+ * Set a user’s wallet total.
+ * @method CurrencyManager#setUserWallet
+ * @param {string} userId - Foundry user id.
+ * @param {CoinBag|number} amount - New balance.
+ * @returns {Promise<void>} Resolves when saved.
  */
 ```
 
-## File: main.js
-
-Entry point defining the static VendorWalletSystem controller.
-
-### Class: VendorWalletSystem
-
-```javascript
-/**
- * VendorWalletSystem.initialize()
- * Registers settings, sockets, and helpers.
- */
-```
-
-```javascript
-/**
- * VendorWalletSystem.registerSettings()
- * Creates world and client settings.
- */
-```
-
-```javascript
-/**
- * VendorWalletSystem.registerSocketListeners()
- * Sets up socket communication.
- */
-```
-
-```javascript
-/**
- * VendorWalletSystem.addPlayerWalletButton(app, html)
- * Injects wallet button into player list.
- */
-```
-
 ```javascript
 /**
- * VendorWalletSystem.getUserWallet(userId)
- * Returns the wallet for a specific user.
+ * Read coin items from a character sheet.
+ * @method CurrencyManager#getCharacterSheetCurrency
+ * @param {string} userId - Foundry user id.
+ * @returns {CoinBag} Coins found on the actor.
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.setUserWallet(userId, amount)
- * Persists a wallet value for a user.
+ * Refresh all open wallet applications.
+ * @method CurrencyManager#refreshWalletApplications
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.formatCurrency(amount)
- * Formats currency using current settings.
+ * Process purchase of an item.
+ * @method CurrencyManager#processItemPurchase
+ * @param {Actor} actor - Buying actor.
+ * @param {Item} item - Item to purchase.
+ * @param {string} vendorId - Vendor identifier.
+ * @param {string} vendorItemId - Vendor item identifier.
+ * @param {number} quantity - Number of copies.
+ * @returns {Promise<{success:boolean,message:string}>} Result of the purchase.
  */
 ```
 
-```javascript
-/**
- * VendorWalletSystem.parseCurrency(value)
- * Parses a currency string into copper.
- */
-```
+---
 
-```javascript
-/**
- * VendorWalletSystem.getModuleCurrencyBreakdown(userId)
- * Provides coin distribution for the user.
- */
-```
+## File: `main.js`
 
-```javascript
-/**
- * VendorWalletSystem.getVendors()
- * Fetches all vendor records.
- */
-```
+Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * VendorWalletSystem.getVendor(id)
- * Looks up a single vendor.
+ * Central module controller.
+ * @namespace VendorWalletSystem
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.updateVendor(id, data)
- * Saves vendor updates to settings.
+ * Initialize settings, sockets, and helpers.
+ * @function VendorWalletSystem.initialize
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.deleteVendor(id)
- * Removes vendor from settings.
+ * Register all module settings.
+ * @function VendorWalletSystem.registerSettings
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.refreshVendorDisplays(id)
- * Re-renders open vendor windows.
+ * Register socket listeners for live updates.
+ * @function VendorWalletSystem.registerSocketListeners
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.refreshVendorManagers()
- * Refreshes vendor manager apps.
+ * Add a wallet button to the player list.
+ * @function VendorWalletSystem.addPlayerWalletButton
+ * @param {Application} app - Player list app.
+ * @param {jQuery} html - Rendered HTML.
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.openAllAvailableVendors()
- * Opens all active vendor windows.
+ * Format a copper value using the `CurrencyManager`.
+ * @function VendorWalletSystem.formatCurrency
+ * @param {number} amount - Copper amount.
+ * @returns {string} Human readable currency.
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.processPlayerPurchaseRequest(data)
- * Validates and forwards purchase requests.
+ * Parse a currency string into copper.
+ * @function VendorWalletSystem.parseCurrency
+ * @param {string} value - Formatted string.
+ * @returns {number} Copper amount.
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.emitPurchaseResult(userId, success, message, data)
- * Sends purchase outcome to a client.
+ * Get a user’s wallet balance.
+ * @function VendorWalletSystem.getUserWallet
+ * @param {string} userId - Foundry user id.
+ * @returns {Wallet} User wallet.
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.processItemPurchase(actor, item, vendorId, vendorItemId, quantity)
- * Server-side purchase execution.
+ * Set a user’s wallet balance.
+ * @function VendorWalletSystem.setUserWallet
+ * @param {string} userId - Foundry user id.
+ * @param {CoinBag|number} amount - New balance.
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.updateItemQuantityInVendor(vendorId, itemId, change)
- * Adjusts inventory after purchase.
+ * Retrieve all stored vendors.
+ * @function VendorWalletSystem.getVendors
+ * @returns {Object<string,VendorData>} Map of vendor ids to data.
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.addItemToActor(actor, uuid, quantity)
- * Places purchased items into an actor.
+ * Get data for a single vendor.
+ * @function VendorWalletSystem.getVendor
+ * @param {string} vendorId - Identifier.
+ * @returns {VendorData|undefined} Vendor record.
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.findVendorByItemUuid(uuid)
- * Finds vendor containing a specific item.
+ * Update vendor data and notify listeners.
+ * @function VendorWalletSystem.updateVendor
+ * @param {string} vendorId - Identifier.
+ * @param {VendorData} vendorData - Updated data.
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * VendorWalletSystem.handleItemDrop(actor, data)
- * Processes drag-and-drop purchases.
+ * Remove a vendor from settings.
+ * @function VendorWalletSystem.deleteVendor
+ * @param {string} vendorId - Identifier.
+ * @returns {Promise<void>}
  */
 ```
-
-## File: gm-tools-app.js
 
-GM dashboard offering quick links to administrative tools.
-
-### Class: GMToolsApplication
-
 ```javascript
 /**
- * GMToolsApplication._onRender()
- * Binds event listeners after rendering.
+ * Process a purchase initiated by a player.
+ * @function VendorWalletSystem.processPlayerPurchaseRequest
+ * @param {SocketRequest} data - Purchase request payload.
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * GMToolsApplication._onClickTool(event)
- * Routes button clicks to specific GM applications.
+ * Send purchase result back to a user.
+ * @function VendorWalletSystem.emitPurchaseResult
+ * @param {string} userId - Recipient user id.
+ * @param {boolean} success - Whether the purchase succeeded.
+ * @param {string} message - Human readable result.
+ * @param {Object} [payload] - Optional extra data.
+ * @returns {void}
  */
 ```
-
-## File: money-management-app.js
 
-GM interface to modify player wallets.
-
-### Class: MoneyManagementApplication
-
 ```javascript
 /**
- * MoneyManagementApplication._prepareContext()
- * Collects player data for display.
+ * Add an item to an actor's inventory.
+ * @function VendorWalletSystem.addItemToActor
+ * @param {Actor} actor - Destination actor.
+ * @param {string} uuid - Item UUID.
+ * @param {number} quantity - Number of copies.
+ * @returns {Promise<Item>} The created item.
  */
 ```
 
 ```javascript
 /**
- * MoneyManagementApplication._onRender()
- * Attaches the update button listener.
+ * Update vendor displays after data changes.
+ * @function VendorWalletSystem.refreshVendorDisplays
+ * @param {string} vendorId - Vendor to refresh.
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * MoneyManagementApplication._onClickButton(event)
- * Parses input and updates wallets.
+ * Update all vendor managers after data changes.
+ * @function VendorWalletSystem.refreshVendorManagers
+ * @returns {void}
  */
 ```
-
-## File: vendor-creation-app.js
-
-Wizard to create vendors with random items.
 
-### Class: VendorCreationApplication
-
 ```javascript
 /**
- * VendorCreationApplication._prepareContext()
- * Lists available compendia.
+ * Open all active vendors for the current user.
+ * @function VendorWalletSystem.openAllAvailableVendors
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * VendorCreationApplication._onRender()
- * Registers UI handlers including file picker.
+ * Handle items dropped onto an actor sheet.
+ * @function VendorWalletSystem.handleItemDrop
+ * @param {Actor} actor - Target actor.
+ * @param {object} data - Drag data containing vendor info.
+ * @returns {Promise<void>}
  */
 ```
 
-```javascript
-/**
- * VendorCreationApplication._onClickFilePicker(event)
- * Opens image selection dialog.
- */
-```
+---
 
-```javascript
-/**
- * VendorCreationApplication._setupCurrencyListeners()
- * Formats currency input fields.
- */
-```
+## File: `gm-tools-app.js`
 
-```javascript
-/**
- * VendorCreationApplication._onClickCreate(event)
- * Validates and triggers vendor creation.
- */
-```
+### Class: `GMToolsApplication`
 
 ```javascript
 /**
- * VendorCreationApplication._createVendor()
- * Builds vendor data and saves it.
+ * Menu of GM utilities.
+ * @class GMToolsApplication
+ * @extends Application
  */
 ```
 
 ```javascript
 /**
- * VendorCreationApplication.generateRandomItems(vendorData)
- * Filters and selects random items.
+ * Bind button events on render.
+ * @method GMToolsApplication#_onRender
+ * @param {Application} app - Application instance.
+ * @param {jQuery} html - Rendered HTML.
+ * @returns {void}
  */
 ```
-
-## File: vendor-manager-app.js
-
-Overview window for existing vendors.
 
-### Class: VendorManagerApplication
-
 ```javascript
 /**
- * VendorManagerApplication._prepareContext()
- * Collects vendor metadata for rendering.
+ * Handle tool button clicks.
+ * @method GMToolsApplication#_onClickTool
+ * @param {MouseEvent} event - Click event.
+ * @returns {void}
  */
 ```
 
-```javascript
-/**
- * VendorManagerApplication._onRender()
- * Activates button event listeners.
- */
-```
+---
 
-```javascript
-/**
- * VendorManagerApplication._onClickAction(event)
- * Delegates button actions.
- */
-```
+## File: `money-management-app.js`
 
-```javascript
-/**
- * VendorManagerApplication.toggleVendor(vendorId)
- * Toggles availability of a vendor.
- */
-```
+### Class: `MoneyManagementApplication`
 
 ```javascript
 /**
- * VendorManagerApplication.deleteVendor(vendorId)
- * Removes vendor after confirmation.
+ * GM interface for adjusting player funds.
+ * @class MoneyManagementApplication
+ * @extends Application
  */
 ```
-
-## File: vendor-edit-app.js
-
-Editor for adjusting vendor properties and inventory.
 
-### Class: VendorEditApplication
-
 ```javascript
 /**
- * VendorEditApplication._prepareContext()
- * Loads vendor details and compendia list.
+ * Prepare context with user balances.
+ * @method MoneyManagementApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
 
 ```javascript
 /**
- * VendorEditApplication._updatePosition(...args)
- * Positions the window within Foundry UI.
+ * Handle update button click.
+ * @method MoneyManagementApplication#_onClickButton
+ * @param {MouseEvent} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
-```javascript
-/**
- * VendorEditApplication._onRender()
- * Wires up UI controls after render.
- */
-```
+---
 
-```javascript
-/**
- * VendorEditApplication._setupCurrencyListeners()
- * Formats monetary inputs.
- */
-```
+## File: `vendor-creation-app.js`
 
-```javascript
-/**
- * VendorEditApplication._onClickFilePicker(event)
- * Invokes Foundry's file picker.
- */
-```
+### Class: `VendorCreationApplication`
 
 ```javascript
 /**
- * VendorEditApplication._onClickButton(event)
- * Handles save and regenerate actions.
+ * Wizard to create vendors with random items.
+ * @class VendorCreationApplication
+ * @extends Application
  */
 ```
 
 ```javascript
 /**
- * VendorEditApplication._onSubmitForm(event)
- * Processes form submission.
+ * Prepare compendium list and defaults.
+ * @method VendorCreationApplication#_prepareContext
+ * @returns {Promise<object>} Context for template.
  */
 ```
 
 ```javascript
 /**
- * VendorEditApplication._updateVendor()
- * Saves edits and optional item regeneration.
+ * Generate vendor and save settings.
+ * @method VendorCreationApplication#_createVendor
+ * @param {Event} event - Form submission event.
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * VendorEditApplication.generateRandomItems(vendorData)
- * Repopulates inventory based on filters.
+ * Filter compendium items and select random entries.
+ * @function generateRandomItems
+ * @param {VendorData} vendorData - Criteria and metadata.
+ * @returns {Promise<ItemData[]>} Array of item data.
  */
 ```
-
-## File: vendor-item-edit-app.js
 
-Editor focused on a single vendor item.
+---
 
-### Class: VendorItemEditApplication
+## File: `vendor-manager-app.js`
 
-```javascript
-/**
- * VendorItemEditApplication._prepareContext()
- * Retrieves vendor and item details.
- */
-```
-
-```javascript
-/**
- * VendorItemEditApplication._onRender()
- * Sets up button listeners.
- */
-```
+### Class: `VendorManagerApplication`
 
 ```javascript
 /**
- * VendorItemEditApplication._onClickButton(event)
- * Routes save or delete operations.
+ * Overview window listing all vendors.
+ * @class VendorManagerApplication
+ * @extends Application
  */
 ```
 
 ```javascript
 /**
- * VendorItemEditApplication._updateItem()
- * Applies item changes and saves vendor.
+ * Assemble vendor metadata for rendering.
+ * @method VendorManagerApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
 
 ```javascript
 /**
- * VendorItemEditApplication._removeItem()
- * Deletes item after confirmation.
+ * Handle edit/toggle/delete/view actions.
+ * @method VendorManagerApplication#_onClickAction
+ * @param {MouseEvent} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
-
-## File: player-wallet-app.js
 
-Combined wallet viewer and vendor browser for players.
-
-### Class: PlayerWalletApplication
-
 ```javascript
 /**
- * PlayerWalletApplication._prepareContext()
- * Determines view mode and prepares data.
+ * Toggle vendor availability.
+ * @method VendorManagerApplication#toggleVendor
+ * @param {string} id - Vendor identifier.
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * PlayerWalletApplication._prepareSingleVendorContext(vendor, wallet, useModuleCurrency, coinBreakdown)
- * Builds context for a single vendor.
+ * Delete a vendor after confirmation.
+ * @method VendorManagerApplication#deleteVendor
+ * @param {string} id - Vendor identifier.
+ * @returns {Promise<void>}
  */
 ```
 
-```javascript
-/**
- * PlayerWalletApplication._prepareAllVendorsContext(wallet, useModuleCurrency, coinBreakdown)
- * Builds context for all vendors.
- */
-```
+---
 
-```javascript
-/**
- * PlayerWalletApplication._updateWindowTitle()
- * Adjusts the window title based on context.
- */
-```
+## File: `vendor-edit-app.js`
 
-```javascript
-/**
- * PlayerWalletApplication._onBackToVendors(event)
- * Returns to vendor list view.
- */
-```
+### Class: `VendorEditApplication`
 
 ```javascript
 /**
- * PlayerWalletApplication._cleanupListeners()
- * Removes active event listeners.
+ * Editor for a single vendor.
+ * @class VendorEditApplication
+ * @extends Application
  */
 ```
 
 ```javascript
 /**
- * PlayerWalletApplication._onClickVendor(event)
- * Opens selected vendor.
+ * Prepare vendor data and compendium list.
+ * @method VendorEditApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
 
 ```javascript
 /**
- * PlayerWalletApplication._onSearchInput(event)
- * Filters items based on search query.
+ * Save vendor updates.
+ * @method VendorEditApplication#_updateVendor
+ * @param {Event} event - Form submission event.
+ * @returns {Promise<void>}
  */
 ```
 
-```javascript
-/**
- * PlayerWalletApplication._updateClearButtonVisibility()
- * Shows or hides clear search button.
- */
-```
+---
 
-```javascript
-/**
- * PlayerWalletApplication._onSocketEvent(data)
- * Handles purchase result messages.
- */
-```
+## File: `vendor-item-edit-app.js`
 
-```javascript
-/**
- * PlayerWalletApplication._onItemSelection(event)
- * Tracks selected items for purchase.
- */
-```
+### Class: `VendorItemEditApplication`
 
 ```javascript
 /**
- * PlayerWalletApplication._onPurchaseAction(event)
- * Validates and executes purchase.
+ * Editor for an individual vendor item.
+ * @class VendorItemEditApplication
+ * @extends Application
  */
 ```
 
 ```javascript
 /**
- * PlayerWalletApplication._updatePurchaseDisplay()
- * Recalculates running total cost.
+ * Prepare item and vendor context.
+ * @method VendorItemEditApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
 
 ```javascript
 /**
- * PlayerWalletApplication._clearSelection()
- * Clears all selections and quantities.
+ * Apply item changes.
+ * @method VendorItemEditApplication#_updateItem
+ * @param {Event} event - Form submission event.
+ * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * PlayerWalletApplication._onClickEditItem(event)
- * Opens item editor for GMs.
+ * Remove item from vendor inventory.
+ * @method VendorItemEditApplication#_removeItem
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
-## File: vendor-display-app.js
+---
 
-Standalone window for browsing a single vendor.
+## File: `player-wallet-app.js`
 
-### Class: VendorDisplayApplication
-
-```javascript
-/**
- * VendorDisplayApplication._prepareContext()
- * Fetches vendor and wallet information.
- */
-```
+### Class: `PlayerWalletApplication`
 
 ```javascript
 /**
- * VendorDisplayApplication._onRender()
- * Registers event and socket listeners.
+ * Combined wallet viewer and vendor browser for players.
+ * @class PlayerWalletApplication
+ * @extends Application
+ * @param {object} [options] - Application options.
  */
 ```
 
 ```javascript
 /**
- * VendorDisplayApplication._onSearchInput(event)
- * Filters visible items.
+ * Build context for template rendering.
+ * @method PlayerWalletApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
 
 ```javascript
 /**
- * VendorDisplayApplication._updateClearButtonVisibility()
- * Manages clear search button.
+ * Handle vendor selection.
+ * @method PlayerWalletApplication#_onClickVendor
+ * @param {MouseEvent} event - Click event.
+ * @returns {void}
  */
 ```
 
 ```javascript
 /**
- * VendorDisplayApplication._onSocketEvent(data)
- * Responds to purchase outcomes.
+ * Process purchase of selected items.
+ * @method PlayerWalletApplication#_onPurchaseAction
+ * @param {MouseEvent} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
-```javascript
-/**
- * VendorDisplayApplication._onItemSelection(event)
- * Tracks chosen items.
- */
-```
+---
 
-```javascript
-/**
- * VendorDisplayApplication._onPurchaseAction(event)
- * Initiates a purchase request.
- */
-```
+## File: `vendor-display-app.js`
 
-```javascript
-/**
- * VendorDisplayApplication._updatePurchaseDisplay()
- * Recomputes total cost.
- */
-```
+### Class: `VendorDisplayApplication`
 
 ```javascript
 /**
- * VendorDisplayApplication._clearSelection()
- * Resets selections.
+ * Stand‑alone window showing a vendor's inventory.
+ * @class VendorDisplayApplication
+ * @extends Application
+ * @param {object} [options] - Application options.
  */
 ```
 
 ```javascript
 /**
- * VendorDisplayApplication._onClickEditItem(event)
- * Opens item editor (GM only).
+ * Prepare vendor data for rendering.
+ * @method VendorDisplayApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
-
-## File: currency-settings-app.js
 
-UI to configure coin denominations and related options.
-
-### Class: CurrencySettingsApplication
-
 ```javascript
 /**
- * CurrencySettingsApplication._prepareContext()
- * Loads current settings and coin values.
+ * Handle purchase button actions.
+ * @method VendorDisplayApplication#_onPurchaseAction
+ * @param {MouseEvent} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
-```javascript
-/**
- * CurrencySettingsApplication._onRender()
- * Adds listeners for add/remove actions.
- */
-```
+---
 
-```javascript
-/**
- * CurrencySettingsApplication._populateDenominationFields()
- * Displays existing denomination rows.
- */
-```
+## File: `currency-settings-app.js`
 
-```javascript
-/**
- * CurrencySettingsApplication._addCoinDenominationField(name, value)
- * Creates a new denomination row.
- */
-```
+### Class: `CurrencySettingsApplication`
 
 ```javascript
 /**
- * CurrencySettingsApplication._updateWarningVisibility()
- * Shows warnings if rules are violated.
+ * Configure coin denominations and behavior.
+ * @class CurrencySettingsApplication
+ * @extends Application
  */
 ```
 
 ```javascript
 /**
- * CurrencySettingsApplication._onClickButton(event)
- * Handles button-based actions.
+ * Prepare current settings for rendering.
+ * @method CurrencySettingsApplication#_prepareContext
+ * @returns {Promise<object>} Template data.
  */
 ```
 
 ```javascript
 /**
- * CurrencySettingsApplication._saveCurrencySettings()
- * Validates and saves denomination settings.
+ * Save denomination changes.
+ * @method CurrencySettingsApplication#_saveCurrencySettings
+ * @param {Event} event - Form submission event.
+ * @returns {Promise<void>}
  */
 ```
-
-## Templates and Styles
 
-- Handlebars templates (`*.hbs`) define UI layouts for all applications.
-- styles.css provides module-wide styling rules.
-- module.json registers metadata and entry scripts.
+---
 
 ## Supporting Files
 
-- README.md offers installation and usage instructions.
-- CHANGELOG.md lists updates across versions.
-- LICENSE states the terms of use (MIT).
+- Handlebars templates (`*.hbs`) define UI layouts for each application.
+- `styles.css` provides module-wide styling.
+- `module.json` declares module metadata.
+- `README.md`, `CHANGELOG.md`, and `LICENSE` document usage, history, and licensing.
+
