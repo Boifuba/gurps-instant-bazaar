@@ -33,7 +33,7 @@
  * The order is important for the greedy algorithm (which is optimal here).
  * @type {{key: keyof CoinBag, value: number}[]}
  */
-const DENOMS = [
+export const DENOMS = [
   { key: "ouro",  value: 80 }, // gold
   { key: "prata", value: 4 }, // silver
   { key: "cobre", value: 1  }, // copper
@@ -48,7 +48,7 @@ const DENOMS = [
  * isNonNegInt(-1);  // false
  * isNonNegInt(3.2); // false
  */
-const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
+export const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
 
 /**
  * Returns the total value (in copper units) of a given coin bag.
@@ -59,7 +59,7 @@ const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
  * @example
  * valueFromCoins({ ouro: 1, prata: 2, cobre: 3 }); // 80 + 40 + 3 = 123
  */
-function valueFromCoins({ ouro = 0, prata = 0, cobre = 0 } = {}) {
+export function valueFromCoins({ ouro = 0, prata = 0, cobre = 0 } = {}) {
   [ouro, prata, cobre].forEach((n, i) => {
     if (!isNonNegInt(n)) {
       const k = ["ouro", "prata", "cobre"][i];
@@ -78,7 +78,7 @@ function valueFromCoins({ ouro = 0, prata = 0, cobre = 0 } = {}) {
  * @example
  * makeChange(328); // { ouro: 4, prata: 0, cobre: 8 }
  */
-function makeChange(total) {
+export function makeChange(total) {
   if (!isNonNegInt(total)) throw new Error(`Invalid total: ${total}`);
   const out = { ouro: 0, prata: 0, cobre: 0 };
   let rest = total;
@@ -97,7 +97,7 @@ function makeChange(total) {
  * @example
  * normalizeCoins({ prata: 5, cobre: 10 }); // { ouro: 1, prata: 1, cobre: 10 }
  */
-function normalizeCoins(coins) {
+export function normalizeCoins(coins) {
   return makeChange(valueFromCoins(coins));
 }
 
@@ -105,7 +105,7 @@ function normalizeCoins(coins) {
  * A wallet that holds coins and supports add/subtract with optional
  * auto-normalization controls.
  */
-class Wallet {
+export default class Wallet {
   /**
    * Creates a wallet.
    * @param {CoinBag} [coins] Initial coin bag.
@@ -251,31 +251,7 @@ class Wallet {
   }
 }
 
-/* =========================
-   Demo (run directly only)
-   ========================= */
-if (require.main === module) {
-  // Example 1: optimized by default
-  console.log("makeChange(1000) →", makeChange(1000)); // sanity check
-
-  // Example 2: construct without auto-normalizing
-  const w1 = new Wallet({ ouro: 28, prata: 260, cobre: 22898 }, { optimizeOnConstruct: false });
-  console.log("w1:", w1.toString());
-
-  // Example 3: fully preserve counts on add/subtract
-  const w2 = new Wallet(
-    { ouro: 28, prata: 260, cobre: 22898 },
-    { optimizeOnConstruct: false, optimizeOnAdd: false, optimizeOnSubtract: false }
-  );
-  console.log("w2 (start):", w2.toString());
-  w2.add(328);
-  console.log("w2 after add(328):", w2.toString());
-  w2.subtract(615);
-  console.log("w2 after subtract(615):", w2.toString());
-}
-
-// CommonJS export (so you can require this in other files)
-module.exports = { Wallet, DENOMS, valueFromCoins, makeChange, normalizeCoins, isNonNegInt };
+// End of currency module.
 
 
 

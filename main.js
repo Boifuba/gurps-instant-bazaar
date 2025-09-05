@@ -3,7 +3,7 @@
  * @description Provides core functionality for managing vendors, player wallets, and item transactions in FoundryVTT
  */
 
-import { Wallet, valueFromCoins } from './currency.js';
+import Wallet, { DENOMS, valueFromCoins, makeChange, normalizeCoins, isNonNegInt } from './currency.js';
 
 console.log("🔧 VENDOR WALLET SYSTEM: main.js loaded!");
 
