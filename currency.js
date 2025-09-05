@@ -251,34 +251,6 @@ class Wallet {
   }
 }
 
-/* =========================
-   Demo (run directly only)
-   ========================= */
-if (require.main === module) {
-  // Example 1: optimized by default
-  console.log("makeChange(1000) →", makeChange(1000)); // sanity check
-
-  // Example 2: construct without auto-normalizing
-  const w1 = new Wallet({ ouro: 28, prata: 260, cobre: 22898 }, { optimizeOnConstruct: false });
-  console.log("w1:", w1.toString());
-
-  // Example 3: fully preserve counts on add/subtract
-  const w2 = new Wallet(
-    { ouro: 28, prata: 260, cobre: 22898 },
-    { optimizeOnConstruct: false, optimizeOnAdd: false, optimizeOnSubtract: false }
-  );
-  console.log("w2 (start):", w2.toString());
-  w2.add(328);
-  console.log("w2 after add(328):", w2.toString());
-  w2.subtract(615);
-  console.log("w2 after subtract(615):", w2.toString());
-}
-
-// CommonJS export (so you can require this in other files)
-module.exports = { Wallet, DENOMS, valueFromCoins, makeChange, normalizeCoins, isNonNegInt };
-
-
-
 // [15:50, 04/09/2025] +55 84 9133-4802: let need = delta;
 //     let custo = [0,0,0];
 //     let cotacao = [DENOMS["ouro"],DENOMS["prata"],DENOMS["cobre"]];
@@ -308,3 +280,6 @@ module.exports = { Wallet, DENOMS, valueFromCoins, makeChange, normalizeCoins, i
 //         this.coins[i] = this.coins[i]-custo;
 //     }
 //     if(need > 0) throw new Error("Insufficient funds (unexpected).");
+
+// Export for use as ES module
+export { Wallet, DENOMS, valueFromCoins, makeChange, normalizeCoins, isNonNegInt };
