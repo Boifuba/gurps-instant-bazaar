@@ -36,6 +36,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
   async _prepareContext() {
     // Load the current state of the module currency system setting
     const useModuleCurrencySystem = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+    const optimizeOnConstruct = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
     
     // Load saved currency denominations or use defaults
     const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [
@@ -46,6 +47,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
 
     return {
       useModuleCurrencySystem,
+      optimizeOnConstruct,
       denominations
     };
   }
@@ -62,6 +64,12 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     if (useModuleCurrencyCheckbox) {
       const currentSetting = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
       useModuleCurrencyCheckbox.checked = currentSetting;
+    }
+    
+    const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
+    if (optimizeOnConstructCheckbox) {
+      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
+      optimizeOnConstructCheckbox.checked = currentSetting;
     }
     
     // Populate denomination fields with saved data
@@ -239,6 +247,9 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     const useModuleCurrencyCheckbox = this.element.querySelector('#useModuleCurrencySystem');
     const useModuleCurrencySystem = useModuleCurrencyCheckbox ? useModuleCurrencyCheckbox.checked : true;
     
+    const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
+    const optimizeOnConstruct = optimizeOnConstructCheckbox ? optimizeOnConstructCheckbox.checked : true;
+    
     const container = this.element.querySelector('#coinDenominationsContainer');
     const denominationFields = container?.querySelectorAll('.coin-denomination-item');
     
@@ -303,6 +314,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     try {
       // Save both the module currency system setting and denominations
       await game.settings.set(VendorWalletSystem.ID, 'useModuleCurrencySystem', useModuleCurrencySystem);
+      await game.settings.set(VendorWalletSystem.ID, 'optimizeOnConstruct', optimizeOnConstruct);
       // Save the denominations
       await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', denominations);
       ui.notifications.info('Currency settings saved successfully!');

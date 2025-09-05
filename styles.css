@@ -612,3 +612,44 @@ button.secondary:hover {
   margin: 0;
   font-size: 0.9rem;
 }
+
+/* Coin Breakdown Styles */
+.coin-breakdown {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-bg-option);
+}
+
+.coin-breakdown h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.coin-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.coin-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-bg);
+  font-size: 0.9rem;
+}
+
+.coin-count {
+  font-weight: bold;
+  color: var(--color-text-highlight);
+}
+
+.coin-name {
+  color: var(--color-text-dark-secondary);
+}
