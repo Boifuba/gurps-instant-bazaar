@@ -251,9 +251,6 @@ export default class Wallet {
   }
 }
 
-// End of currency module.
-
-
 
 // [15:50, 04/09/2025] +55 84 9133-4802: let need = delta;
 //     let custo = [0,0,0];
@@ -284,3 +281,6 @@ export default class Wallet {
 //         this.coins[i] = this.coins[i]-custo;
 //     }
 //     if(need > 0) throw new Error("Insufficient funds (unexpected).");
+
+// Export for use as ES module
+export { Wallet, DENOMS, valueFromCoins, makeChange, normalizeCoins, isNonNegInt };
