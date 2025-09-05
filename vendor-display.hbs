@@ -34,10 +34,10 @@
   {{/unless}}
 
   <div class="search-section">
-    <div class="search-input-container">
+    <div class="search-input-wrapper">
       <i class="fas fa-search search-icon"></i>
       <input type="text" id="itemSearch" class="search-input" placeholder="Search items..." value="{{searchTerm}}">
-      <button type="button" id="clearSearch" class="clear-search-btn" title="Clear search">
+      <button type="button" id="clearSearch" class="clear-search-btn" style="display: {{#if searchTerm}}flex{{else}}none{{/if}};" title="Clear search">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -47,25 +47,37 @@
     <div id="itemList">
       {{#each vendor.items}}
       <div class="vendor-item-card" data-item-uuid="{{uuid}}" data-vendor-item-id="{{id}}" data-item-price="{{price}}">
-        {{#if ../isGM}}
-        <div class="item-edit-button">
-          <button type="button" class="edit-item-btn" data-item-id="{{id}}" title="Edit Item">
-            <i class="fas fa-edit"></i>
-          </button>
-        </div>
-        {{/if}}
-        
         <div class="item-details">
           {{#unless ../isGM}}
-          <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}">
+          <div class="item-selection">
+            <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}">
+            <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" {{#if quantity}}max="{{quantity}}"{{/if}}>
+          </div>
           {{/unless}}
-          <span class="item-name">{{name}}</span>
-          <span class="item-price">{{formatCurrency price}}</span>
-          {{#unless ../isGM}}
-          <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" max="{{quantity}}">
-          {{/unless}}
-          <span class="item-stock">({{quantity}} available)</span>
-          {{#if pageref}}<span class="item-pageref pdflink">{{pageref}}</span>{{/if}}
+          
+          <div class="item-info">
+            <h4 class="item-name">{{name}}</h4>
+            <div class="item-meta">
+              <span class="item-price">{{formatCurrency price}}</span>
+              {{#if weight}}
+                <span class="item-weight">{{weight}} lbs</span>
+              {{/if}}
+              {{#if quantity}}
+                <span class="item-stock">({{quantity}} available)</span>
+              {{/if}}
+              {{#if pageref}}
+                <span class="item-pageref">{{pageref}}</span>
+              {{/if}}
+            </div>
+          </div>
+          
+          {{#if ../isGM}}
+            <div class="item-actions">
+              <button type="button" class="edit-item-btn secondary" data-item-id="{{id}}">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+            </div>
+          {{/if}}
         </div>
       </div>
       {{/each}}

@@ -259,6 +259,9 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
       selectedCount += quantity;
     }
 
+    // Round up the total price
+    totalPrice = Math.ceil(totalPrice);
+
     this.element.querySelector('#selectedCount').textContent = selectedCount;
     this.element.querySelector('#totalPrice').textContent = VendorWalletSystem.formatCurrency(totalPrice);
 
@@ -466,11 +469,12 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     // Calculate total cost of attempted purchases
     const totalCostRequired = itemsToProcess.reduce((sum, { vendorItem, purchaseQuantity }) =>
       sum + (vendorItem.price * purchaseQuantity), 0);
+    const roundedTotalCostRequired = Math.ceil(totalCostRequired);
 
     // Check wallet
     const currentWallet = VendorWalletSystem.getUserWallet(game.user.id);
-    if (currentWallet < totalCostRequired) {
-      ui.notifications.warn(`Not enough coins! Need ${VendorWalletSystem.formatCurrency(totalCostRequired)} but only have ${VendorWalletSystem.formatCurrency(currentWallet)}.`);
+    if (currentWallet < roundedTotalCostRequired) {
+      ui.notifications.warn(`Not enough coins! Need ${VendorWalletSystem.formatCurrency(roundedTotalCostRequired)} but only have ${VendorWalletSystem.formatCurrency(currentWallet)}.`);
       return;
     }
 
@@ -504,6 +508,9 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
       const qtyInput = itemCard?.querySelector('.item-quantity-input');
       if (qtyInput) qtyInput.max = newStock;
     }
+
+    // Round up the final cost processed
+    totalCostProcessed = Math.ceil(totalCostProcessed);
 
     // Deduct money from wallet
     await VendorWalletSystem.setUserWallet(game.user.id, currentWallet - totalCostProcessed);

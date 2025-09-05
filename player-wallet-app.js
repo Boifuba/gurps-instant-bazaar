@@ -1,4 +1,3 @@
-
 /**
  * @class PlayerWalletApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -21,6 +20,7 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     this._boundOnPurchaseAction = this._onPurchaseAction.bind(this);
     this._boundOnSearchInput = this._onSearchInput.bind(this);
     this._boundOnClickVendor = this._onClickVendor.bind(this);
+    this._boundOnBackToVendors = this._onBackToVendors.bind(this);
     this._socketRegistered = false;
   }
 
@@ -29,7 +29,7 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     // The template's root element is a <div>; ensure the tag matches to prevent layout issues
     tag: 'div',
     window: {
-      title: 'Player Wallet',
+      title: 'GURPS Instant Bazaar',
       icon: 'fas fa-wallet'
     },
     position: {
@@ -65,9 +65,12 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     
     // Get coin breakdown for display
-    let coinBreakdown = null;
+    let coinBreakdown;
     if (useModuleCurrency) {
       coinBreakdown = VendorWalletSystem.getModuleCurrencyBreakdown(game.user.id);
+    } else {
+      // Get character sheet currency breakdown
+      coinBreakdown = VendorWalletSystem.currencyManager._getCharacterSheetCoinBreakdown(game.user.id);
     }
 
     // Check if we're displaying a specific vendor or all vendors
@@ -159,6 +162,9 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     // Clean up any existing listeners first
     this._cleanupListeners();
     
+    // Update window title based on current view
+    this._updateWindowTitle();
+    
     // Register socket listener for purchase results once
     if (!this._socketRegistered) {
       game.socket.on(VendorWalletSystem.SOCKET, this._boundOnSocketEvent);
@@ -197,12 +203,54 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
         });
       }
 
+      // Add back to vendors button listener
+      const backButton = this.element.querySelector('.back-to-vendors');
+      if (backButton) {
+        backButton.addEventListener('click', this._boundOnBackToVendors);
+      }
+
       // Update clear button visibility
       this._updateClearButtonVisibility();
     } else {
       // All vendors display - add vendor selection listeners
       this.element.addEventListener('click', this._boundOnClickVendor);
     }
+  }
+
+  /**
+   * Updates the window title based on current view
+   */
+  _updateWindowTitle() {
+    if (this.vendorId) {
+      const vendor = VendorWalletSystem.getVendor(this.vendorId);
+      if (vendor) {
+        // Update the window title to show vendor name
+        const titleElement = this.element.closest('.window-app')?.querySelector('.window-title');
+        if (titleElement) {
+          titleElement.textContent = vendor.name;
+        }
+        // Also update the options for future renders
+        this.options.window.title = vendor.name;
+      }
+    } else {
+      // Reset to default title
+      const titleElement = this.element.closest('.window-app')?.querySelector('.window-title');
+      if (titleElement) {
+        titleElement.textContent = 'GURPS Instant Bazaar';
+      }
+      this.options.window.title = 'GURPS Instant Bazaar';
+    }
+  }
+
+  /**
+   * Handles back to vendors button click
+   * @param {Event} event - The click event
+   */
+  _onBackToVendors(event) {
+    event.preventDefault();
+    this.vendorId = null;
+    this.searchTerm = '';
+    this.render();
   }
 
   /**
@@ -218,6 +266,11 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
       const searchInput = this.element.querySelector('#itemSearch');
       if (searchInput) {
         searchInput.removeEventListener('input', this._boundOnSearchInput);
+      }
+
+      const backButton = this.element.querySelector('.back-to-vendors');
+      if (backButton) {
+        backButton.removeEventListener('click', this._boundOnBackToVendors);
       }
       
       // Clear any pending search timeout
@@ -370,6 +423,9 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
       totalPrice += price * quantity;
       selectedCount += quantity;
     }
+
+    // Round up the total price
+    totalPrice = Math.ceil(totalPrice);
 
     this.element.querySelector('#selectedCount').textContent = selectedCount;
     this.element.querySelector('#totalPrice').textContent = VendorWalletSystem.currencyManager.formatCurrency(totalPrice);
@@ -578,11 +634,12 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     // Calculate total cost of attempted purchases
     const totalCostRequired = itemsToProcess.reduce((sum, { vendorItem, purchaseQuantity }) =>
       sum + (vendorItem.price * purchaseQuantity), 0);
+    const roundedTotalCostRequired = Math.ceil(totalCostRequired);
 
     // Check wallet
     const currentWallet = VendorWalletSystem.getUserWallet(game.user.id);
-    if (currentWallet < totalCostRequired) {
-      ui.notifications.warn(`Not enough coins! Need ${VendorWalletSystem.currencyManager.formatCurrency(totalCostRequired)} but only have ${VendorWalletSystem.currencyManager.formatCurrency(currentWallet)}.`);
+    if (currentWallet < roundedTotalCostRequired) {
+      ui.notifications.warn(`Not enough coins! Need ${VendorWalletSystem.currencyManager.formatCurrency(roundedTotalCostRequired)} but only have ${VendorWalletSystem.currencyManager.formatCurrency(currentWallet)}.`);
       return;
     }
 
@@ -616,6 +673,9 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
       const qtyInput = itemCard?.querySelector('.item-quantity-input');
       if (qtyInput) qtyInput.max = newStock;
     }
+
+    // Round up the final cost processed
+    totalCostProcessed = Math.ceil(totalCostProcessed);
 
     // Deduct money from wallet
     await VendorWalletSystem.setUserWallet(game.user.id, currentWallet - totalCostProcessed);

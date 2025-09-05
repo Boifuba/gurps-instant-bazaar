@@ -33,11 +33,6 @@
  * The order is important for the greedy algorithm (which is optimal here).
  * @type {{key: keyof CoinBag, value: number}[]}
  */
-const DENOMS = [
-  { key: "ouro",  value: 80 }, // gold
-  { key: "prata", value: 4 }, // silver
-  { key: "cobre", value: 1  }, // copper
-];
 
 /**
  * Checks whether a number is a non-negative integer.
@@ -54,18 +49,24 @@ const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
  * Returns the total value (in copper units) of a given coin bag.
  * Validates that each field, if present, is a non-negative integer.
  * @param {CoinBag} [coins]
+ * @param {Array} [denominations] - Array of denomination objects with name and value
  * @returns {number} Total value in copper.
  * @throws {Error} If any coin count is invalid.
  * @example
  * valueFromCoins({ ouro: 1, prata: 2, cobre: 3 }); // 80 + 8 + 3 = 91
  */
-function valueFromCoins({ ouro = 0, prata = 0, cobre = 0 } = {}) {
+function valueFromCoins({ ouro = 0, prata = 0, cobre = 0 } = {}, denominations = null) {
   [ouro, prata, cobre].forEach((n, i) => {
     if (!isNonNegInt(n)) {
       const k = ["ouro", "prata", "cobre"][i];
       throw new Error(`Invalid quantity for ${k}: ${n}`);
     }
   });
+  
+  if (denominations && denominations.length >= 3) {
+    return ouro * denominations[0].value + prata * denominations[1].value + cobre * denominations[2].value;
+  }
+  // Default values if no denominations provided
   return ouro * 80 + prata * 4 + cobre * 1;
 }
 
@@ -73,16 +74,29 @@ function valueFromCoins({ ouro = 0, prata = 0, cobre = 0 } = {}) {
  * Greedy change-making: decomposes a total (in copper) into the
  * optimal combination (minimal number of coins).
  * @param {number} total Non-negative integer total in copper.
+ * @param {Array} [denominations] - Array of denomination objects with name and value
  * @returns {CoinBag} Optimal coin breakdown.
  * @throws {Error} If total is invalid.
  * @example
  * makeChange(328); // { ouro: 4, prata: 0, cobre: 8 }
  */
-function makeChange(total) {
+function makeChange(total, denominations = null) {
   if (!isNonNegInt(total)) throw new Error(`Invalid total: ${total}`);
   const out = { ouro: 0, prata: 0, cobre: 0 };
   let rest = total;
-  for (const { key, value } of DENOMS) {
+  
+  // Use provided denominations or default values
+  const denoms = denominations && denominations.length >= 3 ? [
+    { key: "ouro", value: denominations[0].value },
+    { key: "prata", value: denominations[1].value },
+    { key: "cobre", value: denominations[2].value }
+  ] : [
+    { key: "ouro", value: 80 },
+    { key: "prata", value: 4 },
+    { key: "cobre", value: 1 }
+  ];
+  
+  for (const { key, value } of denoms) {
     out[key] = Math.floor(rest / value);
     rest = rest % value;
   }
@@ -93,12 +107,13 @@ function makeChange(total) {
  * Normalizes a coin bag by converting it to total (in copper) and
  * then making optimal change.
  * @param {CoinBag} coins
+ * @param {Array} [denominations] - Array of denomination objects with name and value
  * @returns {CoinBag} Normalized (optimal) bag.
  * @example
  * normalizeCoins({ prata: 5, cobre: 10 }); // { ouro: 0, prata: 7, cobre: 2 }
  */
-function normalizeCoins(coins) {
-  return makeChange(valueFromCoins(coins));
+function normalizeCoins(coins, denominations = null) {
+  return makeChange(valueFromCoins(coins, denominations), denominations);
 }
 
 /**
@@ -110,6 +125,7 @@ class Wallet {
    * Creates a wallet.
    * @param {CoinBag} [coins] Initial coin bag.
    * @param {WalletOptions} [opts] Normalization options.
+   * @param {Array} [denominations] Array of denomination objects with name and value
    * @example
    * // Fully optimized behavior (default)
    * const w1 = new Wallet({ ouro: 0, prata: 5, cobre: 10 });
@@ -117,14 +133,15 @@ class Wallet {
    * const w2 = new Wallet({ ouro: 1, prata: 0, cobre: 200 },
    *   { optimizeOnConstruct: false, optimizeOnAdd: false, optimizeOnSubtract: false });
    */
-  constructor(coins = { ouro: 0, prata: 0, cobre: 0 }, opts = {}) {
+  constructor(coins = { ouro: 0, prata: 0, cobre: 0 }, opts = {}, denominations = null) {
     const {
       optimizeOnConstruct = true,
       optimizeOnAdd = true,
       optimizeOnSubtract = true,
     } = opts;
     this._opts = { optimizeOnConstruct, optimizeOnAdd, optimizeOnSubtract };
-    this._set(optimizeOnConstruct ? normalizeCoins(coins) : { ...coins });
+    this._denominations = denominations;
+    this._set(optimizeOnConstruct ? normalizeCoins(coins, this._denominations) : { ...coins });
   }
 
   /**
@@ -140,7 +157,7 @@ class Wallet {
    * Total value of the wallet in copper units.
    * @returns {number}
    */
-  total() { return valueFromCoins(this); }
+  total() { return valueFromCoins(this, this._denominations); }
 
   /**
    * Adds either a numeric amount (treated as copper) or a CoinBag.
@@ -156,11 +173,11 @@ class Wallet {
    */
   add(arg) {
     const isNumber = typeof arg === "number";
-    const delta = isNumber ? arg : valueFromCoins(arg);
+    const delta = isNumber ? arg : valueFromCoins(arg, this._denominations);
     if (!isNonNegInt(delta)) throw new Error(`Invalid value to add: ${delta}`);
 
     if (this._opts.optimizeOnAdd) {
-      this._set(makeChange(this.total() + delta));
+      this._set(makeChange(this.total() + delta, this._denominations));
     } else {
       if (isNumber) this.cobre += delta;
       else {
@@ -184,33 +201,49 @@ class Wallet {
    * wallet.subtract(615);
    */
   subtract(arg) {
-    const delta = typeof arg === "number" ? arg : valueFromCoins(arg);
+    const delta = typeof arg === "number" ? arg : valueFromCoins(arg, this._denominations);
     if (!isNonNegInt(delta)) throw new Error(`Invalid value to subtract: ${delta}`);
     if (this.total() < delta) {
       throw new Error(`Insufficient funds: short by ${delta - this.total()} (copper).`);
     }
 
     if (this._opts.optimizeOnSubtract) {
-      this._set(makeChange(this.total() - delta));
+      this._set(makeChange(this.total() - delta, this._denominations));
       return this;
     }
 
-    // "Preserve" mode: spend copper; if needed, break silver into copper,
-    // and gold into silver (then copper), never promoting coins.
+    // "Preserve" mode: spend from smallest denomination first, breaking larger denominations as needed
     let need = delta;
+
+    // Get denomination values (use defaults if not provided)
+    const denomValues = this._denominations && this._denominations.length >= 3 ? {
+      ouro: this._denominations[0].value,
+      prata: this._denominations[1].value,
+      cobre: this._denominations[2].value
+    } : {
+      ouro: 80,
+      prata: 4,
+      cobre: 1
+    };
 
     const spendFrom = (key, amt) => {
       const take = Math.min(this[key], amt);
       this[key] -= take;
       return take;
     };
+    
     const breakPrata = () => {
       if (this.prata <= 0) return false;
-      this.prata -= 1; this.cobre += 4; return true;
+      this.prata -= 1; 
+      this.cobre += Math.floor(denomValues.prata / denomValues.cobre);
+      return true;
     };
+    
     const breakOuro = () => {
       if (this.ouro <= 0) return false;
-      this.ouro -= 1; this.prata += 20; return true; // 1 ouro = 20 pratas (80/4)
+      this.ouro -= 1; 
+      this.prata += Math.floor(denomValues.ouro / denomValues.prata);
+      return true;
     };
 
     while (need > 0) {
@@ -232,7 +265,7 @@ class Wallet {
    * @returns {Wallet} This wallet (chainable).
    */
   normalize() {
-    this._set(normalizeCoins(this));
+    this._set(normalizeCoins(this, this._denominations));
     return this;
   }
 
@@ -328,7 +361,7 @@ class CurrencyManager {
     const denominations = game.settings.get(this.moduleId, 'currencyDenominations') || [];
     
     // Use currency.js makeChange function
-    const coinBag = makeChange(totalValue);
+    const coinBag = makeChange(totalValue, denominations);
     const breakdown = [];
     
     // Map the standard coin names to configured denomination names
@@ -448,16 +481,21 @@ class CurrencyManager {
       );
       console.log('💰 DEBUG _getCharacterSheetCurrency - matchingItems for', denom.name, ':', matchingItems);
 
-      for (const entry of matchingItems) {
-        const count = entry.data.count || 0;
-        const value = denom.value || 0;
+      // Adiciona o item à lista se ele for encontrado, mesmo que a quantidade seja 0
+      // Isso garante que o itemId esteja disponível para atualização posterior
+      if (matchingItems.length > 0) {
+        const entry = matchingItems[0]; // Pega o primeiro item correspondente
+        const count = entry.data.count || 0; // Pega a contagem atual, padrão para 0
+        const value = denom.value || 0; // Usa o valor da denominação configurada
+        
         console.log('💰 DEBUG _getCharacterSheetCurrency - Item:', entry.data.name, 'count:', count, 'value per unit:', value, 'total value:', count * value);
-        if (count > 0 && value > 0) {
+        
+        if (value > 0) { // Apenas se a denominação tiver um valor válido
           coinBreakdown.push({
             name: denom.name,
             count: count,
             value: value,
-            itemId: entry.id // Add item ID for later updates (using the key from carried object)
+            itemId: entry.id // Adiciona o ID do item para atualizações futuras
           });
         }
       }
@@ -567,12 +605,15 @@ class CurrencyManager {
 
       console.log('💰 DEBUG _setCharacterSheetCurrency - currentCoinBag:', currentCoinBag);
 
+      // Get optimize settings
+      const optimizeOnConstruct = game.settings.get(this.moduleId, 'optimizeOnConstruct');
+
       // Create wallet with current coins (don't optimize on construct to preserve exact counts)
       const wallet = new Wallet(currentCoinBag, { 
-        optimizeOnConstruct: false, 
+        optimizeOnConstruct: optimizeOnConstruct, 
         optimizeOnAdd: false, 
         optimizeOnSubtract: false 
-      });
+      }, denominations);
 
       console.log('💰 DEBUG _setCharacterSheetCurrency - wallet created with total:', wallet.total());
 
@@ -690,10 +731,11 @@ class CurrencyManager {
     }
 
     const totalPrice = itemPrice * quantity;
+    const roundedTotalPrice = Math.ceil(totalPrice);
 
-    if (currentWallet >= totalPrice) {
+    if (currentWallet >= roundedTotalPrice) {
       // Debit money from wallet
-      await this.setUserWallet(userId, currentWallet - totalPrice);
+      await this.setUserWallet(userId, currentWallet - roundedTotalPrice);
       // Add item to actor, updating quantity if it already exists
       const sourceId =
         item._stats?.compendiumSource ||
@@ -742,10 +784,10 @@ class CurrencyManager {
         await this.updateItemQuantityInVendor(vendorId, vendorItemId, -quantity);
       }
 
-      ui.notifications.info(`${quantity}x ${item.name} purchased for ${this.formatCurrency(totalPrice)} and added to ${actor.name}'s inventory.`);
+      ui.notifications.info(`${quantity}x ${item.name} purchased for ${this.formatCurrency(roundedTotalPrice)} and added to ${actor.name}'s inventory.`);
       return true;
     } else {
-      ui.notifications.warn(`Not enough coins to purchase ${quantity}x ${item.name}. Need ${this.formatCurrency(totalPrice)} but only have ${this.formatCurrency(currentWallet)}.`);
+      ui.notifications.warn(`Not enough coins to purchase ${quantity}x ${item.name}. Need ${this.formatCurrency(roundedTotalPrice)} but only have ${this.formatCurrency(currentWallet)}.`);
       return false;
     }
   }
@@ -816,7 +858,6 @@ class CurrencyManager {
 // Also expose to global scope for FoundryVTT modules
 if (typeof window !== 'undefined') {
   window.Wallet = Wallet;
-  window.DENOMS = DENOMS;
   window.valueFromCoins = valueFromCoins;
   window.makeChange = makeChange;
   window.normalizeCoins = normalizeCoins;

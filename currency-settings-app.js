@@ -248,7 +248,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     const useModuleCurrencySystem = useModuleCurrencyCheckbox ? useModuleCurrencyCheckbox.checked : true;
     
     const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
-    const optimizeOnConstruct = optimizeOnConstructCheckbox ? optimizeOnConstructCheckbox.checked : true;
+    const optimizeOnConstruct = optimizeOnConstructCheckbox ? optimizeOnConstructCheckbox.checked : false;
     
     const container = this.element.querySelector('#coinDenominationsContainer');
     const denominationFields = container?.querySelectorAll('.coin-denomination-item');

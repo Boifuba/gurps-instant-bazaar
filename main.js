@@ -132,7 +132,8 @@ class VendorWalletSystem {
    * @returns {Array<{name: string, count: number, value: number}>} Array of coin breakdown objects
    */
   static getModuleCurrencyBreakdown(userId) {
-    return this.currencyManager.getModuleCurrencyBreakdown(userId);
+    const denominations = game.settings.get(this.ID, 'currencyDenominations') || [];
+    return this.currencyManager.getModuleCurrencyBreakdown(userId, denominations);
   }
 
   /**
@@ -270,10 +271,11 @@ class VendorWalletSystem {
 
     // Calculate total cost of items that can be purchased
     const totalCost = itemsWithStock.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const roundedTotalCost = Math.ceil(totalCost);
     const currentWallet = this.getUserWallet(userId);
 
-    if (currentWallet < totalCost) {
-      this.emitPurchaseResult(userId, false, `Not enough coins! Need ${this.currencyManager.formatCurrency(totalCost)} but only have ${this.currencyManager.formatCurrency(currentWallet)}.`);
+    if (currentWallet < roundedTotalCost) {
+      this.emitPurchaseResult(userId, false, `Not enough coins! Need ${this.currencyManager.formatCurrency(roundedTotalCost)} but only have ${this.currencyManager.formatCurrency(currentWallet)}.`);
       return;
     }
 
@@ -283,7 +285,7 @@ class VendorWalletSystem {
         .join('');
       const approved = await Dialog.confirm({
         title: 'Approve Purchase',
-        content: `<p>${game.users.get(userId)?.name || 'A player'} wants to purchase:</p><ul>${itemList}</ul><p>Total: ${this.currencyManager.formatCurrency(totalCost)}</p>`
+        content: `<p>${game.users.get(userId)?.name || 'A player'} wants to purchase:</p><ul>${itemList}</ul><p>Total: ${this.currencyManager.formatCurrency(roundedTotalCost)}</p>`
       });
       if (!approved) {
         this.emitPurchaseResult(userId, false, 'Purchase declined by GM.');
@@ -313,6 +315,9 @@ class VendorWalletSystem {
         // Remove purchased quantity from vendor
         await this.updateItemQuantityInVendor(vendorId, id, -quantity);
       }
+
+      // Round up the final cost processed
+      costProcessed = Math.ceil(costProcessed);
 
       if (totalItemsProcessed === 0) {
         this.emitPurchaseResult(userId, false, "No items were purchased.");
