@@ -3,6 +3,8 @@
  * @description Provides core functionality for managing vendors, player wallets, and item transactions in FoundryVTT
  */
 
+import { Wallet, valueFromCoins } from './currency.js';
+
 console.log("🔧 VENDOR WALLET SYSTEM: main.js loaded!");
 
 /**
@@ -242,6 +244,44 @@ class VendorWalletSystem {
 
     console.log('💰 DEBUG _getCharacterSheetCoinBreakdown - Final coinBreakdown:', coinBreakdown);
     return coinBreakdown;
+  }
+
+  static async _setCharacterSheetCurrency(userId, spendValue) {
+    const user = game.users.get(userId);
+    const actor = user?.character;
+    if (!actor) return 0;
+
+    const coinBreakdown = this._getCharacterSheetCoinBreakdown(userId);
+    const wallet = new Wallet();
+    for (const coin of coinBreakdown) wallet.add(coin.totalValue);
+
+    try {
+      wallet.subtract(spendValue);
+    } catch (err) {
+      ui.notifications?.warn(err.message);
+      return wallet.total();
+    }
+
+    const denominations = game.settings.get(this.ID, 'currencyDenominations') || [];
+    const updates = [];
+
+    for (const denom of denominations) {
+      const item = actor.items.find(i => i.name === denom.name && i.system?.eqt?.count !== undefined);
+      if (!item) continue;
+
+      let newCount = 0;
+      if (denom.value === 80) newCount = wallet.ouro;
+      else if (denom.value === 4) newCount = wallet.prata;
+      else newCount = wallet.cobre;
+
+      updates.push({ _id: item.id, 'system.eqt.count': newCount });
+    }
+
+    if (updates.length) await actor.updateEmbeddedDocuments('Item', updates);
+
+    const finalTotal = wallet.total();
+    console.log('💰 DEBUG _setCharacterSheetCurrency - final total:', finalTotal, valueFromCoins(wallet));
+    return finalTotal;
   }
 
   /**
@@ -626,8 +666,13 @@ class VendorWalletSystem {
     const totalPrice = itemPrice * quantity;
 
     if (currentWallet >= totalPrice) {
-      // Debit money from wallet
-      await VendorWalletSystem.setUserWallet(userId, currentWallet - totalPrice);
+      // Debit money from appropriate wallet
+      const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
+      if (useModuleCurrency) {
+        await VendorWalletSystem.setUserWallet(userId, currentWallet - totalPrice);
+      } else {
+        await this._setCharacterSheetCurrency(userId, totalPrice);
+      }
       // Add item to actor, updating quantity if it already exists
       const sourceId =
         item._stats?.compendiumSource ||
