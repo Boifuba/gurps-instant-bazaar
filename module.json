@@ -27,6 +27,10 @@
   "styles": [
     "styles.css"
   ],
+  "languages": [
+    { "lang": "en", "name": "English", "path": "lang/en.json" },
+    { "lang": "pt-BR", "name": "Português (Brasil)", "path": "lang/pt-BR.json" }
+  ],
   "socket": true,
   "manifest": "https://raw.githubusercontent.com/Boifuba/gurps-instant-bazaar/refs/heads/main/module.json",
 
