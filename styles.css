@@ -165,7 +165,7 @@
 
 /* Search Container */
 .search-container {
-  margin-bottom: 1rem;
+  margin-bottom: 4px;
 }
 
 .search-input-wrapper {
@@ -226,12 +226,14 @@
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 0.5rem;
+  margin-top: 1rem;
+  gap: 4px;
 }
 
 .item-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 /* Vendor Item Card */
