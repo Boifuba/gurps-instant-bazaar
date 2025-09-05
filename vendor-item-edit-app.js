@@ -3,6 +3,8 @@
  * @description Allows GMs to edit individual items within a vendor's inventory
  */
 
+const { getVendor, updateVendor } = require('./vendor-service.js');
+
 /**
  * @class VendorItemEditApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -45,7 +47,7 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
    * @returns {Promise<Object>} Context object containing item and vendor data
    */
   async _prepareContext() {
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
+    const vendor = getVendor(this.vendorId);
     const item = vendor?.items.find(item => item.id === this.itemId);
     
     return { 
@@ -100,7 +102,7 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
     const form = this.element.querySelector('form');
     const formData = new FormData(form);
     
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
+    const vendor = getVendor(this.vendorId);
     const itemIndex = vendor.items.findIndex(item => item.id === this.itemId);
     
     if (itemIndex === -1) {
@@ -117,7 +119,7 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
       quantity: parseInt(formData.get('itemQuantity')) || 1
     };
 
-    await VendorWalletSystem.updateVendor(this.vendorId, vendor);
+    await updateVendor(this.vendorId, vendor);
     
     ui.notifications.info('Item updated successfully!');
     this.close();
@@ -134,10 +136,10 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
     });
 
     if (confirmed) {
-      const vendor = VendorWalletSystem.getVendor(this.vendorId);
+      const vendor = getVendor(this.vendorId);
       vendor.items = vendor.items.filter(item => item.id !== this.itemId);
       
-      await VendorWalletSystem.updateVendor(this.vendorId, vendor);
+      await updateVendor(this.vendorId, vendor);
       
       ui.notifications.info('Item removed from vendor!');
       this.close();

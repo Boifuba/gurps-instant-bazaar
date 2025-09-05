@@ -3,6 +3,10 @@
  * @description Displays vendor items with purchase functionality for players and editing for GMs
  */
 
+const { getVendor, updateItemQuantityInVendor, SOCKET } = require('./vendor-service.js');
+const { getUserWallet, setUserWallet, formatCurrency } = require('./currency-service.js');
+const { addItemToActor } = require('./inventory-utils.js');
+
 /**
  * @class VendorDisplayApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -64,8 +68,8 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
    * @returns {Promise<Object>} Context object containing vendor, wallet, and user data
    */
   async _prepareContext() {
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
-    const wallet = VendorWalletSystem.getUserWallet(game.user.id);
+    const vendor = getVendor(this.vendorId);
+    const wallet = getUserWallet(game.user.id);
 
     // Start with a shallow copy to avoid mutating the original vendor
     let filteredVendor = { ...vendor, items: [...(vendor.items || [])] };
@@ -98,7 +102,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
   async _onRender() {
     // Register socket listener for purchase results once
     if (!this._socketRegistered) {
-      game.socket.on(VendorWalletSystem.SOCKET, this._boundOnSocketEvent);
+      game.socket.on(SOCKET, this._boundOnSocketEvent);
       this._socketRegistered = true;
     }
 
@@ -203,7 +207,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
 
     switch (action) {
       case 'purchaseSelected': {
-        const vendor = VendorWalletSystem.getVendor(this.vendorId);
+        const vendor = getVendor(this.vendorId);
         const selected = Array.from(this.element.querySelectorAll('.item-checkbox:checked'));
         const validCheckboxes = [];
 
@@ -260,7 +264,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     }
 
     this.element.querySelector('#selectedCount').textContent = selectedCount;
-    this.element.querySelector('#totalPrice').textContent = VendorWalletSystem.formatCurrency(totalPrice);
+    this.element.querySelector('#totalPrice').textContent = formatCurrency(totalPrice);
 
     const purchaseButton = this.element.querySelector('#purchaseSelected');
     purchaseButton.disabled = selectedCount === 0;
@@ -354,7 +358,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     console.log("💰 PLAYER: Target actor selected:", targetActor.name);
     
     // Collect selected items data
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
+    const vendor = getVendor(this.vendorId);
     const selectedItems = [];
     
     for (const checkbox of checkboxes) {
@@ -383,7 +387,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     
     // Send purchase request to GM
     console.log("💰 PLAYER: Emitting socket event...");
-    game.socket.emit(VendorWalletSystem.SOCKET, {
+    game.socket.emit(SOCKET, {
       type: 'playerPurchaseRequest',
       userId: game.user.id,
       actorId: targetActor.id,
@@ -443,7 +447,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     console.log("💰 GM: Target actor selected:", targetActor.name);
     
     // Gather items with sufficient stock
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
+    const vendor = getVendor(this.vendorId);
     const itemsToProcess = [];
     
     for (const checkbox of checkboxes) {
@@ -468,9 +472,9 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
       sum + (vendorItem.price * purchaseQuantity), 0);
 
     // Check wallet
-    const currentWallet = VendorWalletSystem.getUserWallet(game.user.id);
+    const currentWallet = getUserWallet(game.user.id);
     if (currentWallet < totalCostRequired) {
-      ui.notifications.warn(`Not enough coins! Need ${VendorWalletSystem.formatCurrency(totalCostRequired)} but only have ${VendorWalletSystem.formatCurrency(currentWallet)}.`);
+      ui.notifications.warn(`Not enough coins! Need ${formatCurrency(totalCostRequired)} but only have ${formatCurrency(currentWallet)}.`);
       return;
     }
 
@@ -481,7 +485,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     console.log("💰 GM: Processing selected items...");
     for (const { vendorItem, purchaseQuantity, itemId } of itemsToProcess) {
       console.log("💰 GM: Processing vendor item:", vendorItem.name, "Quantity:", purchaseQuantity);
-      const success = await VendorWalletSystem.addItemToActor(targetActor, vendorItem.uuid, purchaseQuantity);
+      const success = await addItemToActor(targetActor, vendorItem.uuid, purchaseQuantity);
       
       if (!success) {
         ui.notifications.error(`Failed to add ${vendorItem.name} to ${targetActor.name}.`);
@@ -493,7 +497,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
       
       // Remove purchased quantity from vendor
       const currentStock = vendorItem.quantity ?? 0;
-      await VendorWalletSystem.updateItemQuantityInVendor(this.vendorId, vendorItem.id, -purchaseQuantity);
+      await updateItemQuantityInVendor(this.vendorId, vendorItem.id, -purchaseQuantity);
 
       // Update displayed stock
       const newStock = currentStock - purchaseQuantity;
@@ -506,9 +510,9 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     }
 
     // Deduct money from wallet
-    await VendorWalletSystem.setUserWallet(game.user.id, currentWallet - totalCostProcessed);
+    await setUserWallet(game.user.id, currentWallet - totalCostProcessed);
 
-    ui.notifications.info(`Purchased ${totalItemsProcessed} items for ${VendorWalletSystem.formatCurrency(totalCostProcessed)}!`);
+    ui.notifications.info(`Purchased ${totalItemsProcessed} items for ${formatCurrency(totalCostProcessed)}!`);
 
     // Clear selection and refresh
     if (this.element) {
@@ -524,7 +528,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
    */
   async close(options) {
     if (this._socketRegistered) {
-      game.socket.off(VendorWalletSystem.SOCKET, this._boundOnSocketEvent);
+      game.socket.off(SOCKET, this._boundOnSocketEvent);
       this._socketRegistered = false;
     }
 

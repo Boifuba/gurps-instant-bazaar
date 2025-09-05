@@ -3,6 +3,8 @@
  * @description Allows GMs to view, edit, activate/deactivate, and delete vendors
  */
 
+const { getVendors, getVendor, updateVendor, deleteVendor } = require('./vendor-service.js');
+
 /**
  * @class VendorManagerApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -41,7 +43,7 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
    * @returns {Promise<Object>} Context object containing all vendors data
    */
   async _prepareContext() {
-    const vendors = VendorWalletSystem.getVendors();
+    const vendors = getVendors();
     return {
       vendors: Object.entries(vendors).map(([id, vendor]) => ({
         id,
@@ -96,9 +98,9 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
    * @returns {Promise<void>}
    */
   async toggleVendor(vendorId) {
-    const vendor = VendorWalletSystem.getVendor(vendorId);
+    const vendor = getVendor(vendorId);
     vendor.active = !vendor.active;
-    await VendorWalletSystem.updateVendor(vendorId, vendor);
+    await updateVendor(vendorId, vendor);
     this.render();
   }
 
@@ -114,7 +116,7 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
     });
 
     if (confirmed) {
-      await VendorWalletSystem.deleteVendor(vendorId);
+      await deleteVendor(vendorId);
       this.render();
     }
   }

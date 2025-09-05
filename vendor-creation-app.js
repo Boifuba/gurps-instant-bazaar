@@ -3,6 +3,9 @@
  * @description Allows GMs to create new vendors with randomly selected items from compendiums
  */
 
+const { formatCurrency, parseCurrency } = require('./currency-service.js');
+const { getVendors, MODULE_ID } = require('./vendor-service.js');
+
 /**
  * @class VendorCreationApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -82,10 +85,10 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
       });
       field.addEventListener('blur', e => {
         const value = parseFloat(e.target.value.replace(/[^0-9.-]+/g, '')) || 0;
-        e.target.value = VendorWalletSystem.formatCurrency(value);
+        e.target.value = formatCurrency(value);
       });
       const value = parseFloat(field.value.replace(/[^0-9.-]+/g, '')) || 0;
-      field.value = VendorWalletSystem.formatCurrency(value);
+      field.value = formatCurrency(value);
     });
   }
 
@@ -133,8 +136,8 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
       stockMin: parseInt(formData.get('stockMin'), 10),
       stockMax: parseInt(formData.get('stockMax'), 10),
 
-      minValue: VendorWalletSystem.parseCurrency(formData.get('minValue')),
-      maxValue: VendorWalletSystem.parseCurrency(formData.get('maxValue')),
+      minValue: parseCurrency(formData.get('minValue')),
+      maxValue: parseCurrency(formData.get('maxValue')),
 
       tlFilter: tlFilterArray,
       lcFilter: formData.get('lcFilter') === '' ? null : parseInt(formData.get('lcFilter'), 10),
@@ -156,9 +159,9 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
       id: foundry.utils.randomID()
     };
 
-    const vendors = VendorWalletSystem.getVendors();
+    const vendors = getVendors();
     vendors[vendor.id] = vendor;
-    await game.settings.set(VendorWalletSystem.ID, 'vendors', vendors);
+    await game.settings.set(MODULE_ID, 'vendors', vendors);
 
     ui.notifications.info(`Vendor ${vendor.name} created with ${items.length} items!`);
     this.close();

@@ -3,6 +3,9 @@
  * @description Allows players to view their wallet balance and browse available vendors
  */
 
+const { getUserWallet, _getCharacterSheetCoinBreakdown } = require('./currency-service.js');
+const { getVendors, MODULE_ID } = require('./vendor-service.js');
+
 /**
  * @class PlayerWalletApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -33,9 +36,9 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
    * @returns {Promise<Object>} Context object containing wallet and vendor data
    */
   async _prepareContext() {
-    const wallet = VendorWalletSystem.getUserWallet(game.user.id);
-    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
-    const allVendors = VendorWalletSystem.getVendors();
+    const wallet = getUserWallet(game.user.id);
+    const useModuleCurrency = game.settings.get(MODULE_ID, 'useModuleCurrencySystem');
+    const allVendors = getVendors();
     
     const vendors = Object.entries(allVendors)
       .filter(([id, vendor]) => vendor.active)
@@ -48,7 +51,7 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     // Get coin breakdown when using character sheet currency
     
     // Get coin breakdown when using character sheet currency
-    const coinBreakdown = useModuleCurrency ? [] : VendorWalletSystem._getCharacterSheetCoinBreakdown(game.user.id);
+    const coinBreakdown = useModuleCurrency ? [] : _getCharacterSheetCoinBreakdown(game.user.id);
     
     return {
       wallet,

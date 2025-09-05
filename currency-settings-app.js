@@ -3,6 +3,8 @@
  * @description Allows GMs to define currency names and denominations for the module's wallet system
  */
 
+const { MODULE_ID } = require('./vendor-service.js');
+
 /**
  * @class CurrencySettingsApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -35,10 +37,10 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
    */
   async _prepareContext() {
     // Load the current state of the module currency system setting
-    const useModuleCurrencySystem = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+    const useModuleCurrencySystem = game.settings.get(MODULE_ID, 'useModuleCurrencySystem');
     
     // Load saved currency denominations or use defaults
-    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [
+    const denominations = game.settings.get(MODULE_ID, 'currencyDenominations') || [
       { name: "Gold Coin", value: 80 },
       { name: "Silver Coin", value: 4 },
       { name: "Copper Farthing", value: 1 }
@@ -60,7 +62,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     // Set the checkbox state based on the current setting
     const useModuleCurrencyCheckbox = this.element.querySelector('#useModuleCurrencySystem');
     if (useModuleCurrencyCheckbox) {
-      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+      const currentSetting = game.settings.get(MODULE_ID, 'useModuleCurrencySystem');
       useModuleCurrencyCheckbox.checked = currentSetting;
     }
     
@@ -302,9 +304,9 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
 
     try {
       // Save both the module currency system setting and denominations
-      await game.settings.set(VendorWalletSystem.ID, 'useModuleCurrencySystem', useModuleCurrencySystem);
+      await game.settings.set(MODULE_ID, 'useModuleCurrencySystem', useModuleCurrencySystem);
       // Save the denominations
-      await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', denominations);
+      await game.settings.set(MODULE_ID, 'currencyDenominations', denominations);
       ui.notifications.info('Currency settings saved successfully!');
       this.close();
     } catch (error) {

@@ -5,16 +5,20 @@
 
 console.log("🔧 VENDOR WALLET SYSTEM: main.js loaded!");
 
+const currencyService = require('./currency-service.js');
+const vendorService = require('./vendor-service.js');
+const inventoryUtils = require('./inventory-utils.js');
+
 /**
  * @class VendorWalletSystem
  * @description Core class that manages the vendor and wallet system functionality
  */
 class VendorWalletSystem {
   /** @type {string} Module identifier */
-  static ID = 'gurps-instant-bazaar';
-  
+  static ID = vendorService.MODULE_ID;
+
   /** @type {string} Socket identifier for module communication */
-  static SOCKET = `module.${VendorWalletSystem.ID}`;
+  static SOCKET = vendorService.SOCKET;
 
   /**
    * Formats a numeric amount as currency string
@@ -22,10 +26,7 @@ class VendorWalletSystem {
    * @returns {string} Formatted currency string
    */
   static formatCurrency(amount) {
-    return '$' + Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return currencyService.formatCurrency(amount);
   }
 
   /**
@@ -34,11 +35,7 @@ class VendorWalletSystem {
    * @returns {number} Parsed numeric value
    */
   static parseCurrency(value) {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      return Number(value.replace(/[^0-9.-]+/g, '')) || 0;
-    }
-    return 0;
+    return currencyService.parseCurrency(value);
   }
 
   /**
@@ -116,21 +113,7 @@ class VendorWalletSystem {
    * @returns {number} The wallet amount
    */
   static getUserWallet(userId) {
-    console.log('💰 DEBUG getUserWallet - userId:', userId);
-    
-    // Check if module currency system is enabled
-    const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
-    console.log('💰 DEBUG getUserWallet - useModuleCurrency:', useModuleCurrency);
-    
-    if (!useModuleCurrency) {
-      // Use character sheet currency system
-      console.log('💰 DEBUG getUserWallet - Using character sheet currency system');
-      return this._getCharacterSheetCurrency(userId);
-    }
-    
-    console.log('💰 DEBUG getUserWallet - Using module currency system');
-    const user = game.users.get(userId);
-    return Number(user?.getFlag(this.ID, 'wallet')) || 0;
+    return currencyService.getUserWallet(userId);
   }
 
   /**
@@ -140,26 +123,7 @@ class VendorWalletSystem {
    * @returns {Array<Object>} An array of item-like objects.
    */
   static _flattenItemsFromObject(obj) {
-    const items = [];
-    if (typeof obj !== 'object' || obj === null) {
-      return items;
-    }
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const value = obj[key];
-        if (typeof value === 'object' && value !== null) {
-          // Heuristic: if it has a 'name' property, consider it an item.
-          // You might want to add more specific checks if your system has other unique item properties.
-          if (value.name !== undefined) {
-            items.push(value);
-          } else {
-            // If not an item, recurse into the nested object
-            items.push(...VendorWalletSystem._flattenItemsFromObject(value));
-          }
-        }
-      }
-    }
-    return items;
+    return currencyService._flattenItemsFromObject(obj);
   }
 
   /**
@@ -168,12 +132,7 @@ class VendorWalletSystem {
    * @returns {number} The total wallet amount from character sheet
    */
   static _getCharacterSheetCurrency(userId) {
-    const coinBreakdown = this._getCharacterSheetCoinBreakdown(userId);
-    let totalValue = 0;
-    for (const coin of coinBreakdown) {
-      totalValue += coin.totalValue;
-    }
-    return totalValue;
+    return currencyService._getCharacterSheetCurrency(userId);
   }
 
   /**
@@ -182,66 +141,7 @@ class VendorWalletSystem {
    * @returns {Array<{name: string, totalValue: number}>} Array of coin breakdown objects
    */
   static _getCharacterSheetCoinBreakdown(userId) {
-    console.log('💰 DEBUG _getCharacterSheetCurrency - userId:', userId);
-    
-    const user = game.users.get(userId);
-    console.log('💰 DEBUG _getCharacterSheetCurrency - user:', user);
-    
-    if (!user?.character) {
-      console.warn(`No character assigned to user ${user?.name || userId}`);
-      return [];
-    }
-
-    const actor = user.character;
-    console.log('💰 DEBUG _getCharacterSheetCurrency - actor:', actor.name, 'ID:', actor.id);
-    
-    const carried = actor.system?.equipment?.carried;
-    console.log('💰 DEBUG _getCharacterSheetCurrency - carried:', carried);
-    
-    if (!carried) {
-      console.warn(`No equipment.carried found for character ${actor.name}`);
-      return [];
-    }
-
-    // Get currency denominations from settings
-    const denominations = game.settings.get(this.ID, 'currencyDenominations') || [];
-    console.log('💰 DEBUG _getCharacterSheetCurrency - denominations:', denominations);
-    
-    const coinBreakdown = [];
-
-    // Convert carried object to array for easier processing
-    // MODIFICAÇÃO AQUI: Use a nova função auxiliar para aplanar o objeto
-    const carriedItems = VendorWalletSystem._flattenItemsFromObject(carried);
-    console.log('💰 DEBUG _getCharacterSheetCurrency - carriedItems count (flattened):', carriedItems.length);
-
-    // For each denomination, find matching items in character sheet
-    for (const denom of denominations) {
-      console.log('💰 DEBUG _getCharacterSheetCurrency - Processing denomination:', denom.name, 'value:', denom.value);
-      console.log(`💰 DEBUG: Looking for item with name "${denom.name}"`);
-      
-      const matchingItems = carriedItems.filter(item => 
-        {
-          console.log(`💰 DEBUG: Comparing with character sheet item "${item.name}"`);
-          return item.name === denom.name && item.carried === true;
-        }
-      );
-      console.log('💰 DEBUG _getCharacterSheetCurrency - matchingItems for', denom.name, ':', matchingItems);
-
-      for (const item of matchingItems) {
-        const count = item.count || 0;
-        const value = denom.value || 0;
-        console.log('💰 DEBUG _getCharacterSheetCurrency - Item:', item.name, 'count:', count, 'value per unit:', value, 'total value:', count * value);
-        if (count > 0 && value > 0) {
-          coinBreakdown.push({
-            name: denom.name,
-            totalValue: count * value
-          });
-        }
-      }
-    }
-
-    console.log('💰 DEBUG _getCharacterSheetCoinBreakdown - Final coinBreakdown:', coinBreakdown);
-    return coinBreakdown;
+    return currencyService._getCharacterSheetCoinBreakdown(userId);
   }
 
   /**
@@ -251,16 +151,7 @@ class VendorWalletSystem {
    * @returns {Promise<any>} The result of the flag update
    */
   static async setUserWallet(userId, amount) {
-    // Check if module currency system is enabled
-    const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
-    if (!useModuleCurrency) {
-      console.warn('Module currency system is disabled. Direct wallet changes are not allowed. Currency is managed through character sheet items.');
-      return false; // Don't allow wallet changes when module currency system is disabled
-    }
-    
-    const user = game.users.get(userId);
-    const result = await user?.setFlag(this.ID, 'wallet', Math.max(0, amount));
-    return result;
+    return currencyService.setUserWallet(userId, amount);
   }
 
   /**
@@ -268,12 +159,7 @@ class VendorWalletSystem {
   * @returns {Object} All vendors data
    */
   static getVendors() {
-    try {
-      return game.settings.get(this.ID, 'vendors');
-    } catch (err) {
-      console.warn('Setting gurps-instant-bazaar.vendors ausente', err);
-      return {};
-    }
+    return vendorService.getVendors();
   }
 
   /**
@@ -282,8 +168,7 @@ class VendorWalletSystem {
    * @returns {Object|undefined} The vendor data
    */
   static getVendor(vendorId) {
-    const vendors = this.getVendors();
-    return vendors[vendorId];
+    return vendorService.getVendor(vendorId);
   }
 
   /**
@@ -293,20 +178,7 @@ class VendorWalletSystem {
    * @returns {Promise<void>}
    */
   static async updateVendor(vendorId, vendorData) {
-    const vendors = this.getVendors();
-    vendors[vendorId] = vendorData;
-    await game.settings.set(this.ID, 'vendors', vendors);
-
-    // Refresh local vendor windows so quantities update immediately
-    this.refreshVendorManagers();
-    this.refreshVendorDisplays(vendorId);
-
-    // Notify all clients to refresh vendor displays
-    game.socket.emit(this.SOCKET, {
-      type: 'vendorUpdated',
-      vendorId: vendorId,
-      vendorData: vendorData
-    });
+    return vendorService.updateVendor(vendorId, vendorData);
   }
 
   /**
@@ -315,9 +187,7 @@ class VendorWalletSystem {
    * @returns {Promise<any>} The result of the settings update
    */
   static async deleteVendor(vendorId) {
-    const vendors = this.getVendors();
-    delete vendors[vendorId];
-    return game.settings.set(this.ID, 'vendors', vendors);
+    return vendorService.deleteVendor(vendorId);
   }
 
   /**
@@ -476,94 +346,7 @@ class VendorWalletSystem {
    * @returns {Promise<boolean>} True if successful, false otherwise
    */
   static async addItemToActor(actor, uuid, quantity) {
-    console.log(`🔍 DEBUG QUANTITY - Value: ${quantity}, Type: ${typeof quantity}`);
-    quantity = Number(quantity);
-    if (!Number.isFinite(quantity) || quantity < 1) quantity = 1;
-    const itemDoc = await fromUuid(uuid);
-
-    if (!itemDoc) {
-      return false;
-    }
-
-    let item = actor.items.find(i =>
-      i._stats?.compendiumSource === uuid ||
-      i.flags?.core?.sourceId === uuid ||
-      i.system.globalid === uuid
-    );
-
-    if (item) {
-      // Para itens existentes, soma a quantidade atual com a nova
-      const current = item.system?.eqt?.count ?? 0;
-      const total = current + quantity;
-
-      const eqtUuid = item.system?.eqt?.uuid;
-      const key = eqtUuid ? actor._findEqtkeyForId("uuid", eqtUuid) : undefined;
-
-      if (typeof actor.updateEqtCount === "function" && key) {
-        await actor.updateEqtCount(key, total);
-      } else {
-        await item.update({ "system.eqt.count": total });
-      }
-
-      return true;
-    } else {
-      let createdItem;
-
-      if (typeof actor.handleItemDrop === "function") {
-        const dropData = { type: "Item", uuid };
-        // Support both modern and legacy signatures for handleItemDrop
-        if (actor.handleItemDrop.length >= 2) {
-          createdItem = await actor.handleItemDrop(null, dropData);
-        } else {
-          createdItem = await actor.handleItemDrop(dropData);
-        }
-      } else if (typeof actor.createEmbeddedDocuments === "function") {
-        const itemData = itemDoc.toObject ? itemDoc.toObject() : { ...itemDoc };
-        delete itemData._id;
-        const result = await actor.createEmbeddedDocuments("Item", [itemData]);
-        createdItem = Array.isArray(result) ? result[0] : result;
-      }
-
-      if (createdItem instanceof Item) {
-        item = createdItem;
-      } else if (Array.isArray(createdItem) && createdItem[0] instanceof Item) {
-        item = createdItem[0];
-      }
-
-      if (!item) {
-        item = actor.items.find(i =>
-          i._stats?.compendiumSource === uuid ||
-          i.flags?.core?.sourceId === uuid ||
-          i.system?.globalid === uuid
-        );
-      }
-
-      if (!(item instanceof Item)) {
-        console.error(`💰 ERROR: Item was not added to character (UUID: ${uuid})`);
-        return false;
-      }
-
-      // Para itens recém-criados, define a quantidade diretamente
-      console.log(`🔍 DEBUG NEW ITEM - Setting quantity to: ${quantity}`);
-      
-      // Aguarda um tick para garantir que o item foi completamente criado
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
-      const eqtUuid = item.system?.eqt?.uuid;
-      const key = eqtUuid ? actor._findEqtkeyForId("uuid", eqtUuid) : undefined;
-
-      if (typeof actor.updateEqtCount === "function" && key) {
-        console.log(`🔍 DEBUG NEW ITEM - Using updateEqtCount with key: ${key}`);
-        await actor.updateEqtCount(key, quantity);
-      } else {
-        console.log(`🔍 DEBUG NEW ITEM - Using item.update for eqt.count`);
-        await item.update({ "system.eqt.count": quantity });
-      }
-      
-      console.log(`🔍 DEBUG NEW ITEM - Final count: ${item.system?.eqt?.count}`);
-
-      return true;
-    }
+    return inventoryUtils.addItemToActor(actor, uuid, quantity);
   }
 
   /**
@@ -571,23 +354,14 @@ class VendorWalletSystem {
    * @param {string} vendorId - The vendor ID to refresh displays for
    */
   static refreshVendorDisplays(vendorId) {
-    // Refresh all open vendor display windows for this vendor
-    Object.values(ui.windows).forEach(window => {
-      if (window instanceof VendorDisplayApplication && window.vendorId === vendorId) {
-        window.render();
-      }
-    });
+    return vendorService.refreshVendorDisplays(vendorId);
   }
 
   /**
    * Refreshes all open vendor manager windows
    */
   static refreshVendorManagers() {
-    Object.values(ui.windows).forEach(window => {
-      if (window instanceof VendorManagerApplication) {
-        window.render();
-      }
-    });
+    return vendorService.refreshVendorManagers();
   }
 
   /**
@@ -607,81 +381,7 @@ class VendorWalletSystem {
    * @returns {Promise<boolean>} True if purchase was successful
    */
   static async processItemPurchase(actor, item, vendorId, vendorItemId, quantity = 1) {
-    const userId = game.user.id;
-    const currentWallet = VendorWalletSystem.getUserWallet(userId);
-    const itemPrice = parseInt(
-    ) || 0;
-
-    // Verify vendor stock if available
-    if (vendorId && vendorItemId) {
-      const vendor = VendorWalletSystem.getVendor(vendorId);
-      const vendorItem = vendor?.items.find(i => i.id === vendorItemId);
-      const stock = vendorItem?.quantity;
-      if (stock !== undefined && stock < quantity) {
-        ui.notifications.warn(`${item.name} is out of stock.`);
-        return false;
-      }
-    }
-
-    const totalPrice = itemPrice * quantity;
-
-    if (currentWallet >= totalPrice) {
-      // Debit money from wallet
-      await VendorWalletSystem.setUserWallet(userId, currentWallet - totalPrice);
-      // Add item to actor, updating quantity if it already exists
-      const sourceId =
-        item._stats?.compendiumSource ||
-        item.flags?.core?.sourceId ||
-        item.system?.globalid;
-      let actorItem = sourceId
-        ? actor.items.find(i =>
-            i._stats?.compendiumSource === sourceId ||
-            i.flags?.core?.sourceId === sourceId ||
-            i.system?.globalid === sourceId
-          )
-        : null;
-
-      if (actorItem) {
-        // Determine which quantity path to use
-        const isEquipment = actorItem.system?.eqt?.count !== undefined;
-        const path = isEquipment ? "system.eqt.count" : "system.quantity";
-        const total = (getProperty(actorItem, path) ?? 0) + quantity;
-
-        // Update using system-specific method
-        if (isEquipment) {
-          const key = actor._findEqtkeyForId("itemid", actorItem.id);
-
-          if (!key || typeof actor.updateEqtCount !== "function") {
-            await actorItem.update({ [path]: total });
-          } else {
-            await actor.updateEqtCount(key, total);
-          }
-        } else {
-          await actorItem.update({ [path]: total });
-        }
-      } else {
-        // Create the item with initial quantity
-        const itemData = item.toObject();
-        delete itemData._id; // Ensure new _id is generated
-        itemData._stats ??= {};
-        itemData._stats.compendiumSource = sourceId;
-        if (itemData.system?.eqt?.count !== undefined) itemData.system.eqt.count = quantity;
-        else itemData.system.quantity = quantity;
-
-        await actor.createEmbeddedDocuments('Item', [itemData]);
-      }
-
-      // Remove item from vendor
-      if (vendorId && vendorItemId) {
-        await VendorWalletSystem.updateItemQuantityInVendor(vendorId, vendorItemId, -quantity);
-      }
-
-      ui.notifications.info(`${quantity}x ${item.name} purchased for ${VendorWalletSystem.formatCurrency(totalPrice)} and added to ${actor.name}'s inventory.`);
-      return true;
-    } else {
-      ui.notifications.warn(`Not enough coins to purchase ${quantity}x ${item.name}. Need ${VendorWalletSystem.formatCurrency(totalPrice)} but only have ${VendorWalletSystem.formatCurrency(currentWallet)}.`);
-      return false;
-    }
+    return inventoryUtils.processItemPurchase(actor, item, vendorId, vendorItemId, quantity);
   }
 
   /**
@@ -692,40 +392,7 @@ class VendorWalletSystem {
    * @returns {Promise<void>}
    */
   static async updateItemQuantityInVendor(vendorId, vendorItemId, change) {
-    const vendor = VendorWalletSystem.getVendor(vendorId);
-    if (!vendor) return;
-
-    // Find the item and update its quantity
-    const itemIndex = vendor.items.findIndex(item => item.id === vendorItemId);
-    
-    if (itemIndex === -1) {
-      return;
-    }
-    
-    const item = vendor.items[itemIndex];
-    const currentQuantity = item.quantity || 1;
-    const newQuantity = Math.max(0, currentQuantity + change);
-    
-    if (newQuantity <= 0) {
-      // Remove item completely if quantity reaches 0
-      vendor.items = vendor.items.filter(item => item.id !== vendorItemId);
-    } else {
-      // Update the quantity
-      vendor.items[itemIndex].quantity = newQuantity;
-    }
-
-    // Update the vendor
-    await VendorWalletSystem.updateVendor(vendorId, vendor);
-
-    // Refresh local vendor manager windows
-    this.refreshVendorManagers();
-
-    // Notify all clients about the item purchase
-    game.socket.emit(this.SOCKET, {
-      type: 'itemPurchased',
-      vendorId: vendorId,
-      itemId: vendorItemId
-    });
+    return vendorService.updateItemQuantityInVendor(vendorId, vendorItemId, change);
   }
 
   /**
@@ -734,14 +401,7 @@ class VendorWalletSystem {
    * @returns {Object|null} Object containing vendorId and vendorItemId, or null if not found
    */
   static findVendorByItemUuid(itemUuid) {
-    const vendors = VendorWalletSystem.getVendors();
-    for (const [vendorId, vendor] of Object.entries(vendors)) {
-      const vendorItem = vendor.items.find(item => item.uuid === itemUuid);
-      if (vendorItem) {
-        return { vendorId, vendorItemId: vendorItem.id };
-      }
-    }
-    return null;
+    return vendorService.findVendorByItemUuid(itemUuid);
   }
 
   /**
@@ -751,42 +411,7 @@ class VendorWalletSystem {
    * @returns {Promise<boolean>} True to allow default behavior, false to prevent it
    */
   static async handleItemDrop(actor, data) {
-    // Handle case where data might be a string (from dataTransfer)
-    if (typeof data === 'string') {
-      try {
-        data = JSON.parse(data);
-      } catch (e) {
-        return true; // Let Foundry handle it normally
-      }
-    }
-    
-    if (data.type !== "Item") return;
-
-    const item = await fromUuid(data.uuid);
-    if (!item) return;
-
-    // Check if this item comes from a vendor using drag data
-    if (data.vendorId && data.vendorItemId) {
-      let quantity = parseInt(data.quantity, 10);
-
-      if (!quantity || quantity < 1) {
-        const vendor = VendorWalletSystem.getVendor(data.vendorId);
-        const vendorItem = vendor?.items.find(i => i.id === data.vendorItemId);
-        const maxStock = vendorItem?.quantity;
-
-        quantity = await Dialog.prompt({
-          title: `Purchase Quantity`,
-          content: `<p>How many ${item.name}?</p><input type="number" id="purchase-qty" value="1" min="1" ${maxStock !== undefined ? `max="${maxStock}"` : ''}>`,
-          callback: html => parseInt(html.find('#purchase-qty').val(), 10) || 1
-        });
-      }
-
-      await VendorWalletSystem.processItemPurchase(actor, item, data.vendorId, data.vendorItemId, quantity);
-      return false; // Prevent default item drop behavior
-    } else {
-      // Regular item drop, let Foundry handle it normally
-      return true;
-    }
+    return inventoryUtils.handleItemDrop(actor, data);
   }
 }
 

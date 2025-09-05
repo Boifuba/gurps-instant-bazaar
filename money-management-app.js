@@ -3,6 +3,9 @@
  * @description Allows Game Masters to add or remove money from player wallets
  */
 
+const { getUserWallet, setUserWallet, formatCurrency } = require('./currency-service.js');
+const { MODULE_ID } = require('./vendor-service.js');
+
 /**
  * @class MoneyManagementApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -33,11 +36,11 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
    * @returns {Promise<Object>} Context object containing user wallet data
    */
   async _prepareContext() {
-    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+    const useModuleCurrency = game.settings.get(MODULE_ID, 'useModuleCurrencySystem');
     const users = game.users.filter(u => !u.isGM).map(user => ({
       id: user.id,
       name: user.name,
-      wallet: VendorWalletSystem.getUserWallet(user.id)
+      wallet: getUserWallet(user.id)
     }));
 
     return { 
@@ -68,7 +71,7 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
     }
 
     // Check if module currency system is enabled
-    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+    const useModuleCurrency = game.settings.get(MODULE_ID, 'useModuleCurrencySystem');
     if (!useModuleCurrency) {
       ui.notifications.warn('Module currency system is disabled. Player money is managed through character sheet items. Use the currency settings to configure denominations.');
       return;
@@ -85,16 +88,16 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
       const amountChange = parseInt(input?.value) || 0;
       
       if (amountChange !== 0) {
-        const currentWallet = VendorWalletSystem.getUserWallet(user.id);
+        const currentWallet = getUserWallet(user.id);
         const newAmount = Math.max(0, currentWallet + amountChange);
-        await VendorWalletSystem.setUserWallet(user.id, newAmount);
+        await setUserWallet(user.id, newAmount);
         
         // Update the UI directly without re-rendering the entire application
         const userItem = this.element.querySelector(`[data-user-id="${user.id}"]`);
         if (userItem) {
           const walletDisplay = userItem.querySelector('small');
           if (walletDisplay) {
-            walletDisplay.textContent = `Wallet: ${VendorWalletSystem.formatCurrency(newAmount)}`;
+            walletDisplay.textContent = `Wallet: ${formatCurrency(newAmount)}`;
           }
         }
         

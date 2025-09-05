@@ -13,6 +13,9 @@
     }
   ],
   "scripts": [
+    "currency-service.js",
+    "vendor-service.js",
+    "inventory-utils.js",
     "main.js",
     "player-wallet-app.js",
     "money-management-app.js",

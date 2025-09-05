@@ -3,6 +3,9 @@
  * @description Allows GMs to edit vendor properties and optionally regenerate items
  */
 
+const { formatCurrency, parseCurrency } = require('./currency-service.js');
+const { getVendor, updateVendor } = require('./vendor-service.js');
+
 /**
  * @class VendorEditApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
@@ -62,7 +65,7 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
    * @returns {Promise<Object>} Context object containing vendor and compendium data
    */
   async _prepareContext() {
-    const vendor = { ...VendorWalletSystem.getVendor(this.vendorId) };
+    const vendor = { ...getVendor(this.vendorId) };
     if (vendor.stockMin === undefined) vendor.stockMin = 1;
     if (vendor.stockMax === undefined) vendor.stockMax = 1;
     const compendiums = game.packs.filter(p => p.documentName === 'Item').map(p => ({
@@ -133,10 +136,10 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
       });
       field.addEventListener('blur', e => {
         const value = parseFloat(e.target.value.replace(/[^0-9.-]+/g, '')) || 0;
-        e.target.value = VendorWalletSystem.formatCurrency(value);
+        e.target.value = formatCurrency(value);
       });
       const value = parseFloat(field.value.replace(/[^0-9.-]+/g, '')) || 0;
-      field.value = VendorWalletSystem.formatCurrency(value);
+      field.value = formatCurrency(value);
     });
   }
 
@@ -169,7 +172,7 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
     const form = this.element.querySelector('form');
     const formData = new FormData(form);
 
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
+    const vendor = getVendor(this.vendorId);
     const regenerateItems = formData.get('regenerateItems') === 'on';
 
     const tlFilterRaw = formData.get('tlFilter')?.trim();
@@ -202,8 +205,8 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
       stockMin: parseInt(formData.get('stockMin'), 10),
       stockMax: parseInt(formData.get('stockMax'), 10),
 
-      minValue: VendorWalletSystem.parseCurrency(formData.get('minValue')),
-      maxValue: VendorWalletSystem.parseCurrency(formData.get('maxValue')),
+      minValue: parseCurrency(formData.get('minValue')),
+      maxValue: parseCurrency(formData.get('maxValue')),
       stockMin,
       stockMax,
       tlFilter: tlFilterArray,
@@ -218,7 +221,7 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
       updatedVendor.items = await this.generateRandomItems(updatedVendor);
     }
 
-    await VendorWalletSystem.updateVendor(this.vendorId, updatedVendor);
+    await updateVendor(this.vendorId, updatedVendor);
 
     ui.notifications.info(`Vendor ${updatedVendor.name} updated successfully!`);
     this.close();
