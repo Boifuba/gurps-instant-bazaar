@@ -22,10 +22,8 @@ class VendorWalletSystem {
    * @returns {string} Formatted currency string
    */
   static formatCurrency(amount) {
-    return '$' + Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    const symbol = game.i18n?.localize('GURPS.InstantBazaar.CurrencySymbol') ?? '$';
+    return symbol + String(amount ?? 0);
   }
 
   /**
@@ -36,7 +34,9 @@ class VendorWalletSystem {
   static parseCurrency(value) {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
-      return Number(value.replace(/[^0-9.-]+/g, '')) || 0;
+      const cleaned = value.replace(/[^0-9.-]/g, '');
+      const parsed = cleaned === '' ? 0 : Number(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
     }
     return 0;
   }
