@@ -12,8 +12,11 @@
       "name": "Boifubá"
     }
   ],
-  "scripts": [
+  "esmodules": [
     "main.js",
+    "currency.js"
+  ],
+  "scripts": [
     "player-wallet-app.js",
     "money-management-app.js",
     "vendor-creation-app.js",
