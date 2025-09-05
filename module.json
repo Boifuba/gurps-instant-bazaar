@@ -12,11 +12,16 @@
       "name": "Boifubá"
     }
   ],
+
   "scripts": [
     "currency-service.js",
     "vendor-service.js",
     "inventory-utils.js",
+
     "main.js",
+    "currency.js"
+  ],
+  "scripts": [
     "player-wallet-app.js",
     "money-management-app.js",
     "vendor-creation-app.js",
