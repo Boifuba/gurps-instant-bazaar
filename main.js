@@ -68,15 +68,17 @@ class VendorWalletSystem {
     });
     game.settings.register(this.ID, 'useModuleCurrencySystem', {
       name: 'Use Module Currency System',
+      hint: 'The module will manage all money, regardless of what\'s on the player\'s character sheet.',
       scope: 'world',
-      config: false,
+      config: true,
       type: Boolean,
       default: true
     });
     game.settings.register(this.ID, 'currencyName', {
       name: 'Main Currency Name',
+      hint: 'Name for the main currency (e.g., dollars, credits, coins).',
       scope: 'world',
-      config: false,
+      config: true,
       type: String,
       default: 'coins'
     });
@@ -93,8 +95,9 @@ class VendorWalletSystem {
     });
     game.settings.register(this.ID, 'optimizeOnConstruct', {
       name: 'Optimize On Construct',
+      hint: 'When enabled, wallets will automatically convert coins to the optimal combination (minimal number of coins).',
       scope: 'world',
-      config: false,
+      config: true,
       type: Boolean,
       default: true
     });
@@ -416,13 +419,75 @@ class VendorWalletSystem {
         .join('');
       
       const dialogContent = `
-        <p>${game.users.get(userId)?.name || 'A player'} wants to sell:</p>
-        <ul>${itemList}</ul>
-        <p>Total Value: ${this.currencyManager.formatCurrency(totalValue)}</p>
-        <div class="form-group">
-          <label for="sellPercentage">Sell Percentage:</label>
-          <input type="number" id="sellPercentage" value="${automaticSellPercentage}" min="0" max="100" step="1">%
+        <div style="padding: 10px;">
+          <div style="margin-bottom: 15px; padding: 10px; background: rgba(0, 123, 255, 0.1); border-left: 4px solid #333; border-radius: 4px;">
+            <h3 style="margin: 0 0 5px 0; ; font-size: 1.1em;">
+              <i class="fas fa-coins" style="margin-right: 8px;"></i>Sale Request
+            </h3>
+            <p style="margin: 0; font-weight: bold;">${game.users.get(userId)?.name || 'A player'} wants to sell items</p>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <h4 style="margin: 0 0 8px 0;  border-bottom: 1px solid #333; padding-bottom: 4px;">
+              <i class="fas fa-list" style="margin-right: 6px;"></i>Items to Sell:
+            </h4>
+            <ul style="margin: 0; padding-left: 20px;  border-radius: 4px; padding: 10px 10px 10px 30px;">${itemList}</ul>
+          </div>
+          
+          <div style="margin-bottom: 20px; padding: 12px; background: rgba(117, 117, 117, 0.1); border: 1px solid #333; border-radius: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: bold;  font-size: 1.1em;">
+                <i class="fas fa-calculator" style="margin-right: 6px;"></i>Total Value:
+              </span>
+              <span style="font-size: 1.2em; font-weight: bold; ">${this.currencyManager.formatCurrency(totalValue)}</span>
+            </div>
+          </div>
+          
+          <div style="border: 1px solid #333;background: rgba(117, 117, 117, 0.1); border-radius: 8px; padding: 15px;">
+            <label for="sellPercentage" style="display: block; margin-bottom: 8px; font-weight: bold;">
+              <i class="fas fa-percentage" style="margin-right: 6px; "></i>Sale Percentage:
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" id="sellPercentageSlider" min="0" max="100" step="1" value="${automaticSellPercentage}" 
+                     style="flex: 1; height: 6px;  border-radius: 3px; outline: none;">
+              <div style="display: flex; align-items: center; gap: 5px; min-width: 80px;">
+                <input type="number" id="sellPercentage" value="${automaticSellPercentage}" min="0" max="100" step="1"
+                       style="width: 60px; padding: 4px 8px; border: 1px solid #333; border-radius: 4px; text-align: center; font-weight: bold;">
+                <span style="font-weight: bold; ">%</span>
+              </div>
+            </div>
+            <div style="margin-top: 10px; padding: 8px; border-radius: 4px; text-align: center;">
+              <span style="font-size: 0.9em;">Final Payment: </span>
+              <span id="finalPaymentDisplay" style="font-weight: bold; font-size: 1.1em;">
+                ${this.currencyManager.formatCurrency((totalValue * automaticSellPercentage) / 100)}
+              </span>
+            </div>
+          </div>
         </div>
+        
+        <script>
+          const slider = document.getElementById('sellPercentageSlider');
+          const input = document.getElementById('sellPercentage');
+          const display = document.getElementById('finalPaymentDisplay');
+          const totalValue = ${totalValue};
+          
+          function updatePayment(percentage) {
+            const payment = (totalValue * percentage) / 100;
+            display.textContent = '${this.currencyManager.formatCurrency(0)}'.replace(/[\\d.,]+/, payment.toFixed(2));
+          }
+          
+          slider.addEventListener('input', function() {
+            input.value = this.value;
+            updatePayment(this.value);
+          });
+          
+          input.addEventListener('input', function() {
+            const value = Math.max(0, Math.min(100, parseInt(this.value) || 0));
+            this.value = value;
+            slider.value = value;
+            updatePayment(value);
+          });
+        </script>
       `;
       
       const result = await Dialog.prompt({
@@ -492,7 +557,7 @@ class VendorWalletSystem {
       }
 
       // Calculate final payment
-      const finalPayment = Math.floor((totalValueProcessed * sellPercentage) / 100);
+      const finalPayment = (totalValueProcessed * sellPercentage) / 100;
       
       // Add money to wallet
       const currentWallet = this.getUserWallet(userId);

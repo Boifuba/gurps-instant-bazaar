@@ -34,13 +34,6 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
    * @returns {Promise<Object>} Context object
    */
   async _prepareContext() {
-    // Load the current state of the module currency system setting
-    const useModuleCurrencySystem = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
-    const optimizeOnConstruct = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
-    const requireGMApproval = game.settings.get(VendorWalletSystem.ID, 'requireGMApproval');
-    const automaticSellPercentage = game.settings.get(VendorWalletSystem.ID, 'automaticSellPercentage');
-    const currencyName = game.settings.get(VendorWalletSystem.ID, 'currencyName');
-    
     // Load saved currency denominations or use defaults
     const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [
       { name: "Gold Coin", value: 80 },
@@ -50,11 +43,6 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     ];
 
     return {
-      useModuleCurrencySystem,
-      optimizeOnConstruct,
-      requireGMApproval,
-      automaticSellPercentage,
-      currencyName,
       denominations
     };
   }
@@ -65,79 +53,14 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
   _onRender() {
     this.element.addEventListener('click', this._onClickButton.bind(this));
     this.element.addEventListener('submit', this._onSubmitForm.bind(this));
-    
-    // Set the checkbox state based on the current setting
-    const useModuleCurrencyCheckbox = this.element.querySelector('#useModuleCurrencySystem');
-    if (useModuleCurrencyCheckbox) {
-      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
-      useModuleCurrencyCheckbox.checked = currentSetting;
-    }
-    
-    const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
-    if (optimizeOnConstructCheckbox) {
-      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
-      optimizeOnConstructCheckbox.checked = currentSetting;
-    }
-    
-    // Set the GM approval checkbox state
-    const requireGMApprovalCheckbox = this.element.querySelector('#requireGMApproval');
-    if (requireGMApprovalCheckbox) {
-      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'requireGMApproval');
-      requireGMApprovalCheckbox.checked = currentSetting;
-      requireGMApprovalCheckbox.addEventListener('change', this._updateAutomaticSellPercentageState.bind(this));
-    }
-    
-    // Set the automatic sell percentage slider
-    const automaticSellPercentageSlider = this.element.querySelector('#automaticSellPercentage');
-    const sellPercentageValue = this.element.querySelector('#sellPercentageValue');
-    if (automaticSellPercentageSlider && sellPercentageValue) {
-      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'automaticSellPercentage');
-      automaticSellPercentageSlider.value = currentSetting;
-      sellPercentageValue.textContent = currentSetting;
-      
-      automaticSellPercentageSlider.addEventListener('input', (e) => {
-        sellPercentageValue.textContent = e.target.value;
-      });
-    }
-    
-    // Set the currency name field
-    const currencyNameField = this.element.querySelector('#currencyName');
-    if (currencyNameField) {
-      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'currencyName');
-      currencyNameField.value = currentSetting;
-    }
-    
     // Populate denomination fields with saved data
     this._populateDenominationFields();
-    
-    // Update automatic sell percentage state based on GM approval setting
-    this._updateAutomaticSellPercentageState();
     
     // Ensure warning visibility is updated after initial render
     setTimeout(() => {
       this._updateWarningVisibility();
     }, 100);
   }
-
-  /**
-   * Updates the automatic sell percentage controls based on GM approval setting
-   */
-  _updateAutomaticSellPercentageState() {
-    const requireGMApprovalCheckbox = this.element.querySelector('#requireGMApproval');
-    const automaticSellGroup = this.element.querySelector('#automaticSellGroup');
-    const automaticSellPercentageSlider = this.element.querySelector('#automaticSellPercentage');
-    
-    if (requireGMApprovalCheckbox && automaticSellGroup && automaticSellPercentageSlider) {
-      const isGMApprovalRequired = requireGMApprovalCheckbox.checked;
-      
-      // Garante que o elemento esteja sempre visível
-      automaticSellGroup.style.display = 'block';
-      
-      // Disable/enable the slider based on GM approval setting
-      automaticSellPercentageSlider.disabled = isGMApprovalRequired;
-    }
-  }
-
 
   /**
    * Populates the denomination fields with saved data
@@ -288,22 +211,6 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
    * @returns {Promise<void>}
    */
   async _saveCurrencySettings() {
-    // Save the module currency system setting
-    const useModuleCurrencyCheckbox = this.element.querySelector('#useModuleCurrencySystem');
-    const useModuleCurrencySystem = useModuleCurrencyCheckbox ? useModuleCurrencyCheckbox.checked : true;
-    
-    const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
-    const optimizeOnConstruct = optimizeOnConstructCheckbox ? optimizeOnConstructCheckbox.checked : false;
-    
-    const requireGMApprovalCheckbox = this.element.querySelector('#requireGMApproval');
-    const requireGMApproval = requireGMApprovalCheckbox ? requireGMApprovalCheckbox.checked : true;
-    
-    const automaticSellPercentageSlider = this.element.querySelector('#automaticSellPercentage');
-    const automaticSellPercentage = automaticSellPercentageSlider ? parseInt(automaticSellPercentageSlider.value) : 50;
-    
-    const currencyNameField = this.element.querySelector('#currencyName');
-    const currencyName = currencyNameField ? currencyNameField.value.trim() : 'coins';
-    
     const container = this.element.querySelector('#coinDenominationsContainer');
     const denominationFields = container?.querySelectorAll('.coin-denomination-item');
     
@@ -356,41 +263,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       return;
     }
 
-    // Check if module currency system is enabled and warn about decimal precision
-    if (useModuleCurrencySystem) {
-      // Calculate base unit multiplier to check decimal precision
-      let maxDecimalPlaces = 0;
-      for (const denom of sortedDenominations) {
-        const valueStr = denom.value.toString();
-        const decimalIndex = valueStr.indexOf('.');
-        if (decimalIndex !== -1) {
-          const decimalPlaces = valueStr.length - decimalIndex - 1;
-          maxDecimalPlaces = Math.max(maxDecimalPlaces, decimalPlaces);
-        }
-      }
-      
-      const baseUnitMultiplier = Math.pow(10, maxDecimalPlaces);
-      
-      // If no decimal denominations are defined, warn about rounding
-      if (baseUnitMultiplier === 1) {
-        const hasSmallDenomination = sortedDenominations.some(d => d.value < 1);
-        if (!hasSmallDenomination) {
-          ui.notifications.warn(
-            'Warning: No decimal denominations (like 0.1 or 0.01) are configured. ' +
-            'Values will be rounded to the nearest whole number. ' +
-            'Consider adding smaller denominations for precise currency handling.'
-          );
-        }
-      }
-    }
-
     try {
-      // Save both the module currency system setting and denominations
-      await game.settings.set(VendorWalletSystem.ID, 'useModuleCurrencySystem', useModuleCurrencySystem);
-      await game.settings.set(VendorWalletSystem.ID, 'optimizeOnConstruct', optimizeOnConstruct);
-      await game.settings.set(VendorWalletSystem.ID, 'requireGMApproval', requireGMApproval);
-      await game.settings.set(VendorWalletSystem.ID, 'automaticSellPercentage', automaticSellPercentage);
-      await game.settings.set(VendorWalletSystem.ID, 'currencyName', currencyName || 'coins');
       // Save the denominations (sorted by value descending)
       await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', sortedDenominations);
       

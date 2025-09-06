@@ -1,40 +1,4 @@
 <form>
-  <div class="form-group">
-    <label>
-      <input type="checkbox" id="useModuleCurrencySystem" name="useModuleCurrencySystem">
-      Use module currency system
-    </label>
-    <p class="notes">The module will manage all money, regardless of what's on the player's character sheet.</p>
-  </div>
-
-  <div class="form-group">
-    <label>
-      <input type="checkbox" id="optimizeOnConstruct" name="optimizeOnConstruct">
-      Optimize wallet on construct
-    </label>
-    <p class="notes">When enabled, wallets will automatically convert coins to the optimal combination (minimal number of coins).</p>
-  </div>
-
-  <div class="form-group">
-    <label>
-      <input type="checkbox" id="requireGMApproval" name="requireGMApproval">
-      Require GM Approval for Player Sales
-    </label>
-    <p class="notes">When enabled, players must get GM approval before selling items. When disabled, items are sold automatically at the percentage below.</p>
-  </div>
-
-  <div class="form-group" id="automaticSellGroup">
-    <label for="automaticSellPercentage">Automatic Sell Percentage: <span id="sellPercentageValue">50</span>%</label>
-    <input type="range" id="automaticSellPercentage" name="automaticSellPercentage" min="0" max="100" step="1" value="50">
-    <p class="notes">Percentage of item value when selling automatically (only used when GM approval is disabled).</p>
-  </div>
-
-
-  <div class="form-group">
-    <label for="currencyName">Main Currency Name:</label>
-    <input type="text" id="currencyName" name="currencyName" placeholder="dollars, credits, etc.">
-  </div>
-
   <h3>Currency Denominations</h3>
   <div id="coinDenominationsContainer" class="coin-denominations-container">
     <p class="notes">Enter the exact value of each coin and the exact name as it appears on your character sheet. An error here and the system won't recognize your money. You can define any number of denominations - they will be automatically sorted from highest to lowest value for optimal change-making.</p>
