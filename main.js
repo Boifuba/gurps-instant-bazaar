@@ -393,10 +393,10 @@ class VendorWalletSystem {
       i.system.globalid === uuid
     );
 
-    if (item) {
-      // Para itens existentes, soma a quantidade atual com a nova
-      const current = item.system?.eqt?.count ?? 0;
-      const total = current + quantity;
+      if (item) {
+        // For existing items, add the new quantity to the current one
+        const current = item.system?.eqt?.count ?? 0;
+        const total = current + quantity;
 
       const eqtUuid = item.system?.eqt?.uuid;
       const key = eqtUuid ? actor._findEqtkeyForId("uuid", eqtUuid) : undefined;
@@ -445,10 +445,10 @@ class VendorWalletSystem {
         return false;
       }
 
-      // Para itens recém-criados, define a quantidade diretamente
+        // For newly created items, set the quantity directly
       console.log(`🔍 DEBUG NEW ITEM - Setting quantity to: ${quantity}`);
       
-      // Aguarda um tick para garantir que o item foi completamente criado
+        // Wait a tick to ensure the item was fully created
       await new Promise(resolve => setTimeout(resolve, 10));
       
       const eqtUuid = item.system?.eqt?.uuid;
@@ -628,7 +628,7 @@ Hooks.once('init', () => {
   if (UserClass?.registerFlagScope) {
     UserClass.registerFlagScope(VendorWalletSystem.ID);
   } else {
-    console.warn('User.registerFlagScope indisponível; flags de carteira podem falhar.');
+    console.warn('User.registerFlagScope unavailable; wallet flags may fail.');
 
   }
   VendorWalletSystem.initialize();
