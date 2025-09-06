@@ -5,7 +5,19 @@ files, exported symbols, arguments, parameter types, and return values.
 
 ---
 
-## File: `currency.js`
+- [currency.js](#file-currencyjs)
+- [main.js](#file-mainjs)
+- [gm-tools-app.js](#file-gm-tools-appjs)
+- [money-management-app.js](#file-money-management-appjs)
+- [vendor-creation-app.js](#file-vendor-creation-appjs)
+- [vendor-manager-app.js](#file-vendor-manager-appjs)
+- [vendor-edit-app.js](#file-vendor-edit-appjs)
+- [vendor-item-edit-app.js](#file-vendor-item-edit-appjs)
+- [player-wallet-app.js](#file-player-wallet-appjs)
+- [vendor-display-app.js](#file-vendor-display-appjs)
+- [currency-settings-app.js](#file-currency-settings-appjs)
+
+## File: `currency.js` {#file-currencyjs}
 
 Utility functions and classes for coin-based currency.
 
@@ -195,7 +207,7 @@ Utility functions and classes for coin-based currency.
 
 ---
 
-## File: `main.js`
+## File: `main.js` {#file-mainjs}
 
 Defines the `VendorWalletSystem` static controller.
 
@@ -382,7 +394,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `gm-tools-app.js`
+## File: `gm-tools-app.js` {#file-gm-tools-appjs}
 
 ### Class: `GMToolsApplication`
 
@@ -415,7 +427,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `money-management-app.js`
+## File: `money-management-app.js` {#file-money-management-appjs}
 
 ### Class: `MoneyManagementApplication`
 
@@ -446,7 +458,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-creation-app.js`
+## File: `vendor-creation-app.js` {#file-vendor-creation-appjs}
 
 ### Class: `VendorCreationApplication`
 
@@ -486,7 +498,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-manager-app.js`
+## File: `vendor-manager-app.js` {#file-vendor-manager-appjs}
 
 ### Class: `VendorManagerApplication`
 
@@ -535,7 +547,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-edit-app.js`
+## File: `vendor-edit-app.js` {#file-vendor-edit-appjs}
 
 ### Class: `VendorEditApplication`
 
@@ -566,7 +578,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-item-edit-app.js`
+## File: `vendor-item-edit-app.js` {#file-vendor-item-edit-appjs}
 
 ### Class: `VendorItemEditApplication`
 
@@ -606,7 +618,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `player-wallet-app.js`
+## File: `player-wallet-app.js` {#file-player-wallet-appjs}
 
 ### Class: `PlayerWalletApplication`
 
@@ -647,7 +659,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-display-app.js`
+## File: `vendor-display-app.js` {#file-vendor-display-appjs}
 
 ### Class: `VendorDisplayApplication`
 
@@ -679,7 +691,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `currency-settings-app.js`
+## File: `currency-settings-app.js` {#file-currency-settings-appjs}
 
 ### Class: `CurrencySettingsApplication`
 
