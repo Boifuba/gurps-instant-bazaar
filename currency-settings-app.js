@@ -130,17 +130,14 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     if (requireGMApprovalCheckbox && automaticSellGroup && automaticSellPercentageSlider) {
       const isGMApprovalRequired = requireGMApprovalCheckbox.checked;
       
+      // Garante que o elemento esteja sempre visível
+      automaticSellGroup.style.display = 'block';
+      
       // Disable/enable the slider based on GM approval setting
       automaticSellPercentageSlider.disabled = isGMApprovalRequired;
-      
-      // Add visual indication when disabled
-      if (isGMApprovalRequired) {
-        automaticSellGroup.style.opacity = '0.5';
-      } else {
-        automaticSellGroup.style.opacity = '1';
-      }
     }
   }
+
 
   /**
    * Populates the denomination fields with saved data

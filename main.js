@@ -3,7 +3,7 @@
  * @description Provides core functionality for managing vendors, player wallets, and item transactions in FoundryVTT
  */
 
-console.log("🔧 VENDOR WALLET SYSTEM: main.js loaded!");
+console.log("🐮 VENDOR WALLET SYSTEM: main.js loaded!");
 
 /**
  * @class VendorWalletSystem
@@ -99,7 +99,7 @@ class VendorWalletSystem {
       default: true
     });
     game.settings.register(this.ID, 'requireGMApproval', {
-      name: 'Require GM Approval for Player Sales',
+      name: 'Require GM Approval for Sales',
       hint: 'If enabled, the GM must approve player sale requests.',
       scope: 'world',
       config: true,
@@ -110,7 +110,7 @@ class VendorWalletSystem {
       name: 'Automatic Sell Percentage',
       hint: 'Percentage of item value when selling automatically (when GM approval is disabled).',
       scope: 'world',
-      config: false,
+      config: true,
       type: Number,
       default: 50,
       range: {
@@ -441,6 +441,9 @@ class VendorWalletSystem {
       }
       
       sellPercentage = Math.max(0, Math.min(100, result.percentage));
+    } else {
+      // Automatic sale without GM approval
+      console.log(`💰 AUTOMATIC SALE: Processing automatic sale at ${sellPercentage}% for user ${userId}`);
     }
 
     try {
@@ -495,7 +498,11 @@ class VendorWalletSystem {
       const currentWallet = this.getUserWallet(userId);
       await this.setUserWallet(userId, currentWallet + finalPayment);
 
-      this.emitSellResult(userId, true, `Sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(finalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`);
+      const saleMessage = requireGMApproval 
+        ? `Sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(finalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`
+        : `Automatically sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(finalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`;
+      
+      this.emitSellResult(userId, true, saleMessage);
 
     } catch (error) {
       console.error(error);
