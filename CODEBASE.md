@@ -288,6 +288,15 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Dispatch incoming socket events.
+ * @function VendorWalletSystem.handleSocketEvent
+ * @param {Object} data - Message payload.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
  * Add a wallet button to the player list.
  * @function VendorWalletSystem.addPlayerWalletButton
  * @param {Application} app - Player list app.
@@ -428,6 +437,39 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Process an item purchase transaction.
+ * @function VendorWalletSystem.processItemPurchase
+ * @param {Actor} actor - Buying actor.
+ * @param {Item} item - Item being purchased.
+ * @param {string} vendorId - Vendor identifier.
+ * @param {string} vendorItemId - Vendor item identifier.
+ * @param {number} [quantity=1] - Quantity to purchase.
+ * @returns {Promise<boolean>} True on success.
+ */
+```
+
+```javascript
+/**
+ * Adjust quantity of a vendor's item.
+ * @function VendorWalletSystem.updateItemQuantityInVendor
+ * @param {string} vendorId - Vendor identifier.
+ * @param {string} vendorItemId - Item identifier.
+ * @param {number} change - Quantity delta.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Find which vendor sells a given item UUID.
+ * @function VendorWalletSystem.findVendorByItemUuid
+ * @param {string} itemUuid - Item UUID to search.
+ * @returns {{vendorId:string,vendorItemId:string}|null} Match data or null.
+ */
+```
+
+```javascript
+/**
  * Handle items dropped onto an actor sheet.
  * @function VendorWalletSystem.handleItemDrop
  * @param {Actor} actor - Target actor.
@@ -493,6 +535,14 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Bind button events on render.
+ * @method MoneyManagementApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
  * Handle update button click.
  * @method MoneyManagementApplication#_onClickButton
  * @param {MouseEvent} event - Click event.
@@ -519,6 +569,49 @@ Defines the `VendorWalletSystem` static controller.
  * Prepare compendium list and defaults.
  * @method VendorCreationApplication#_prepareContext
  * @returns {Promise<object>} Context for template.
+ */
+```
+
+```javascript
+/**
+ * Bind interactive events on render.
+ * @method VendorCreationApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Open file picker for image fields.
+ * @method VendorCreationApplication#_onClickFilePicker
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Attach currency formatting listeners.
+ * @method VendorCreationApplication#_setupCurrencyListeners
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Submit form to create vendor.
+ * @method VendorCreationApplication#_onSubmitForm
+ * @param {Event} event - Form submit event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle create button click.
+ * @method VendorCreationApplication#_onClickCreate
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
@@ -559,6 +652,14 @@ Defines the `VendorWalletSystem` static controller.
  * Assemble vendor metadata for rendering.
  * @method VendorManagerApplication#_prepareContext
  * @returns {Promise<object>} Template data.
+ */
+```
+
+```javascript
+/**
+ * Bind action handlers on render.
+ * @method VendorManagerApplication#_onRender
+ * @returns {void}
  */
 ```
 
@@ -613,10 +714,71 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Bind form listeners on render.
+ * @method VendorEditApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Clean up listeners when closing.
+ * @method VendorEditApplication#close
+ * @param {object} options - Close options.
+ * @returns {Promise<any>} Result of parent close.
+ */
+```
+
+```javascript
+/**
+ * Open a file picker for image fields.
+ * @method VendorEditApplication#_onClickFilePicker
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Attach currency formatting listeners.
+ * @method VendorEditApplication#_setupCurrencyListeners
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Submit form to update vendor.
+ * @method VendorEditApplication#_onSubmitForm
+ * @param {Event} event - Submit event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle update button clicks.
+ * @method VendorEditApplication#_onClickButton
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
  * Save vendor updates.
  * @method VendorEditApplication#_updateVendor
  * @param {Event} event - Form submission event.
  * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Select random compendium items based on filters.
+ * @method VendorEditApplication#generateRandomItems
+ * @param {Object} vendorData - Vendor criteria.
+ * @returns {Promise<Array>} Array of generated items.
  */
 ```
 
@@ -639,6 +801,32 @@ Defines the `VendorWalletSystem` static controller.
  * Prepare item and vendor context.
  * @method VendorItemEditApplication#_prepareContext
  * @returns {Promise<object>} Template data.
+ */
+```
+
+```javascript
+/**
+ * Bind form events on render.
+ * @method VendorItemEditApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Submit form to update item.
+ * @method VendorItemEditApplication#_onSubmitForm
+ * @param {Event} event - Submit event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle button actions.
+ * @method VendorItemEditApplication#_onClickButton
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
