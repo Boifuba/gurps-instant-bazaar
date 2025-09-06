@@ -56,6 +56,7 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
 
   /**
    * Handles rendering events by setting up event listeners
+   * @returns {void}
    */
   _onRender() {
     this.element.addEventListener('click', this._onClickButton.bind(this));
