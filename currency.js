@@ -143,6 +143,22 @@ class Wallet {
     return true;
   }
 
+  /**
+   * Adiciona valores ao conteúdo da carteira.
+   *
+   * @param {number|Object<string,number>} [arg=0] - Quantia a ser somada. Pode ser
+   * um número (em unidades base) ou um objeto mapeando nomes de moedas para
+   * quantidades.
+   * @returns {Wallet} Esta própria carteira, para encadeamento.
+   * @throws {Error} Se o valor informado for negativo ou não inteiro após o
+   *   escalonamento.
+   *
+   * @example
+   * const wallet = new Wallet();
+   * wallet.add({ prata: 3 });
+   *
+   * @see Wallet#subtract
+   */
   add(arg) {
     const D = this._getScaledDenominations();
     const isNumber = typeof arg === "number";
@@ -173,6 +189,19 @@ class Wallet {
     return this;
   }
 
+  /**
+   * Subtrai valores do conteúdo da carteira.
+   *
+   * @param {number|Object<string,number>} [arg=0] - Quantia a ser removida. Pode
+   * ser um número (em unidades base) ou um objeto mapeando moedas para
+   * quantidades.
+   * @returns {Wallet} Esta própria carteira, para encadeamento.
+   * @throws {Error} Se o valor for negativo, não inteiro ou se houver fundos
+   *   insuficientes. Também lança erro caso seja necessário quebrar moedas
+   *   maiores quando `spendSmallestFirst` está desativado.
+   *
+   * @see Wallet#add
+   */
   subtract(arg) {
     const D = this._getScaledDenominations();
     const delta = typeof arg === "number" ? this._getScaledValue(arg) : valueFromCoins(arg, D);
