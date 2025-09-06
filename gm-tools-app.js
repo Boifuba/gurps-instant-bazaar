@@ -30,6 +30,7 @@ class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationM
 
   /**
    * Handles rendering events by setting up event listeners
+   * @returns {void}
    */
   _onRender() {
     this.element.addEventListener('click', this._onClickTool.bind(this));
@@ -38,6 +39,7 @@ class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationM
   /**
    * Handles tool button clicks to open specific applications
    * @param {Event} event - The click event
+   * @returns {void}
    */
   _onClickTool(event) {
     const tool = event.target.dataset.tool;

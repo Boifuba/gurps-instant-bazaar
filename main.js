@@ -21,6 +21,7 @@ class VendorWalletSystem {
 
   /**
    * Initializes the module by registering settings, socket listeners, and handlebars helpers
+   * @returns {void}
    */
   static initialize() {
     this.registerSettings();
@@ -55,6 +56,7 @@ class VendorWalletSystem {
 
   /**
    * Registers module settings with FoundryVTT
+   * @returns {void}
    */
   static registerSettings() {
     game.settings.register(this.ID, 'vendors', {
@@ -108,6 +110,7 @@ class VendorWalletSystem {
 
   /**
    * Registers socket event listeners for real-time communication
+   * @returns {void}
    */
   static registerSocketListeners() {
     game.socket.on(this.SOCKET, this.handleSocketEvent.bind(this));
@@ -117,6 +120,7 @@ class VendorWalletSystem {
    * Adds a wallet button to the player list interface
    * @param {Application} app - The FoundryVTT application
    * @param {jQuery} html - The HTML element
+   * @returns {void}
    */
   static addPlayerWalletButton(app, html) {
     const button = $(`<button class="wallet-button"><i class="fas fa-wallet"></i> Wallet</button>`);
@@ -213,6 +217,7 @@ class VendorWalletSystem {
   /**
    * Handles socket events from other clients
    * @param {Object} data - The socket event data
+   * @returns {void}
    */
   static handleSocketEvent(data) {
     switch (data.type) {
@@ -466,6 +471,7 @@ class VendorWalletSystem {
   /**
    * Refreshes all open vendor display windows for a specific vendor
    * @param {string} vendorId - The vendor ID to refresh displays for
+   * @returns {void}
    */
   static refreshVendorDisplays(vendorId) {
     // Refresh all open vendor display windows for this vendor
@@ -478,6 +484,7 @@ class VendorWalletSystem {
 
   /**
    * Refreshes all open vendor manager windows
+   * @returns {void}
    */
   static refreshVendorManagers() {
     Object.values(ui.windows).forEach(window => {
@@ -489,6 +496,7 @@ class VendorWalletSystem {
 
   /**
    * Opens the player wallet application showing all available vendors
+   * @returns {void}
    */
   static openAllAvailableVendors() {
     new PlayerWalletApplication().render(true);
