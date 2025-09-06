@@ -78,6 +78,7 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
 
   /**
    * Handles rendering events by setting up event listeners
+   * @returns {void}
    */
   _onRender() {
     this._boundClickButton = this._onClickButton.bind(this);
@@ -125,6 +126,10 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
     }
   }
 
+  /**
+   * Sets up listeners for currency input fields to format values
+   * @returns {void}
+   */
   _setupCurrencyListeners() {
     const fields = this.element.querySelectorAll('#minValue, #maxValue');
     fields.forEach(field => {

@@ -43,6 +43,7 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
 
   /**
    * Handles rendering events by setting up event listeners
+   * @returns {void}
    */
   _onRender() {
     this.element.addEventListener('click', this._onClickCreate.bind(this));
@@ -74,6 +75,10 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     }
   }
 
+  /**
+   * Sets up listeners for currency input fields to format values
+   * @returns {void}
+   */
   _setupCurrencyListeners() {
     const fields = this.element.querySelectorAll('#minValue, #maxValue');
     fields.forEach(field => {

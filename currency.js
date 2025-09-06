@@ -1,4 +1,6 @@
-/* currency.js */
+/**
+ * @file Utility functions and classes for managing currency and wallets
+ */
 
 const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
 
@@ -250,7 +252,14 @@ class Wallet {
   }
 }
 
+/**
+ * Integrates wallets with Foundry actors and settings.
+ * @class CurrencyManager
+ */
 class CurrencyManager {
+  /**
+   * @param {string} moduleId - Module identifier used for settings keys
+   */
   constructor(moduleId) {
     this.moduleId = moduleId;
     const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
@@ -519,14 +528,19 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     }
   }
 
+  /**
+   * Refreshes any open wallet-related applications
+   * @returns {void}
+   */
   _refreshWalletApplications() {
-    Object.values(ui.windows).forEach((windowApp) => {
+    const { PlayerWalletApplication, VendorDisplayApplication, MoneyManagementApplication } = window;
+    Object.values(ui.windows).forEach((app) => {
       if (
-        windowApp instanceof window.PlayerWalletApplication ||
-        windowApp instanceof window.VendorDisplayApplication ||
-        windowApp instanceof window.MoneyManagementApplication
+        (PlayerWalletApplication && app instanceof PlayerWalletApplication) ||
+        (VendorDisplayApplication && app instanceof VendorDisplayApplication) ||
+        (MoneyManagementApplication && app instanceof MoneyManagementApplication)
       ) {
-        windowApp.render(false);
+        app.render(false);
       }
     });
   }
