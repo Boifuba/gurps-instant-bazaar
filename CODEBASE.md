@@ -5,6 +5,22 @@ files, exported symbols, arguments, parameter types, and return values.
 
 ---
 
+## Tipos Comuns
+
+- **CoinBag**: objeto onde cada chave representa o nome de uma moeda e o valor
+  é a quantidade disponível. Exemplo: `{ ouro: 1, prata: 2, cobre: 5 }`.
+- **WalletOptions**: opções aceitas pelo construtor de `Wallet`:
+  - `optimizeOnConstruct` *(boolean)* – normaliza as moedas ao criar a carteira.
+  - `optimizeOnAdd` *(boolean)* – recalcula o troco ao adicionar valores.
+  - `optimizeOnSubtract` *(boolean)* – recalcula o troco ao subtrair valores.
+  - `spendSmallestFirst` *(boolean)* – ao pagar, consome primeiro as moedas de
+    menor valor.
+  - `repackAfterSubtract` *(RepackMode)* – estratégia para reagrupar moedas
+    depois de subtrair.
+- **RepackMode** *(enum)*: usado por `repackAfterSubtract`.
+  - `"none"` – não reagrupa as moedas após o pagamento.
+  - `"up"` – converte moedas menores em maiores quando possível.
+
 ## File: `currency.js`
 
 Utility functions and classes for coin-based currency.
@@ -31,6 +47,13 @@ Utility functions and classes for coin-based currency.
  */
 ```
 
+**Exemplo**
+
+```javascript
+const total = valueFromCoins({ ouro: 1, prata: 2, cobre: 5 });
+// total === 125
+```
+
 ```javascript
 /**
  * Break a copper total into an optimal set of coins.
@@ -40,6 +63,12 @@ Utility functions and classes for coin-based currency.
  * @returns {CoinBag} Bag with minimal coin counts.
  * @throws {Error} If `total` is negative or non‑integer.
  */
+```
+
+**Exemplo**
+
+```javascript
+makeChange(125); // { ouro: 1, prata: 2, cobre: 5 }
 ```
 
 ```javascript
@@ -80,6 +109,19 @@ Utility functions and classes for coin-based currency.
  * @returns {Wallet} This wallet for chaining.
  * @throws {Error} When the value is invalid.
  */
+```
+
+**Exemplo**
+
+```javascript
+const denom = [
+  { name: "ouro", value: 100 },
+  { name: "prata", value: 10 },
+  { name: "cobre", value: 1 }
+];
+const wallet = new Wallet({ cobre: 0 }, {}, denom);
+wallet.add(125);
+// wallet.toObject() => { ouro: 1, prata: 2, cobre: 5 }
 ```
 
 ```javascript
