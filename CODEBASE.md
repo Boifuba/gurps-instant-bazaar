@@ -21,7 +21,7 @@ files, exported symbols, arguments, parameter types, and return values.
   - `"none"` – não reagrupa as moedas após o pagamento.
   - `"up"` – converte moedas menores em maiores quando possível.
 
-## File: `currency.js`
+## Índice
 - [currency.js](#file-currencyjs)
 - [main.js](#file-mainjs)
 - [gm-tools-app.js](#file-gm-tools-appjs)
