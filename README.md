@@ -286,7 +286,7 @@ We welcome suggestions for new features! Consider:
 
 <p align="center">
   <a href="https://github.com/sponsors/Boifuba">
-    <img src="https://img.shields.io/badge/Sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#white)](https://github.com/sponsors/Boifuba" width="200" alt="Apoie este projeto"/>
+    <img src="https://img.shields.io/badge/Sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=white" width="200" alt="Apoie este projeto"/>
   </a>
 </p>
 
