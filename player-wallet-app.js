@@ -73,6 +73,11 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
       coinBreakdown = VendorWalletSystem.currencyManager._getCharacterSheetCoinBreakdown(game.user.id);
     }
 
+    // Ensure coinBreakdown is always an array
+    if (!Array.isArray(coinBreakdown)) {
+      coinBreakdown = [];
+    }
+
     // Check if we're displaying a specific vendor or all vendors
     if (this.vendorId) {
       const vendor = VendorWalletSystem.getVendor(this.vendorId);
@@ -419,7 +424,7 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
 
       quantityInput.value = quantity;
 
-      const price = parseInt(checkbox.dataset.price, 10) || 0;
+      const price = VendorWalletSystem.parseCurrency(checkbox.dataset.price) || 0;
       totalPrice += price * quantity;
       selectedCount += quantity;
     }

@@ -71,6 +71,13 @@ class VendorWalletSystem {
       type: Boolean,
       default: true
     });
+    game.settings.register(this.ID, 'currencyName', {
+      name: 'Main Currency Name',
+      scope: 'world',
+      config: false,
+      type: String,
+      default: 'coins'
+    });
     game.settings.register(this.ID, 'currencyDenominations', {
       name: 'Currency Denominations',
       scope: 'world',
@@ -271,7 +278,7 @@ class VendorWalletSystem {
 
     // Calculate total cost of items that can be purchased
     const totalCost = itemsWithStock.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const roundedTotalCost = Math.ceil(totalCost);
+    const roundedTotalCost = totalCost;
     const currentWallet = this.getUserWallet(userId);
 
     if (currentWallet < roundedTotalCost) {
@@ -317,7 +324,8 @@ class VendorWalletSystem {
       }
 
       // Round up the final cost processed
-      costProcessed = Math.ceil(costProcessed);
+      // Apply proper rounding to 1 decimal place
+      costProcessed = Math.round(costProcessed * 10) / 10;
 
       if (totalItemsProcessed === 0) {
         this.emitPurchaseResult(userId, false, "No items were purchased.");

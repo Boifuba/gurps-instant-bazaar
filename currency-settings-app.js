@@ -37,17 +37,20 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     // Load the current state of the module currency system setting
     const useModuleCurrencySystem = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     const optimizeOnConstruct = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
+    const currencyName = game.settings.get(VendorWalletSystem.ID, 'currencyName');
     
     // Load saved currency denominations or use defaults
     const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [
       { name: "Gold Coin", value: 80 },
       { name: "Silver Coin", value: 4 },
+      { name: "Copper Piece", value: 0.1 },
       { name: "Copper Farthing", value: 1 }
     ];
 
     return {
       useModuleCurrencySystem,
       optimizeOnConstruct,
+      currencyName,
       denominations
     };
   }
@@ -70,6 +73,13 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     if (optimizeOnConstructCheckbox) {
       const currentSetting = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
       optimizeOnConstructCheckbox.checked = currentSetting;
+    }
+    
+    // Set the currency name field
+    const currencyNameField = this.element.querySelector('#currencyName');
+    if (currencyNameField) {
+      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'currencyName');
+      currencyNameField.value = currentSetting;
     }
     
     // Populate denomination fields with saved data
@@ -160,12 +170,6 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     const container = this.element.querySelector('#coinDenominationsContainer');
     if (!container) return;
 
-    // Check if we already have 3 denominations
-    const existingFields = container.querySelectorAll('.coin-denomination-item');
-    if (existingFields.length >= 3) {
-      ui.notifications.warn('Maximum of 3 currency denominations allowed.');
-      return;
-    }
     const newField = document.createElement('div');
     newField.classList.add('form-group', 'coin-denomination-item');
     newField.innerHTML = `
@@ -216,21 +220,14 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     
     if (warningElement && denominationFields) {
       const count = denominationFields.length;
-      warningElement.style.display = count !== 3 ? 'block' : 'none';
+      warningElement.style.display = count === 0 ? 'block' : 'none';
       
-      // Hide add button if we already have 3 or more denominations
+      // Always show add button - no limit on denominations
       if (addButton) {
+        addButton.style.display = 'inline-block';
         const parentElement = addButton.parentElement;
-        if (count >= 3) {
-          addButton.style.display = 'none';
-          if (parentElement && parentElement.classList.contains('form-group')) {
-            parentElement.style.display = 'none';
-          }
-        } else {
-          addButton.style.display = 'inline-block';
-          if (parentElement && parentElement.classList.contains('form-group')) {
-            parentElement.style.display = 'block';
-          }
+        if (parentElement && parentElement.classList.contains('form-group')) {
+          parentElement.style.display = 'block';
         }
       } else {
         console.warn('Add coin button not found. Check template structure.');
@@ -250,11 +247,14 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
     const optimizeOnConstruct = optimizeOnConstructCheckbox ? optimizeOnConstructCheckbox.checked : false;
     
+    const currencyNameField = this.element.querySelector('#currencyName');
+    const currencyName = currencyNameField ? currencyNameField.value.trim() : 'coins';
+    
     const container = this.element.querySelector('#coinDenominationsContainer');
     const denominationFields = container?.querySelectorAll('.coin-denomination-item');
     
-    if (!denominationFields || denominationFields.length !== 3) {
-      ui.notifications.error('You must define exactly 3 currency denominations.');
+    if (!denominationFields || denominationFields.length === 0) {
+      ui.notifications.error('You must define at least one currency denomination to use the system.');
       this._updateWarningVisibility();
       return;
     }
@@ -268,11 +268,11 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       const valueInput = field.querySelector('input[name="coinValue"]');
       
       const name = nameInput?.value.trim();
-      const value = parseInt(valueInput?.value);
+      const value = parseFloat(valueInput?.value);
 
       // Validate name
       if (!name) {
-        ui.notifications.error('All coin names must be filled in.');
+        ui.notifications.error('All denomination names must be filled in and be unique.');
         return;
       }
 
@@ -283,8 +283,8 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       usedNames.add(name.toLowerCase());
 
       // Validate value
-      if (!Number.isInteger(value) || value < 1) {
-        ui.notifications.error(`Invalid value for "${name}". Values must be positive integers.`);
+      if (isNaN(value) || value <= 0) {
+        ui.notifications.error(`Invalid value for "${name}". Values must be positive numbers and unique.`);
         return;
       }
 
@@ -293,15 +293,6 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
 
     // Sort by value (descending) and validate order
     const sortedDenominations = [...denominations].sort((a, b) => b.value - a.value);
-    const isCorrectOrder = denominations.every((denom, index) => 
-      denom.value === sortedDenominations[index].value
-    );
-
-    if (!isCorrectOrder) {
-      ui.notifications.error('Currency denominations must be ordered from highest to lowest value.');
-      this._updateWarningVisibility();
-      return;
-    }
 
     // Validate that values are different
     const values = denominations.map(d => d.value);
@@ -311,12 +302,58 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       return;
     }
 
+    // Check if module currency system is enabled and warn about decimal precision
+    if (useModuleCurrencySystem) {
+      // Calculate base unit multiplier to check decimal precision
+      let maxDecimalPlaces = 0;
+      for (const denom of sortedDenominations) {
+        const valueStr = denom.value.toString();
+        const decimalIndex = valueStr.indexOf('.');
+        if (decimalIndex !== -1) {
+          const decimalPlaces = valueStr.length - decimalIndex - 1;
+          maxDecimalPlaces = Math.max(maxDecimalPlaces, decimalPlaces);
+        }
+      }
+      
+      const baseUnitMultiplier = Math.pow(10, maxDecimalPlaces);
+      
+      // If no decimal denominations are defined, warn about rounding
+      if (baseUnitMultiplier === 1) {
+        const hasSmallDenomination = sortedDenominations.some(d => d.value < 1);
+        if (!hasSmallDenomination) {
+          ui.notifications.warn(
+            'Warning: No decimal denominations (like 0.1 or 0.01) are configured. ' +
+            'Values will be rounded to the nearest whole number. ' +
+            'Consider adding smaller denominations for precise currency handling.'
+          );
+        }
+      }
+    }
+
     try {
       // Save both the module currency system setting and denominations
       await game.settings.set(VendorWalletSystem.ID, 'useModuleCurrencySystem', useModuleCurrencySystem);
       await game.settings.set(VendorWalletSystem.ID, 'optimizeOnConstruct', optimizeOnConstruct);
-      // Save the denominations
-      await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', denominations);
+      await game.settings.set(VendorWalletSystem.ID, 'currencyName', currencyName || 'coins');
+      // Save the denominations (sorted by value descending)
+      await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', sortedDenominations);
+      
+      // Refresh CurrencyManager settings after saving
+      if (window.VendorWalletSystem && window.VendorWalletSystem.currencyManager) {
+        window.VendorWalletSystem.currencyManager.refreshSettings();
+      } else if (window.CurrencyManager) {
+        // Try to find and refresh any global CurrencyManager instances
+        console.warn("Global VendorWalletSystem.currencyManager not found, settings may need manual refresh");
+      }
+      
+      // Notify user if we had to reorder denominations
+      const wasReordered = !denominations.every((denom, index) => 
+        denom.value === sortedDenominations[index].value
+      );
+      if (wasReordered) {
+        ui.notifications.info('Currency denominations have been automatically sorted from highest to lowest value for optimal change-making.');
+      }
+      
       ui.notifications.info('Currency settings saved successfully!');
       this.close();
     } catch (error) {

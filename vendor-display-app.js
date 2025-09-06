@@ -254,7 +254,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
 
       quantityInput.value = quantity;
 
-      const price = parseInt(checkbox.dataset.price, 10) || 0;
+      const price = VendorWalletSystem.parseCurrency(checkbox.dataset.price) || 0;
       totalPrice += price * quantity;
       selectedCount += quantity;
     }

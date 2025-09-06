@@ -34,6 +34,7 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
    */
   async _prepareContext() {
     const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
+    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [];
     const users = game.users.filter(u => !u.isGM).map(user => ({
       id: user.id,
       name: user.name,
@@ -42,7 +43,8 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
 
     return { 
       users,
-      useModuleCurrency
+      useModuleCurrency,
+      hasDenominations: denominations.length > 0
     };
   }
 
@@ -71,6 +73,13 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
     const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     if (!useModuleCurrency) {
       ui.notifications.warn('Module currency system is disabled. Player money is managed through character sheet items. Use the currency settings to configure denominations.');
+      return;
+    }
+
+    // Check if denominations are configured
+    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [];
+    if (denominations.length === 0) {
+      ui.notifications.error('No currency denominations configured. Please configure currency settings first.');
       return;
     }
     

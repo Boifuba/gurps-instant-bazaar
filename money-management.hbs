@@ -3,6 +3,12 @@
   <div class="warning-message" style="margin-bottom: 1rem;">
     <p><strong>Character Sheet Currency Mode:</strong> Player money is managed through character sheet items. Direct wallet modifications are disabled. Configure currency denominations in Currency Settings.</p>
   </div>
+  {{else}}
+  {{#unless hasDenominations}}
+  <div class="warning-message" style="margin-bottom: 1rem;">
+    <p><strong>No Currency Denominations:</strong> You must configure at least one currency denomination in Currency Settings before managing player wallets.</p>
+  </div>
+  {{/unless}}
   {{/unless}}
 
   <div class="user-list">
@@ -18,7 +24,7 @@
       {{/unless}}
     </div>
     <div class="user-money-controls">
-      <input type="number" class="money-input" name="amount-{{id}}" value="0" step="1" {{#unless ../useModuleCurrency}}disabled{{/unless}}>
+      <input type="number" class="money-input" name="amount-{{id}}" value="0" step="1" {{#unless ../useModuleCurrency}}disabled{{/unless}} {{#unless ../hasDenominations}}disabled{{/unless}}>
     </div>
   </div>
   {{/each}}
@@ -29,8 +35,8 @@
   </div>
 
   <div class="button-row">
-    <button type="button" class="primary" data-action="update-wallets" {{#unless useModuleCurrency}}disabled{{/unless}}>
-      {{#if useModuleCurrency}}Update All Wallets{{else}}Character Sheet Mode{{/if}}
+    <button type="button" class="primary" data-action="update-wallets" {{#unless useModuleCurrency}}disabled{{/unless}} {{#unless hasDenominations}}disabled{{/unless}}>
+      {{#if useModuleCurrency}}{{#if hasDenominations}}Update All Wallets{{else}}Configure Currency First{{/if}}{{else}}Character Sheet Mode{{/if}}
     </button>
       <button type="button" class="secondary" onclick="const w = this.closest('.window-app'); w?.querySelector('.window-header .close')?.click();">Cancel</button>
     </div>
