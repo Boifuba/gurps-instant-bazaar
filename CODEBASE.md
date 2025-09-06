@@ -5,21 +5,19 @@ files, exported symbols, arguments, parameter types, and return values.
 
 ---
 
-## Tipos Comuns
+## Common Types
 
-- **CoinBag**: objeto onde cada chave representa o nome de uma moeda e o valor
-  é a quantidade disponível. Exemplo: `{ ouro: 1, prata: 2, cobre: 5 }`.
-- **WalletOptions**: opções aceitas pelo construtor de `Wallet`:
-  - `optimizeOnConstruct` *(boolean)* – normaliza as moedas ao criar a carteira.
-  - `optimizeOnAdd` *(boolean)* – recalcula o troco ao adicionar valores.
-  - `optimizeOnSubtract` *(boolean)* – recalcula o troco ao subtrair valores.
-  - `spendSmallestFirst` *(boolean)* – ao pagar, consome primeiro as moedas de
-    menor valor.
-  - `repackAfterSubtract` *(RepackMode)* – estratégia para reagrupar moedas
-    depois de subtrair.
-- **RepackMode** *(enum)*: usado por `repackAfterSubtract`.
-  - `"none"` – não reagrupa as moedas após o pagamento.
-  - `"up"` – converte moedas menores em maiores quando possível.
+- **CoinBag**: object where each key is a coin name and the value is its count.
+  Example: `{ gold: 1, silver: 2, copper: 5 }`.
+- **WalletOptions**: options accepted by the `Wallet` constructor:
+  - `optimizeOnConstruct` *(boolean)* – normalize coins when creating the wallet.
+  - `optimizeOnAdd` *(boolean)* – recompute change when adding values.
+  - `optimizeOnSubtract` *(boolean)* – recompute change when subtracting values.
+  - `spendSmallestFirst` *(boolean)* – when paying, consume smaller coins first.
+  - `repackAfterSubtract` *(RepackMode)* – strategy for regrouping coins after subtraction.
+- **RepackMode** *(enum)*: used by `repackAfterSubtract`.
+  - `"none"` – do not regroup coins after payment.
+  - `"up"` – convert smaller coins into larger ones when possible.
 
 ## File: `currency.js`
 - [currency.js](#file-currencyjs)
@@ -54,17 +52,17 @@ Utility functions and classes for coin-based currency.
 /**
  * Convert a bag of coins into total copper.
  * @function valueFromCoins
- * @param {CoinBag} [coins] - Object with `ouro`, `prata`, and `cobre` counts.
+ * @param {CoinBag} [coins] - Object with `gold`, `silver`, and `copper` counts.
  * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
  * @returns {number} Total value expressed in copper units.
  * @throws {Error} When any coin count is not a non‑negative integer.
  */
 ```
 
-**Exemplo**
+**Example**
 
 ```javascript
-const total = valueFromCoins({ ouro: 1, prata: 2, cobre: 5 });
+const total = valueFromCoins({ gold: 1, silver: 2, copper: 5 });
 // total === 125
 ```
 
@@ -79,10 +77,10 @@ const total = valueFromCoins({ ouro: 1, prata: 2, cobre: 5 });
  */
 ```
 
-**Exemplo**
+**Example**
 
 ```javascript
-makeChange(125); // { ouro: 1, prata: 2, cobre: 5 }
+makeChange(125); // { gold: 1, silver: 2, copper: 5 }
 ```
 
 ```javascript
@@ -125,17 +123,17 @@ makeChange(125); // { ouro: 1, prata: 2, cobre: 5 }
  */
 ```
 
-**Exemplo**
+**Example**
 
 ```javascript
 const denom = [
-  { name: "ouro", value: 100 },
-  { name: "prata", value: 10 },
-  { name: "cobre", value: 1 }
+  { name: "gold", value: 100 },
+  { name: "silver", value: 10 },
+  { name: "copper", value: 1 }
 ];
-const wallet = new Wallet({ cobre: 0 }, {}, denom);
+const wallet = new Wallet({ copper: 0 }, {}, denom);
 wallet.add(125);
-// wallet.toObject() => { ouro: 1, prata: 2, cobre: 5 }
+// wallet.toObject() => { gold: 1, silver: 2, copper: 5 }
 ```
 
 ```javascript

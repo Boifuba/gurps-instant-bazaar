@@ -60,9 +60,9 @@ class Wallet {
     const {
       optimizeOnConstruct = true,
       optimizeOnAdd = true,
-      optimizeOnSubtract = false, // se true: caminho canônico (maior→menor) após subtrair
-      spendSmallestFirst = true,  // gastar começando da menor
-      repackAfterSubtract = "up"  // "none" | "up" (coalesce para cima após pagar)
+      optimizeOnSubtract = false, // if true: canonical path (largest→smallest) after subtracting
+      spendSmallestFirst = true,  // spend starting from the smallest
+      repackAfterSubtract = "up"  // "none" | "up" (coalesce upward after paying)
     } = opts;
 
     this._denominations = (denominations || [])
@@ -90,7 +90,7 @@ class Wallet {
       const a = d[i].value, b = d[i + 1].value;
       if (a % b !== 0) {
         throw new Error(
-          `Denominações não-canônicas após escalar: ${d[i].name} (${a}) não é múltiplo de ${d[i + 1].name} (${b}).`
+          `Non-canonical denominations after scaling: ${d[i].name} (${a}) is not a multiple of ${d[i + 1].name} (${b}).`
         );
       }
     }
@@ -135,9 +135,9 @@ class Wallet {
     const cnt = bag[from.name] | 0;
     if (cnt <= 0) return false;
     const ratio = from.value / to.value;
-    if (!Number.isInteger(ratio)) {
-      throw new Error("Denominações não permitem quebra limpa (não-inteiras após escalar).");
-    }
+      if (!Number.isInteger(ratio)) {
+        throw new Error("Denominations do not allow a clean break (non-integers after scaling).");
+      }
     bag[from.name] = cnt - 1;
     bag[to.name] = (bag[to.name] | 0) + ratio;
     return true;
@@ -263,8 +263,8 @@ class CurrencyManager {
   constructor(moduleId) {
     this.moduleId = moduleId;
     const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
-    this._baseUnitMultiplier = _calculateBaseUnitMultiplier(denominations);
-    this._moduleScale = 100; // centavos no modo do módulo (sem moedas físicas)
+      this._baseUnitMultiplier = _calculateBaseUnitMultiplier(denominations);
+      this._moduleScale = 100; // cents in module mode (no physical coins)
   }
 
   _getScale() {
@@ -649,9 +649,9 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
         vendorId: vendorId,
         itemId: vendorItemId
       });
-    } catch (err) {
-      // silencioso
-    }
+      } catch (err) {
+        // silent
+      }
   }
 
   refreshSettings() {
