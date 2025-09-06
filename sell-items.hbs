@@ -1,0 +1,70 @@
+<div class="sell-items-content">
+  <div class="wallet-display">
+    Your Wallet: {{formatCurrency wallet}}
+  </div>
+
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="itemSearch" class="search-input" placeholder="Search items..." value="{{searchTerm}}" />
+      <button type="button" id="clearSearch" class="clear-search-btn" style="display: {{#if searchTerm}}flex{{else}}none{{/if}};">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="sell-controls-section">
+    <div class="sell-summary">
+      <div class="sell-info">
+        <span class="selected-count">Selected: <span id="selectedCount">0</span> items</span>
+        <span class="total-value">Total Value: <span id="totalValue">{{formatCurrency 0}}</span></span>
+        {{#if requireGMApproval}}
+          <span class="approval-note">GM approval required</span>
+        {{else}}
+          <span class="auto-sell-note">Auto-sell at {{automaticSellPercentage}}%</span>
+        {{/if}}
+      </div>
+      <div class="sell-actions">
+        <button type="button" id="sellSelected" class="primary sell-btn" disabled>
+          <i class="fas fa-coins"></i> Sell Selected
+        </button>
+        <button type="button" id="clearSelection" class="secondary clear-btn">
+          <i class="fas fa-times"></i> Clear Selection
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="item-list-container">
+    <div class="item-list">
+      {{#each items}}
+        <div class="sell-item-card" data-item-id="{{id}}">
+          <div class="item-details">
+            <div class="item-selection">
+              <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}" />
+              <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" max="{{quantity}}" />
+            </div>
+            
+            <div class="item-info">
+              <h4 class="item-name">{{name}}</h4>
+              <div class="item-meta">
+                <span class="item-price">{{formatCurrency price}}</span>
+                {{#if weight}}
+                  <span class="item-weight">{{weight}} lbs</span>
+                {{/if}}
+                <span class="item-quantity">({{quantity}} available)</span>
+                {{#if pageref}}
+                  <span class="item-pageref">{{pageref}}</span>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+      
+      {{#unless items}}
+        <div class="no-items">You have no items to sell.</div>
+      {{/unless}}
+    </div>
+  </div>
+</div>

@@ -96,13 +96,26 @@ class VendorWalletSystem {
       type: Boolean,
       default: true
     });
-    game.settings.register(this.ID, 'requirePurchaseApproval', {
-      name: 'Require GM Purchase Approval',
-      hint: 'If enabled, the GM must approve player purchase requests.',
+    game.settings.register(this.ID, 'requireGMApproval', {
+      name: 'Require GM Approval for Player Sales',
+      hint: 'If enabled, the GM must approve player sale requests.',
       scope: 'world',
       config: true,
       type: Boolean,
       default: true
+    });
+    game.settings.register(this.ID, 'automaticSellPercentage', {
+      name: 'Automatic Sell Percentage',
+      hint: 'Percentage of item value when selling automatically (when GM approval is disabled).',
+      scope: 'world',
+      config: false,
+      type: Number,
+      default: 50,
+      range: {
+        min: 0,
+        max: 100,
+        step: 1
+      }
     });
   }
 
@@ -229,6 +242,11 @@ class VendorWalletSystem {
           this.processPlayerPurchaseRequest(data);
         }
         break;
+      case 'playerSellRequest':
+        if (game.user.isGM) {
+          this.processPlayerSellRequest(data);
+        }
+        break;
     }
   }
 
@@ -286,7 +304,7 @@ class VendorWalletSystem {
       return;
     }
 
-    if (game.settings.get(this.ID, 'requirePurchaseApproval')) {
+    if (game.settings.get(this.ID, 'requireGMApproval')) {
       const itemList = itemsWithStock
         .map(item => `<li>${item.quantity}x ${item.name} - ${this.currencyManager.formatCurrency(item.price)}</li>`)
         .join('');
@@ -359,6 +377,137 @@ class VendorWalletSystem {
   static emitPurchaseResult(userId, success, message, data = {}) {
     game.socket.emit(this.SOCKET, {
       type: success ? 'purchaseCompleted' : 'purchaseFailed',
+      userId: userId,
+      message: message,
+      ...data
+    });
+  }
+
+  /**
+   * Processes a player's sell request (GM only)
+   * @param {Object} data - Sell request data containing userId, actorId, and selectedItems
+   * @returns {Promise<void>}
+   */
+  static async processPlayerSellRequest(data) {
+    const { userId, actorId, selectedItems } = data;
+    const actor = game.actors.get(actorId);
+    const requireGMApproval = game.settings.get(this.ID, 'requireGMApproval');
+    const automaticSellPercentage = game.settings.get(this.ID, 'automaticSellPercentage');
+    
+    if (!actor) {
+      this.emitSellResult(userId, false, "Character not found by GM. Please ensure your character exists and has proper permissions.");
+      return;
+    }
+
+    // Calculate total value of items to sell
+    const totalValue = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    let sellPercentage = automaticSellPercentage;
+    
+    if (requireGMApproval) {
+      // Show GM approval dialog with percentage input
+      const itemList = selectedItems
+        .map(item => `<li>${item.quantity}x ${item.name} - ${this.currencyManager.formatCurrency(item.price)}</li>`)
+        .join('');
+      
+      const dialogContent = `
+        <p>${game.users.get(userId)?.name || 'A player'} wants to sell:</p>
+        <ul>${itemList}</ul>
+        <p>Total Value: ${this.currencyManager.formatCurrency(totalValue)}</p>
+        <div class="form-group">
+          <label for="sellPercentage">Sell Percentage:</label>
+          <input type="number" id="sellPercentage" value="${automaticSellPercentage}" min="0" max="100" step="1">%
+        </div>
+      `;
+      
+      const result = await Dialog.prompt({
+        title: 'Approve Sale',
+        content: dialogContent,
+        callback: (html) => {
+          const percentage = parseInt(html.find('#sellPercentage').val()) || 0;
+          return { approved: true, percentage };
+        },
+        rejectClose: false
+      });
+      
+      if (!result || !result.approved) {
+        this.emitSellResult(userId, false, 'Sale declined by GM.');
+        return;
+      }
+      
+      sellPercentage = Math.max(0, Math.min(100, result.percentage));
+    }
+
+    try {
+      // Process the sale
+      let totalItemsProcessed = 0;
+      let totalValueProcessed = 0;
+
+      for (const selectedItem of selectedItems) {
+        const { id, quantity, price } = selectedItem;
+        const item = actor.items.get(id);
+        
+        if (!item) {
+          console.warn(`Item ${id} not found on actor ${actor.name}`);
+          continue;
+        }
+
+        const currentQuantity = item.system?.eqt?.count || item.system?.quantity || 1;
+        
+        if (currentQuantity < quantity) {
+          this.emitSellResult(userId, false, `Not enough ${item.name} to sell (have ${currentQuantity}, trying to sell ${quantity}).`);
+          continue;
+        }
+
+        // Remove items from character
+        const newQuantity = currentQuantity - quantity;
+        
+        if (newQuantity <= 0) {
+          // Delete the item completely
+          await item.delete();
+        } else {
+          // Update the quantity
+          if (item.system?.eqt?.count !== undefined) {
+            await item.update({ "system.eqt.count": newQuantity });
+          } else {
+            await item.update({ "system.quantity": newQuantity });
+          }
+        }
+
+        totalItemsProcessed += quantity;
+        totalValueProcessed += price * quantity;
+      }
+
+      if (totalItemsProcessed === 0) {
+        this.emitSellResult(userId, false, "No items were sold.");
+        return;
+      }
+
+      // Calculate final payment
+      const finalPayment = Math.floor((totalValueProcessed * sellPercentage) / 100);
+      
+      // Add money to wallet
+      const currentWallet = this.getUserWallet(userId);
+      await this.setUserWallet(userId, currentWallet + finalPayment);
+
+      this.emitSellResult(userId, true, `Sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(finalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`);
+
+    } catch (error) {
+      console.error(error);
+      this.emitSellResult(userId, false, `An error occurred while processing the sale: ${error.message}`);
+    }
+  }
+
+  /**
+   * Emits a sell result to the specified user
+   * @param {string} userId - The user ID to send the result to
+   * @param {boolean} success - Whether the sale was successful
+   * @param {string} message - The message to display
+   * @param {Object} data - Additional data to include
+   */
+  static emitSellResult(userId, success, message, data = {}) {
+    game.socket.emit(this.SOCKET, {
+      type: success ? 'sellCompleted' : 'sellFailed',
       userId: userId,
       message: message,
       ...data
@@ -637,41 +786,21 @@ Hooks.on('ready', () => {
   }
   
   // Register the /shop chat command
-  if (typeof game.chatCommands !== 'undefined' && game.chatCommands.register) {
-    game.chatCommands.register({
-      name: '/shop',
-      module: VendorWalletSystem.ID,
-      description: 'Opens vendor interface (GM Tools for GMs, Player Wallet for players)',
-      icon: '<i class="fas fa-store"></i>',
-      callback: () => {
-        if (game.user.isGM) {
-          if (typeof GMToolsApplication !== 'undefined') {
-            new GMToolsApplication().render(true);
-          } else {
-            ui.notifications.error('GM Tools not available');
-          }
+  // Simple /shop command registration
+  Hooks.on('chatMessage', (chatLog, message, chatData) => {
+    if (message.trim() === '/shop') {
+      if (game.user.isGM) {
+        if (typeof GMToolsApplication !== 'undefined') {
+          new GMToolsApplication().render(true);
         } else {
-          VendorWalletSystem.openAllAvailableVendors();
+          ui.notifications.error('GM Tools not available');
         }
+      } else {
+        VendorWalletSystem.openAllAvailableVendors();
       }
-    });
-  } else {
-    // Fallback for systems without chatCommands API
-    Hooks.on('chatMessage', (chatLog, message, chatData) => {
-      if (message.trim() === '/shop') {
-        if (game.user.isGM) {
-          if (typeof GMToolsApplication !== 'undefined') {
-            new GMToolsApplication().render(true);
-          } else {
-            ui.notifications.error('GM Tools not available');
-          }
-        } else {
-          VendorWalletSystem.openAllAvailableVendors();
-        }
-        return false; // Prevent the message from being sent to chat
-      }
-    });
-  }
+      return false; // Prevent the message from being sent to chat
+    }
+  });
 });
 
 // Expose the main class globally

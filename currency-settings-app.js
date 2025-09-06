@@ -37,6 +37,8 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     // Load the current state of the module currency system setting
     const useModuleCurrencySystem = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     const optimizeOnConstruct = game.settings.get(VendorWalletSystem.ID, 'optimizeOnConstruct');
+    const requireGMApproval = game.settings.get(VendorWalletSystem.ID, 'requireGMApproval');
+    const automaticSellPercentage = game.settings.get(VendorWalletSystem.ID, 'automaticSellPercentage');
     const currencyName = game.settings.get(VendorWalletSystem.ID, 'currencyName');
     
     // Load saved currency denominations or use defaults
@@ -50,6 +52,8 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     return {
       useModuleCurrencySystem,
       optimizeOnConstruct,
+      requireGMApproval,
+      automaticSellPercentage,
       currencyName,
       denominations
     };
@@ -75,6 +79,27 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       optimizeOnConstructCheckbox.checked = currentSetting;
     }
     
+    // Set the GM approval checkbox state
+    const requireGMApprovalCheckbox = this.element.querySelector('#requireGMApproval');
+    if (requireGMApprovalCheckbox) {
+      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'requireGMApproval');
+      requireGMApprovalCheckbox.checked = currentSetting;
+      requireGMApprovalCheckbox.addEventListener('change', this._updateAutomaticSellPercentageState.bind(this));
+    }
+    
+    // Set the automatic sell percentage slider
+    const automaticSellPercentageSlider = this.element.querySelector('#automaticSellPercentage');
+    const sellPercentageValue = this.element.querySelector('#sellPercentageValue');
+    if (automaticSellPercentageSlider && sellPercentageValue) {
+      const currentSetting = game.settings.get(VendorWalletSystem.ID, 'automaticSellPercentage');
+      automaticSellPercentageSlider.value = currentSetting;
+      sellPercentageValue.textContent = currentSetting;
+      
+      automaticSellPercentageSlider.addEventListener('input', (e) => {
+        sellPercentageValue.textContent = e.target.value;
+      });
+    }
+    
     // Set the currency name field
     const currencyNameField = this.element.querySelector('#currencyName');
     if (currencyNameField) {
@@ -85,10 +110,36 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     // Populate denomination fields with saved data
     this._populateDenominationFields();
     
+    // Update automatic sell percentage state based on GM approval setting
+    this._updateAutomaticSellPercentageState();
+    
     // Ensure warning visibility is updated after initial render
     setTimeout(() => {
       this._updateWarningVisibility();
     }, 100);
+  }
+
+  /**
+   * Updates the automatic sell percentage controls based on GM approval setting
+   */
+  _updateAutomaticSellPercentageState() {
+    const requireGMApprovalCheckbox = this.element.querySelector('#requireGMApproval');
+    const automaticSellGroup = this.element.querySelector('#automaticSellGroup');
+    const automaticSellPercentageSlider = this.element.querySelector('#automaticSellPercentage');
+    
+    if (requireGMApprovalCheckbox && automaticSellGroup && automaticSellPercentageSlider) {
+      const isGMApprovalRequired = requireGMApprovalCheckbox.checked;
+      
+      // Disable/enable the slider based on GM approval setting
+      automaticSellPercentageSlider.disabled = isGMApprovalRequired;
+      
+      // Add visual indication when disabled
+      if (isGMApprovalRequired) {
+        automaticSellGroup.style.opacity = '0.5';
+      } else {
+        automaticSellGroup.style.opacity = '1';
+      }
+    }
   }
 
   /**
@@ -247,6 +298,12 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     const optimizeOnConstructCheckbox = this.element.querySelector('#optimizeOnConstruct');
     const optimizeOnConstruct = optimizeOnConstructCheckbox ? optimizeOnConstructCheckbox.checked : false;
     
+    const requireGMApprovalCheckbox = this.element.querySelector('#requireGMApproval');
+    const requireGMApproval = requireGMApprovalCheckbox ? requireGMApprovalCheckbox.checked : true;
+    
+    const automaticSellPercentageSlider = this.element.querySelector('#automaticSellPercentage');
+    const automaticSellPercentage = automaticSellPercentageSlider ? parseInt(automaticSellPercentageSlider.value) : 50;
+    
     const currencyNameField = this.element.querySelector('#currencyName');
     const currencyName = currencyNameField ? currencyNameField.value.trim() : 'coins';
     
@@ -334,6 +391,8 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       // Save both the module currency system setting and denominations
       await game.settings.set(VendorWalletSystem.ID, 'useModuleCurrencySystem', useModuleCurrencySystem);
       await game.settings.set(VendorWalletSystem.ID, 'optimizeOnConstruct', optimizeOnConstruct);
+      await game.settings.set(VendorWalletSystem.ID, 'requireGMApproval', requireGMApproval);
+      await game.settings.set(VendorWalletSystem.ID, 'automaticSellPercentage', automaticSellPercentage);
       await game.settings.set(VendorWalletSystem.ID, 'currencyName', currencyName || 'coins');
       // Save the denominations (sorted by value descending)
       await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', sortedDenominations);

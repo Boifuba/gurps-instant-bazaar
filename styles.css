@@ -757,6 +757,224 @@ button.secondary:hover {
   margin: 0;
   color: var(--color-text-dark-secondary);
 }
+
+/* GM Approval Settings Styles */
+#automaticSellGroup {
+  transition: opacity 0.3s ease;
+}
+
+#automaticSellPercentage {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+#automaticSellPercentage:disabled {
+  cursor: not-allowed;
+}
+
+#sellPercentageValue {
+  font-weight: bold;
+  color: var(--color-text-highlight);
+}
+
+/* Sell Items Application Styles */
+.sell-items-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.sell-controls-section {
+  padding: 0.5rem;
+  border: 2px solid var(--color-border-highlight);
+  border-radius: 8px;
+  background-color: var(--color-bg-option);
+  margin-bottom: 1rem;
+}
+
+.sell-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sell-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selected-count {
+  color: var(--color-text-highlight);
+}
+
+.total-value {
+  color: var(--color-text-highlight);
+  font-size: 1.1rem;
+}
+
+.approval-note, .auto-sell-note {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--color-text-dark-secondary);
+}
+
+.sell-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sell-btn, .clear-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-dark);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sell-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sell-btn:not(:disabled):hover,
+.clear-btn:hover {
+  border-width: 2px;
+  transform: translateY(-1px);
+}
+
+/* Sell Item Card */
+.sell-item-card {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background-color: var(--color-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sell-item-card:hover {
+  border-color: var(--color-border-highlight);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sell-item-card.selected {
+  border-color: var(--color-border-success);
+  border-width: 2px;
+  background-color: var(--color-bg-option);
+}
+
+.sell-item-card .item-details {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sell-item-card .item-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 60px;
+}
+
+.sell-item-card .item-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.sell-item-card .item-quantity-input {
+  width: 50px;
+  padding: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.sell-item-card .item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sell-item-card .item-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sell-item-card .item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.sell-item-card .item-price {
+  font-weight: bold;
+  font-size: 1rem;
+  color: var(--color-text-highlight);
+}
+
+.sell-item-card .item-weight {
+  color: var(--color-text-dark-secondary);
+}
+
+.sell-item-card .item-quantity {
+  font-weight: 600;
+  color: var(--color-text-highlight);
+}
+
+.sell-item-card .item-pageref {
+  font-size: 0.8rem;
+  color: var(--color-text-dark-secondary);
+  font-style: italic;
+}
+
+/* Responsive Design for Sell Items */
+@media (max-width: 600px) {
+  .sell-item-card .item-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .sell-item-card .item-selection {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .sell-item-card .item-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .sell-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .sell-actions {
+    flex-direction: column;
+  }
+}
 /* Wallet Accordion Styles */
 .wallet-accordion {
   margin-bottom: 1rem;

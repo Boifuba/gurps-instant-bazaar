@@ -23,7 +23,8 @@
     "vendor-display-app.js",
     "vendor-manager-app.js",
     "gm-tools-app.js",
-    "currency-settings-app.js"
+    "currency-settings-app.js",
+    "sell-items-app.js"
   ],
   "styles": [
     "styles.css"
