@@ -195,6 +195,18 @@ Fine-tune your vendor inventories by editing individual items:
 - Stock levels are enforced to prevent overselling
 - Wallet balances cannot go below zero
 
+### Currency Settings Application
+Game Masters can customize how money is handled in the module:
+
+1. Open **GM Tools** (type `/shop` in chat) and click **Currency Settings**.
+2. Enable **Use module currency system** to let the module manage all player funds.
+3. (Optional) Enable **Optimize wallet on construct** so wallets automatically convert coins to the minimal number of pieces.
+4. Enter the **Main Currency Name** (e.g. credits, dollars).
+5. Under **Currency Denominations**, click **Add Coin** for each denomination you wish to support.
+   - Provide the exact coin name and its value; every entry must be unique.
+6. Click **Apply** to save your settings. Denominations are sorted from highest to lowest value.
+
+
 ## Troubleshooting
 
 ### Common Issues
