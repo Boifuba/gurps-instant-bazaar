@@ -687,7 +687,7 @@ button.secondary:hover {
 }
 
 .notes {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--color-text-light-secondary);
   font-style: italic;
   margin: 0.5rem 0;

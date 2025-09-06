@@ -272,7 +272,12 @@ class CurrencyManager {
     if (useModuleCurrency) {
       if (finalAmount > 0 && finalAmount < 0.01) finalAmount = 0.01;
       finalAmount = Math.round(finalAmount * 100) / 100;
-      return `${finalAmount} ${currencyName}`;
+      return finalAmount.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     } else {
       if (finalAmount > 0 && finalAmount < 0.1) finalAmount = 0.1;
       else if (finalAmount > 0) finalAmount = Math.round(finalAmount * 10) / 10;
@@ -332,7 +337,7 @@ class CurrencyManager {
 
   getModuleCurrencyBreakdown(userId) {
     const unscaledTotalValue = this.getUserWallet(userId);
-    const scaledTotalValue = unscaledTotalValue * this._getScale();
+const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     const denominations = (game.settings.get(this.moduleId, "currencyDenominations") || [])
       .slice()
       .sort((a, b) => b.value - a.value);

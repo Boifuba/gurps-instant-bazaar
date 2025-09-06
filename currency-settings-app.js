@@ -18,7 +18,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     },
     position: {
       width: 500,
-      height: 'auto'
+      height: "auto"
     },
     classes: ['gurps-instant-bazaar']
   };
