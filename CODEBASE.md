@@ -5,7 +5,35 @@ files, exported symbols, arguments, parameter types, and return values.
 
 ---
 
-## File: `currency.js`
+## Common Types
+
+- **CoinBag**: object where each key is a coin name and the value is its count.
+  Example: `{ gold: 1, silver: 2, copper: 5 }`.
+- **WalletOptions**: options accepted by the `Wallet` constructor:
+  - `optimizeOnConstruct` *(boolean)* – normalize coins when creating the wallet.
+  - `optimizeOnAdd` *(boolean)* – recompute change when adding values.
+  - `optimizeOnSubtract` *(boolean)* – recompute change when subtracting values.
+  - `spendSmallestFirst` *(boolean)* – when paying, consume smaller coins first.
+  - `repackAfterSubtract` *(RepackMode)* – strategy for regrouping coins after subtraction.
+- **RepackMode** *(enum)*: used by `repackAfterSubtract`.
+  - `"none"` – do not regroup coins after payment.
+  - `"up"` – convert smaller coins into larger ones when possible.
+
+## Índice
+- [currency.js](#file-currencyjs)
+- [main.js](#file-mainjs)
+- [gm-tools-app.js](#file-gm-tools-appjs)
+- [money-management-app.js](#file-money-management-appjs)
+- [vendor-creation-app.js](#file-vendor-creation-appjs)
+- [vendor-manager-app.js](#file-vendor-manager-appjs)
+- [vendor-edit-app.js](#file-vendor-edit-appjs)
+- [vendor-item-edit-app.js](#file-vendor-item-edit-appjs)
+- [player-wallet-app.js](#file-player-wallet-appjs)
+- [vendor-display-app.js](#file-vendor-display-appjs)
+- [currency-settings-app.js](#file-currency-settings-appjs)
+
+## File: `currency.js` {#file-currencyjs}
+
 
 Utility functions and classes for coin-based currency.
 
@@ -24,11 +52,18 @@ Utility functions and classes for coin-based currency.
 /**
  * Convert a bag of coins into total copper.
  * @function valueFromCoins
- * @param {CoinBag} [coins] - Object with `ouro`, `prata`, and `cobre` counts.
+ * @param {CoinBag} [coins] - Object with `gold`, `silver`, and `copper` counts.
  * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
  * @returns {number} Total value expressed in copper units.
  * @throws {Error} When any coin count is not a non‑negative integer.
  */
+```
+
+**Example**
+
+```javascript
+const total = valueFromCoins({ gold: 1, silver: 2, copper: 5 });
+// total === 125
 ```
 
 ```javascript
@@ -40,6 +75,12 @@ Utility functions and classes for coin-based currency.
  * @returns {CoinBag} Bag with minimal coin counts.
  * @throws {Error} If `total` is negative or non‑integer.
  */
+```
+
+**Example**
+
+```javascript
+makeChange(125); // { gold: 1, silver: 2, copper: 5 }
 ```
 
 ```javascript
@@ -80,6 +121,19 @@ Utility functions and classes for coin-based currency.
  * @returns {Wallet} This wallet for chaining.
  * @throws {Error} When the value is invalid.
  */
+```
+
+**Example**
+
+```javascript
+const denom = [
+  { name: "gold", value: 100 },
+  { name: "silver", value: 10 },
+  { name: "copper", value: 1 }
+];
+const wallet = new Wallet({ copper: 0 }, {}, denom);
+wallet.add(125);
+// wallet.toObject() => { gold: 1, silver: 2, copper: 5 }
 ```
 
 ```javascript
@@ -195,7 +249,7 @@ Utility functions and classes for coin-based currency.
 
 ---
 
-## File: `main.js`
+## File: `main.js` {#file-mainjs}
 
 Defines the `VendorWalletSystem` static controller.
 
@@ -226,6 +280,15 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Register socket listeners for live updates.
  * @function VendorWalletSystem.registerSocketListeners
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Dispatch incoming socket events.
+ * @function VendorWalletSystem.handleSocketEvent
+ * @param {Object} data - Message payload.
  * @returns {void}
  */
 ```
@@ -372,6 +435,39 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Process an item purchase transaction.
+ * @function VendorWalletSystem.processItemPurchase
+ * @param {Actor} actor - Buying actor.
+ * @param {Item} item - Item being purchased.
+ * @param {string} vendorId - Vendor identifier.
+ * @param {string} vendorItemId - Vendor item identifier.
+ * @param {number} [quantity=1] - Quantity to purchase.
+ * @returns {Promise<boolean>} True on success.
+ */
+```
+
+```javascript
+/**
+ * Adjust quantity of a vendor's item.
+ * @function VendorWalletSystem.updateItemQuantityInVendor
+ * @param {string} vendorId - Vendor identifier.
+ * @param {string} vendorItemId - Item identifier.
+ * @param {number} change - Quantity delta.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Find which vendor sells a given item UUID.
+ * @function VendorWalletSystem.findVendorByItemUuid
+ * @param {string} itemUuid - Item UUID to search.
+ * @returns {{vendorId:string,vendorItemId:string}|null} Match data or null.
+ */
+```
+
+```javascript
+/**
  * Handle items dropped onto an actor sheet.
  * @function VendorWalletSystem.handleItemDrop
  * @param {Actor} actor - Target actor.
@@ -382,7 +478,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `gm-tools-app.js`
+## File: `gm-tools-app.js` {#file-gm-tools-appjs}
 
 ### Class: `GMToolsApplication`
 
@@ -415,7 +511,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `money-management-app.js`
+## File: `money-management-app.js` {#file-money-management-appjs}
 
 ### Class: `MoneyManagementApplication`
 
@@ -437,6 +533,14 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Bind button events on render.
+ * @method MoneyManagementApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
  * Handle update button click.
  * @method MoneyManagementApplication#_onClickButton
  * @param {MouseEvent} event - Click event.
@@ -446,7 +550,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-creation-app.js`
+## File: `vendor-creation-app.js` {#file-vendor-creation-appjs}
 
 ### Class: `VendorCreationApplication`
 
@@ -463,6 +567,49 @@ Defines the `VendorWalletSystem` static controller.
  * Prepare compendium list and defaults.
  * @method VendorCreationApplication#_prepareContext
  * @returns {Promise<object>} Context for template.
+ */
+```
+
+```javascript
+/**
+ * Bind interactive events on render.
+ * @method VendorCreationApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Open file picker for image fields.
+ * @method VendorCreationApplication#_onClickFilePicker
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Attach currency formatting listeners.
+ * @method VendorCreationApplication#_setupCurrencyListeners
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Submit form to create vendor.
+ * @method VendorCreationApplication#_onSubmitForm
+ * @param {Event} event - Form submit event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle create button click.
+ * @method VendorCreationApplication#_onClickCreate
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
  */
 ```
 
@@ -486,7 +633,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-manager-app.js`
+## File: `vendor-manager-app.js` {#file-vendor-manager-appjs}
 
 ### Class: `VendorManagerApplication`
 
@@ -503,6 +650,14 @@ Defines the `VendorWalletSystem` static controller.
  * Assemble vendor metadata for rendering.
  * @method VendorManagerApplication#_prepareContext
  * @returns {Promise<object>} Template data.
+ */
+```
+
+```javascript
+/**
+ * Bind action handlers on render.
+ * @method VendorManagerApplication#_onRender
+ * @returns {void}
  */
 ```
 
@@ -535,7 +690,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-edit-app.js`
+## File: `vendor-edit-app.js` {#file-vendor-edit-appjs}
 
 ### Class: `VendorEditApplication`
 
@@ -557,6 +712,58 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
+ * Bind form listeners on render.
+ * @method VendorEditApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Clean up listeners when closing.
+ * @method VendorEditApplication#close
+ * @param {object} options - Close options.
+ * @returns {Promise<any>} Result of parent close.
+ */
+```
+
+```javascript
+/**
+ * Open a file picker for image fields.
+ * @method VendorEditApplication#_onClickFilePicker
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Attach currency formatting listeners.
+ * @method VendorEditApplication#_setupCurrencyListeners
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Submit form to update vendor.
+ * @method VendorEditApplication#_onSubmitForm
+ * @param {Event} event - Submit event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle update button clicks.
+ * @method VendorEditApplication#_onClickButton
+ * @param {Event} event - Click event.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
  * Save vendor updates.
  * @method VendorEditApplication#_updateVendor
  * @param {Event} event - Form submission event.
@@ -564,9 +771,18 @@ Defines the `VendorWalletSystem` static controller.
  */
 ```
 
+```javascript
+/**
+ * Select random compendium items based on filters.
+ * @method VendorEditApplication#generateRandomItems
+ * @param {Object} vendorData - Vendor criteria.
+ * @returns {Promise<Array>} Array of generated items.
+ */
+```
+
 ---
 
-## File: `vendor-item-edit-app.js`
+## File: `vendor-item-edit-app.js` {#file-vendor-item-edit-appjs}
 
 ### Class: `VendorItemEditApplication`
 
@@ -588,25 +804,51 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Apply item changes.
- * @method VendorItemEditApplication#_updateItem
- * @param {Event} event - Form submission event.
+
+ * Bind DOM event listeners after rendering.
+ * @method VendorItemEditApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Handle submission of the edit form.
+ * @method VendorItemEditApplication#_onSubmitForm
+ * @param {Event} event - Submit event.
  * @returns {Promise<void>}
  */
 ```
 
 ```javascript
 /**
- * Remove item from vendor inventory.
- * @method VendorItemEditApplication#_removeItem
+ * Handle button clicks for update or removal actions.
+ * @method VendorItemEditApplication#_onClickButton
  * @param {Event} event - Click event.
  * @returns {Promise<void>}
  */
 ```
 
+```javascript
+/**
+ * Apply item changes.
+ * @method VendorItemEditApplication#_updateItem
+ * @returns {Promise<void>} Resolves once the item is saved.
+ */
+```
+
+```javascript
+/**
+ * Remove the item from the vendor after confirmation.
+ * @method VendorItemEditApplication#_removeItem
+ * @param {Event} event - Click event that initiated the removal.
+ * @returns {Promise<void>} Resolves once the item has been removed.
+ */
+```
+
 ---
 
-## File: `player-wallet-app.js`
+## File: `player-wallet-app.js` {#file-player-wallet-appjs}
 
 ### Class: `PlayerWalletApplication`
 
@@ -647,7 +889,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-display-app.js`
+## File: `vendor-display-app.js` {#file-vendor-display-appjs}
 
 ### Class: `VendorDisplayApplication`
 
@@ -679,7 +921,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `currency-settings-app.js`
+## File: `currency-settings-app.js` {#file-currency-settings-appjs}
 
 ### Class: `CurrencySettingsApplication`
 

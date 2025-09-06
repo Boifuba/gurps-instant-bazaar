@@ -52,6 +52,7 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
 
   /**
    * Handles rendering events by setting up event listeners
+   * @returns {void}
    */
   _onRender() {
     this.element.addEventListener('click', this._onClickActionBound);

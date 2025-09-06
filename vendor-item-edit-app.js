@@ -56,6 +56,7 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
 
   /**
    * Handles rendering events by setting up event listeners
+   * @returns {void}
    */
   _onRender() {
     this.element.addEventListener('click', this._onClickButton.bind(this));
@@ -79,15 +80,14 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
    */
   async _onClickButton(event) {
     const action = event.target.dataset.action;
-    
+
     switch (action) {
       case 'update-item':
         event.preventDefault();
         await this._updateItem();
         break;
       case 'remove-item':
-        event.preventDefault();
-        await this._removeItem();
+        await this._removeItem(event);
         break;
     }
   }
@@ -124,10 +124,12 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
   }
 
   /**
-   * Removes the item from the vendor after confirmation
-   * @returns {Promise<void>}
+   * Remove the item from the vendor after user confirmation.
+   * @param {Event} event - Click event that initiated the removal.
+   * @returns {Promise<void>} Resolves once the item has been removed.
    */
-  async _removeItem() {
+  async _removeItem(event) {
+    event.preventDefault();
     const confirmed = await Dialog.confirm({
       title: 'Remove Item',
       content: 'Are you sure you want to remove this item from the vendor?'

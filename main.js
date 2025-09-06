@@ -21,6 +21,7 @@ class VendorWalletSystem {
 
   /**
    * Initializes the module by registering settings, socket listeners, and handlebars helpers
+   * @returns {void}
    */
   static initialize() {
     this.registerSettings();
@@ -55,6 +56,7 @@ class VendorWalletSystem {
 
   /**
    * Registers module settings with FoundryVTT
+   * @returns {void}
    */
   static registerSettings() {
     game.settings.register(this.ID, 'vendors', {
@@ -121,6 +123,7 @@ class VendorWalletSystem {
 
   /**
    * Registers socket event listeners for real-time communication
+   * @returns {void}
    */
   static registerSocketListeners() {
     game.socket.on(this.SOCKET, this.handleSocketEvent.bind(this));
@@ -130,6 +133,7 @@ class VendorWalletSystem {
    * Adds a wallet button to the player list interface
    * @param {Application} app - The FoundryVTT application
    * @param {jQuery} html - The HTML element
+   * @returns {void}
    */
   static addPlayerWalletButton(app, html) {
     const button = $(`<button class="wallet-button"><i class="fas fa-wallet"></i> Wallet</button>`);
@@ -226,6 +230,7 @@ class VendorWalletSystem {
   /**
    * Handles socket events from other clients
    * @param {Object} data - The socket event data
+   * @returns {void}
    */
   static handleSocketEvent(data) {
     switch (data.type) {
@@ -537,10 +542,10 @@ class VendorWalletSystem {
       i.system.globalid === uuid
     );
 
-    if (item) {
-      // Para itens existentes, soma a quantidade atual com a nova
-      const current = item.system?.eqt?.count ?? 0;
-      const total = current + quantity;
+      if (item) {
+        // For existing items, add the new quantity to the current one
+        const current = item.system?.eqt?.count ?? 0;
+        const total = current + quantity;
 
       const eqtUuid = item.system?.eqt?.uuid;
       const key = eqtUuid ? actor._findEqtkeyForId("uuid", eqtUuid) : undefined;
@@ -589,10 +594,10 @@ class VendorWalletSystem {
         return false;
       }
 
-      // Para itens recém-criados, define a quantidade diretamente
+        // For newly created items, set the quantity directly
       console.log(`🔍 DEBUG NEW ITEM - Setting quantity to: ${quantity}`);
       
-      // Aguarda um tick para garantir que o item foi completamente criado
+        // Wait a tick to ensure the item was fully created
       await new Promise(resolve => setTimeout(resolve, 10));
       
       const eqtUuid = item.system?.eqt?.uuid;
@@ -615,6 +620,7 @@ class VendorWalletSystem {
   /**
    * Refreshes all open vendor display windows for a specific vendor
    * @param {string} vendorId - The vendor ID to refresh displays for
+   * @returns {void}
    */
   static refreshVendorDisplays(vendorId) {
     // Refresh all open vendor display windows for this vendor
@@ -627,6 +633,7 @@ class VendorWalletSystem {
 
   /**
    * Refreshes all open vendor manager windows
+   * @returns {void}
    */
   static refreshVendorManagers() {
     Object.values(ui.windows).forEach(window => {
@@ -638,6 +645,7 @@ class VendorWalletSystem {
 
   /**
    * Opens the player wallet application showing all available vendors
+   * @returns {void}
    */
   static openAllAvailableVendors() {
     new PlayerWalletApplication().render(true);
@@ -769,7 +777,7 @@ Hooks.once('init', () => {
   if (UserClass?.registerFlagScope) {
     UserClass.registerFlagScope(VendorWalletSystem.ID);
   } else {
-    console.warn('User.registerFlagScope indisponível; flags de carteira podem falhar.');
+    console.warn('User.registerFlagScope unavailable; wallet flags may fail.');
 
   }
   VendorWalletSystem.initialize();

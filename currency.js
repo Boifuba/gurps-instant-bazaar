@@ -1,4 +1,6 @@
-/* currency.js */
+/**
+ * @file Utility functions and classes for managing currency and wallets
+ */
 
 const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
 
@@ -58,9 +60,9 @@ class Wallet {
     const {
       optimizeOnConstruct = true,
       optimizeOnAdd = true,
-      optimizeOnSubtract = false, // se true: caminho canônico (maior→menor) após subtrair
-      spendSmallestFirst = true,  // gastar começando da menor
-      repackAfterSubtract = "up"  // "none" | "up" (coalesce para cima após pagar)
+      optimizeOnSubtract = false, // if true: canonical path (largest→smallest) after subtracting
+      spendSmallestFirst = true,  // spend starting from the smallest
+      repackAfterSubtract = "up"  // "none" | "up" (coalesce upward after paying)
     } = opts;
 
     this._denominations = (denominations || [])
@@ -88,7 +90,7 @@ class Wallet {
       const a = d[i].value, b = d[i + 1].value;
       if (a % b !== 0) {
         throw new Error(
-          `Denominações não-canônicas após escalar: ${d[i].name} (${a}) não é múltiplo de ${d[i + 1].name} (${b}).`
+          `Non-canonical denominations after scaling: ${d[i].name} (${a}) is not a multiple of ${d[i + 1].name} (${b}).`
         );
       }
     }
@@ -133,14 +135,30 @@ class Wallet {
     const cnt = bag[from.name] | 0;
     if (cnt <= 0) return false;
     const ratio = from.value / to.value;
-    if (!Number.isInteger(ratio)) {
-      throw new Error("Denominações não permitem quebra limpa (não-inteiras após escalar).");
-    }
+      if (!Number.isInteger(ratio)) {
+        throw new Error("Denominations do not allow a clean break (non-integers after scaling).");
+      }
     bag[from.name] = cnt - 1;
     bag[to.name] = (bag[to.name] | 0) + ratio;
     return true;
   }
 
+  /**
+   * Adiciona valores ao conteúdo da carteira.
+   *
+   * @param {number|Object<string,number>} [arg=0] - Quantia a ser somada. Pode ser
+   * um número (em unidades base) ou um objeto mapeando nomes de moedas para
+   * quantidades.
+   * @returns {Wallet} Esta própria carteira, para encadeamento.
+   * @throws {Error} Se o valor informado for negativo ou não inteiro após o
+   *   escalonamento.
+   *
+   * @example
+   * const wallet = new Wallet();
+   * wallet.add({ prata: 3 });
+   *
+   * @see Wallet#subtract
+   */
   add(arg) {
     const D = this._getScaledDenominations();
     const isNumber = typeof arg === "number";
@@ -171,6 +189,19 @@ class Wallet {
     return this;
   }
 
+  /**
+   * Subtrai valores do conteúdo da carteira.
+   *
+   * @param {number|Object<string,number>} [arg=0] - Quantia a ser removida. Pode
+   * ser um número (em unidades base) ou um objeto mapeando moedas para
+   * quantidades.
+   * @returns {Wallet} Esta própria carteira, para encadeamento.
+   * @throws {Error} Se o valor for negativo, não inteiro ou se houver fundos
+   *   insuficientes. Também lança erro caso seja necessário quebrar moedas
+   *   maiores quando `spendSmallestFirst` está desativado.
+   *
+   * @see Wallet#add
+   */
   subtract(arg) {
     const D = this._getScaledDenominations();
     const delta = typeof arg === "number" ? this._getScaledValue(arg) : valueFromCoins(arg, D);
@@ -250,12 +281,19 @@ class Wallet {
   }
 }
 
+/**
+ * Integrates wallets with Foundry actors and settings.
+ * @class CurrencyManager
+ */
 class CurrencyManager {
+  /**
+   * @param {string} moduleId - Module identifier used for settings keys
+   */
   constructor(moduleId) {
     this.moduleId = moduleId;
     const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
-    this._baseUnitMultiplier = _calculateBaseUnitMultiplier(denominations);
-    this._moduleScale = 100; // centavos no modo do módulo (sem moedas físicas)
+      this._baseUnitMultiplier = _calculateBaseUnitMultiplier(denominations);
+      this._moduleScale = 100; // cents in module mode (no physical coins)
   }
 
   _getScale() {
@@ -519,14 +557,19 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     }
   }
 
+  /**
+   * Refreshes any open wallet-related applications
+   * @returns {void}
+   */
   _refreshWalletApplications() {
-    Object.values(ui.windows).forEach((windowApp) => {
+    const { PlayerWalletApplication, VendorDisplayApplication, MoneyManagementApplication } = window;
+    Object.values(ui.windows).forEach((app) => {
       if (
-        windowApp instanceof window.PlayerWalletApplication ||
-        windowApp instanceof window.VendorDisplayApplication ||
-        windowApp instanceof window.MoneyManagementApplication
+        (PlayerWalletApplication && app instanceof PlayerWalletApplication) ||
+        (VendorDisplayApplication && app instanceof VendorDisplayApplication) ||
+        (MoneyManagementApplication && app instanceof MoneyManagementApplication)
       ) {
-        windowApp.render(false);
+        app.render(false);
       }
     });
   }
@@ -635,9 +678,9 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
         vendorId: vendorId,
         itemId: vendorItemId
       });
-    } catch (err) {
-      // silencioso
-    }
+      } catch (err) {
+        // silent
+      }
   }
 
   refreshSettings() {
