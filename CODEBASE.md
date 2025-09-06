@@ -806,7 +806,8 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Bind form events on render.
+
+ * Bind DOM event listeners after rendering.
  * @method VendorItemEditApplication#_onRender
  * @returns {void}
  */
@@ -814,7 +815,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Submit form to update item.
+ * Handle submission of the edit form.
  * @method VendorItemEditApplication#_onSubmitForm
  * @param {Event} event - Submit event.
  * @returns {Promise<void>}
@@ -823,7 +824,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Handle button actions.
+ * Handle button clicks for update or removal actions.
  * @method VendorItemEditApplication#_onClickButton
  * @param {Event} event - Click event.
  * @returns {Promise<void>}
@@ -834,17 +835,16 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Apply item changes.
  * @method VendorItemEditApplication#_updateItem
- * @param {Event} event - Form submission event.
- * @returns {Promise<void>}
+ * @returns {Promise<void>} Resolves once the item is saved.
  */
 ```
 
 ```javascript
 /**
- * Remove item from vendor inventory.
+ * Remove the item from the vendor after confirmation.
  * @method VendorItemEditApplication#_removeItem
- * @param {Event} event - Click event.
- * @returns {Promise<void>}
+ * @param {Event} event - Click event that initiated the removal.
+ * @returns {Promise<void>} Resolves once the item has been removed.
  */
 ```
 
