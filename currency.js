@@ -556,7 +556,11 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
       }
 
       if (itemsToDelete.length > 0) {
-        await actor.deleteEmbeddedDocuments("Item", itemsToDelete);
+        // Filter out items that no longer exist in the actor's collection
+        const existingItemsToDelete = itemsToDelete.filter(itemId => actor.items.get(itemId));
+        if (existingItemsToDelete.length > 0) {
+          await actor.deleteEmbeddedDocuments("Item", existingItemsToDelete);
+        }
       }
 
       if (itemsToCreate.length > 0) {

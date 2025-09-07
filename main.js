@@ -466,27 +466,29 @@ class VendorWalletSystem {
         </div>
         
         <script>
-          const slider = document.getElementById('sellPercentageSlider');
-          const input = document.getElementById('sellPercentage');
-          const display = document.getElementById('finalPaymentDisplay');
-          const totalValue = ${totalValue};
-          
-          function updatePayment(percentage) {
-            const payment = (totalValue * percentage) / 100;
-            display.textContent = window.VendorWalletSystem.currencyManager.formatCurrency(payment);
-          }
-          
-          slider.addEventListener('input', function() {
-            input.value = this.value;
-            updatePayment(this.value);
-          });
-          
-          input.addEventListener('input', function() {
-            const value = Math.max(0, Math.min(100, parseInt(this.value) || 0));
-            this.value = value;
-            slider.value = value;
-            updatePayment(value);
-          });
+          (function() {
+            const slider = document.getElementById('sellPercentageSlider');
+            const input = document.getElementById('sellPercentage');
+            const display = document.getElementById('finalPaymentDisplay');
+            const totalValue = ${totalValue};
+            
+            function updatePayment(percentage) {
+              const payment = (totalValue * percentage) / 100;
+              display.textContent = window.VendorWalletSystem.currencyManager.formatCurrency(payment);
+            }
+            
+            slider.addEventListener('input', function() {
+              input.value = this.value;
+              updatePayment(this.value);
+            });
+            
+            input.addEventListener('input', function() {
+              const value = Math.max(0, Math.min(100, parseInt(this.value) || 0));
+              this.value = value;
+              slider.value = value;
+              updatePayment(value);
+            });
+          })();
         </script>
       `;
       
