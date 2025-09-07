@@ -32,7 +32,7 @@ files, exported symbols, arguments, parameter types, and return values.
 - [vendor-display-app.js](#file-vendor-display-appjs)
 - [currency-settings-app.js](#file-currency-settings-appjs)
 
-## File: `currency.js` {#file-currencyjs}
+## File: `currency.js`
 
 
 Utility functions and classes for coin-based currency.
@@ -249,7 +249,7 @@ wallet.add(125);
 
 ---
 
-## File: `main.js` {#file-mainjs}
+## File: `main.js`
 
 Defines the `VendorWalletSystem` static controller.
 
@@ -478,7 +478,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `gm-tools-app.js` {#file-gm-tools-appjs}
+## File: `gm-tools-app.js`
 
 ### Class: `GMToolsApplication`
 
@@ -486,18 +486,16 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Menu of GM utilities.
  * @class GMToolsApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
 ```javascript
 /**
- * Bind button events on render.
+ * Set up event listeners after rendering.
  * @method GMToolsApplication#_onRender
- * @param {Application} app - Application instance.
- * @param {jQuery} html - Rendered HTML.
  * @returns {void}
- */
+*/
 ```
 
 ```javascript
@@ -511,7 +509,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `money-management-app.js` {#file-money-management-appjs}
+## File: `money-management-app.js`
 
 ### Class: `MoneyManagementApplication`
 
@@ -519,7 +517,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * GM interface for adjusting player funds.
  * @class MoneyManagementApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
@@ -550,7 +548,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-creation-app.js` {#file-vendor-creation-appjs}
+## File: `vendor-creation-app.js`
 
 ### Class: `VendorCreationApplication`
 
@@ -558,7 +556,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Wizard to create vendors with random items.
  * @class VendorCreationApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
@@ -633,7 +631,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-manager-app.js` {#file-vendor-manager-appjs}
+## File: `vendor-manager-app.js`
 
 ### Class: `VendorManagerApplication`
 
@@ -641,7 +639,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Overview window listing all vendors.
  * @class VendorManagerApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
@@ -690,7 +688,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-edit-app.js` {#file-vendor-edit-appjs}
+## File: `vendor-edit-app.js`
 
 ### Class: `VendorEditApplication`
 
@@ -698,7 +696,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Editor for a single vendor.
  * @class VendorEditApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
@@ -782,7 +780,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-item-edit-app.js` {#file-vendor-item-edit-appjs}
+## File: `vendor-item-edit-app.js`
 
 ### Class: `VendorItemEditApplication`
 
@@ -790,7 +788,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Editor for an individual vendor item.
  * @class VendorItemEditApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
@@ -848,7 +846,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `player-wallet-app.js` {#file-player-wallet-appjs}
+## File: `player-wallet-app.js`
 
 ### Class: `PlayerWalletApplication`
 
@@ -856,7 +854,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Combined wallet viewer and vendor browser for players.
  * @class PlayerWalletApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @param {object} [options] - Application options.
  */
 ```
@@ -889,7 +887,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ---
 
-## File: `vendor-display-app.js` {#file-vendor-display-appjs}
+## File: `vendor-display-app.js`
 
 ### Class: `VendorDisplayApplication`
 
@@ -897,7 +895,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Stand‑alone window showing a vendor's inventory.
  * @class VendorDisplayApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @param {object} [options] - Application options.
  */
 ```
@@ -912,16 +910,33 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Handle purchase button actions.
- * @method VendorDisplayApplication#_onPurchaseAction
+ * Set up event listeners after rendering.
+ * @method VendorDisplayApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Handle item purchase clicks.
+ * @method VendorDisplayApplication#_onPurchaseItem
  * @param {MouseEvent} event - Click event.
  * @returns {Promise<void>}
  */
 ```
 
+```javascript
+/**
+ * Refresh open displays for a specific vendor.
+ * @function VendorDisplayApplication.refreshDisplays
+ * @param {string} vendorId - Vendor identifier.
+ * @returns {void}
+ */
+```
+
 ---
 
-## File: `currency-settings-app.js` {#file-currency-settings-appjs}
+## File: `currency-settings-app.js`
 
 ### Class: `CurrencySettingsApplication`
 
@@ -929,7 +944,7 @@ Defines the `VendorWalletSystem` static controller.
 /**
  * Configure coin denominations and behavior.
  * @class CurrencySettingsApplication
- * @extends Application
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  */
 ```
 
