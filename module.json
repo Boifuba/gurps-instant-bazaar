@@ -14,6 +14,7 @@
   ],
   "scripts": [
     "currency.js",
+    "utils.js",
     "form-utilities.js",
     "main.js",
     "player-wallet-app.js",

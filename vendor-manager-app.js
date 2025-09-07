@@ -121,5 +121,17 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
   }
 }
 
+/**
+ * Static method to refresh all open vendor manager windows
+ * @returns {void}
+ */
+VendorManagerApplication.refreshVendors = function() {
+  Object.values(ui.windows).forEach(window => {
+    if (window instanceof VendorManagerApplication) {
+      window.render(false);
+    }
+  });
+};
+
 // Make the manager accessible globally for other scripts and tests
 globalThis.VendorManagerApplication = VendorManagerApplication;

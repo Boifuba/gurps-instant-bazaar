@@ -88,9 +88,9 @@ class VendorWalletSystem {
       config: false,
       type: Array,
       default: [
-        { name: "Gold Coin", value: 80 },
-        { name: "Silver Coin", value: 4 },
-        { name: "Copper Farthing", value: 1 }
+        { name: "Gold Coin", value: 80, weight: 0.004 },
+        { name: "Silver Coin", value: 4, weight: 0.004 },
+        { name: "Copper Farthing", value: 1, weight: 0.008 }
       ]
     });
     game.settings.register(this.ID, 'optimizeOnConstruct', {
@@ -145,35 +145,6 @@ class VendorWalletSystem {
   }
 
   /**
-   * Gets the wallet amount for a specific user
-   * @param {string} userId - The user ID
-   * @returns {number} The wallet amount
-   */
-  static getUserWallet(userId) {
-    return this.currencyManager.getUserWallet(userId);
-  }
-
-  /**
-   * Gets the breakdown of currency coins from module wallet system
-   * @param {string} userId - The user ID
-   * @returns {Array<{name: string, count: number, value: number}>} Array of coin breakdown objects
-   */
-  static getModuleCurrencyBreakdown(userId) {
-    const denominations = game.settings.get(this.ID, 'currencyDenominations') || [];
-    return this.currencyManager.getModuleCurrencyBreakdown(userId, denominations);
-  }
-
-  /**
-   * Sets the wallet amount for a specific user
-   * @param {string} userId - The user ID
-   * @param {number} amount - The amount to set (minimum 0)
-   * @returns {Promise<any>} The result of the flag update
-   */
-  static async setUserWallet(userId, amount) {
-    return await this.currencyManager.setUserWallet(userId, amount);
-  }
-
-  /**
   * Gets all vendors from settings
   * @returns {Object} All vendors data
    */
@@ -208,8 +179,8 @@ class VendorWalletSystem {
     await game.settings.set(this.ID, 'vendors', vendors);
 
     // Refresh local vendor windows so quantities update immediately
-    this.refreshVendorManagers();
-    this.refreshVendorDisplays(vendorId);
+    VendorManagerApplication.refreshVendors();
+    VendorDisplayApplication.refreshDisplays(vendorId);
 
     // Notify all clients to refresh vendor displays
     game.socket.emit(this.SOCKET, {
@@ -231,6 +202,113 @@ class VendorWalletSystem {
   }
 
   /**
+   * Sends a purchase request to the GM via socket (for players)
+   * @param {Actor} targetActor - The target actor
+   * @param {string} vendorId - The vendor ID
+   * @param {Array} selectedItems - Selected items data
+   * @param {string} userId - The user ID
+   * @returns {Promise<void>}
+   */
+  static async _sendPurchaseRequestToGM(targetActor, vendorId, selectedItems, userId) {
+    console.log("💰 PLAYER: Sending purchase request to GM...");
+    
+    // Send purchase request to GM
+    console.log("💰 PLAYER: Emitting socket event...");
+    game.socket.emit(this.SOCKET, {
+      type: 'playerPurchaseRequest',
+      userId: userId,
+      actorId: targetActor.id,
+      vendorId: vendorId,
+      selectedItems: selectedItems
+    });
+    
+    ui.notifications.info('Purchase request sent to GM for processing...');
+  }
+
+  /**
+   * Processes purchase directly (for GM users)
+   * @param {Actor} targetActor - The target actor
+   * @param {string} vendorId - The vendor ID
+   * @param {Array} selectedItems - Selected items data
+   * @param {HTMLElement} element - The DOM element (for UI updates)
+   * @returns {Promise<void>}
+   */
+  static async _processDirectPurchase(targetActor, vendorId, selectedItems, element) {
+    console.log("💰 GM: Processing direct purchase...");
+    
+    const vendor = this.getVendor(vendorId);
+    const itemsToProcess = [];
+    
+    // Validate stock for each item
+    for (const selectedItem of selectedItems) {
+      const vendorItem = vendor.items.find(item => item.id === selectedItem.id);
+      const stock = vendorItem?.quantity;
+
+      if (!vendorItem || (stock !== undefined && selectedItem.quantity > stock)) {
+        ui.notifications.warn(`${selectedItem.name || 'Item'} is out of stock.`);
+        continue;
+      }
+
+      itemsToProcess.push({ vendorItem, purchaseQuantity: selectedItem.quantity, itemId: vendorItem.id });
+    }
+
+    if (itemsToProcess.length === 0) return;
+
+    // Calculate total cost
+    const totalCostRequired = itemsToProcess.reduce((sum, { vendorItem, purchaseQuantity }) =>
+      sum + (vendorItem.price * purchaseQuantity), 0);
+    const roundedTotalCostRequired = Math.ceil(totalCostRequired);
+
+    // Check wallet
+    const currentWallet = this.currencyManager.getUserWallet(game.user.id);
+    if (currentWallet < roundedTotalCostRequired) {
+      ui.notifications.warn(`Not enough coins! Need ${this.formatCurrency(roundedTotalCostRequired)} but only have ${this.formatCurrency(currentWallet)}.`);
+      return;
+    }
+
+    // Process each item
+    let totalItemsProcessed = 0;
+    let totalCostProcessed = 0;
+
+    console.log("💰 GM: Processing selected items...");
+    for (const { vendorItem, purchaseQuantity, itemId } of itemsToProcess) {
+      console.log("💰 GM: Processing vendor item:", vendorItem.name, "Quantity:", purchaseQuantity);
+      const success = await this.addItemToActor(targetActor, vendorItem.uuid, purchaseQuantity);
+      
+      if (!success) {
+        ui.notifications.error(`Failed to add ${vendorItem.name} to ${targetActor.name}.`);
+        continue;
+      }
+
+      totalItemsProcessed += purchaseQuantity;
+      totalCostProcessed += vendorItem.price * purchaseQuantity;
+      
+      // Remove purchased quantity from vendor
+      await this.updateItemQuantityInVendor(vendorId, vendorItem.id, -purchaseQuantity);
+
+      // Update displayed stock in UI if element is provided
+      if (element) {
+        const currentStock = vendorItem.quantity ?? 0;
+        const newStock = currentStock - purchaseQuantity;
+        vendorItem.quantity = newStock;
+        const itemCard = element.querySelector(`.vendor-item-card[data-vendor-item-id="${itemId}"]`);
+        const stockEl = itemCard?.querySelector('.item-stock');
+        if (stockEl) stockEl.textContent = `(${newStock} available)`;
+        const qtyInput = itemCard?.querySelector('.item-quantity-input');
+        if (qtyInput) qtyInput.max = newStock;
+      }
+    }
+
+    // Round up the final cost processed
+    totalCostProcessed = Math.ceil(totalCostProcessed);
+
+    // Deduct money from wallet
+    await this.currencyManager.setUserWallet(game.user.id, currentWallet - totalCostProcessed);
+
+    ui.notifications.info(`Purchased ${totalItemsProcessed} items for ${this.formatCurrency(totalCostProcessed)}!`);
+  }
+
+  /**
    * Handles socket events from other clients
    * @param {Object} data - The socket event data
    * @returns {void}
@@ -238,12 +316,12 @@ class VendorWalletSystem {
   static handleSocketEvent(data) {
     switch (data.type) {
       case 'vendorUpdated':
-        this.refreshVendorDisplays(data.vendorId);
-        this.refreshVendorManagers();
+        VendorDisplayApplication.refreshDisplays(data.vendorId);
+        VendorManagerApplication.refreshVendors();
         break;
       case 'itemPurchased':
-        this.refreshVendorDisplays(data.vendorId);
-        this.refreshVendorManagers();
+        VendorDisplayApplication.refreshDisplays(data.vendorId);
+        VendorManagerApplication.refreshVendors();
         break;
       case 'playerPurchaseRequest':
         if (game.user.isGM) {
@@ -305,20 +383,20 @@ class VendorWalletSystem {
     // Calculate total cost of items that can be purchased
     const totalCost = itemsWithStock.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const roundedTotalCost = totalCost;
-    const currentWallet = this.getUserWallet(userId);
+    const currentWallet = this.currencyManager.getUserWallet(userId);
 
     if (currentWallet < roundedTotalCost) {
-      this.emitPurchaseResult(userId, false, `Not enough coins! Need ${this.currencyManager.formatCurrency(roundedTotalCost)} but only have ${this.currencyManager.formatCurrency(currentWallet)}.`);
+      this.emitPurchaseResult(userId, false, `Not enough coins! Need ${this.formatCurrency(roundedTotalCost)} but only have ${this.formatCurrency(currentWallet)}.`);
       return;
     }
 
     if (game.settings.get(this.ID, 'requireGMApproval')) {
       const itemList = itemsWithStock
-        .map(item => `<li>${item.quantity}x ${item.name} - ${this.currencyManager.formatCurrency(item.price)}</li>`)
+        .map(item => `<li>${item.quantity}x ${item.name} - ${this.formatCurrency(item.price)}</li>`)
         .join('');
       const approved = await Dialog.confirm({
         title: 'Approve Purchase',
-        content: `<p>${game.users.get(userId)?.name || 'A player'} wants to purchase:</p><ul>${itemList}</ul><p>Total: ${this.currencyManager.formatCurrency(roundedTotalCost)}</p>`
+        content: `<p>${game.users.get(userId)?.name || 'A player'} wants to purchase:</p><ul>${itemList}</ul><p>Total: ${this.formatCurrency(roundedTotalCost)}</p>`
       });
       if (!approved) {
         this.emitPurchaseResult(userId, false, 'Purchase declined by GM.');
@@ -359,11 +437,11 @@ class VendorWalletSystem {
       }
 
       // Deduct money from wallet for successfully processed items
-      await this.setUserWallet(userId, currentWallet - costProcessed);
+      await this.currencyManager.setUserWallet(userId, currentWallet - costProcessed);
 
       console.log(`💰 DEBUG: Wallet updated from ${currentWallet} to ${currentWallet - costProcessed}`);
 
-      this.emitPurchaseResult(userId, true, `Purchased ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(costProcessed)}!`, {
+      this.emitPurchaseResult(userId, true, `Purchased ${totalItemsProcessed} items for ${this.formatCurrency(costProcessed)}!`, {
         itemCount: totalItemsProcessed,
         totalCost: costProcessed,
         newWallet: currentWallet - costProcessed
@@ -439,7 +517,7 @@ class VendorWalletSystem {
               <span style="font-weight: bold;  font-size: 1.1em;">
                 <i class="fas fa-calculator" style="margin-right: 6px;"></i>Total Value:
               </span>
-              <span style="font-size: 1.2em; font-weight: bold; ">${this.currencyManager.formatCurrency(totalValue)}</span>
+              <span style="font-size: 1.2em; font-weight: bold; ">${this.formatCurrency(totalValue)}</span>
             </div>
           </div>
           
@@ -459,7 +537,7 @@ class VendorWalletSystem {
             <div style="margin-top: 10px; padding: 8px; border-radius: 4px; text-align: center;">
               <span style="font-size: 0.9em;">Final Payment: </span>
               <span id="finalPaymentDisplay" style="font-weight: bold; font-size: 1.1em;">
-                ${this.currencyManager.formatCurrency((totalValue * automaticSellPercentage) / 100)}
+                ${this.formatCurrency((totalValue * automaticSellPercentage) / 100)}
               </span>
             </div>
           </div>
@@ -474,7 +552,7 @@ class VendorWalletSystem {
             
             function updatePayment(percentage) {
               const payment = (totalValue * percentage) / 100;
-              display.textContent = window.VendorWalletSystem.currencyManager.formatCurrency(payment);
+              display.textContent = window.VendorWalletSystem.formatCurrency(payment);
             }
             
             slider.addEventListener('input', function() {
@@ -529,13 +607,13 @@ class VendorWalletSystem {
         }
         
         // Find the item in the carried equipment structure
-        const itemPath = this._findItemInCarried(carried, id);
+        const itemPath = window.findItemInCarried(carried, id);
         if (!itemPath) {
           console.warn(`Item ${id} not found in carried equipment for actor ${actor.name}`);
           continue;
         }
         
-        const itemData = this._getItemFromPath(carried, itemPath);
+        const itemData = window.getItemFromPath(carried, itemPath);
         if (!itemData) {
           console.warn(`Could not retrieve item data for ${id}`);
           continue;
@@ -594,12 +672,12 @@ class VendorWalletSystem {
       }
       
       // Add money to wallet
-      const currentWallet = this.getUserWallet(userId);
-      await this.setUserWallet(userId, currentWallet + processedFinalPayment);
+      const currentWallet = this.currencyManager.getUserWallet(userId);
+      await this.currencyManager.setUserWallet(userId, currentWallet + processedFinalPayment);
 
       const saleMessage = requireGMApproval 
-        ? `Sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(processedFinalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`
-        : `Automatically sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(processedFinalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`;
+        ? `Sold ${totalItemsProcessed} items for ${this.formatCurrency(processedFinalPayment)} (${sellPercentage}% of ${this.formatCurrency(totalValueProcessed)})!`
+        : `Automatically sold ${totalItemsProcessed} items for ${this.formatCurrency(processedFinalPayment)} (${sellPercentage}% of ${this.formatCurrency(totalValueProcessed)})!`;
       
       this.emitSellResult(userId, true, saleMessage);
 
@@ -609,56 +687,6 @@ class VendorWalletSystem {
     }
   }
 
-  /**
-   * Recursively finds an item in the carried equipment structure
-   * @param {Object} carried - The carried equipment object
-   * @param {string} itemId - The item ID to find
-   * @param {string} [currentPath=''] - Current path in the structure
-   * @returns {string|null} The path to the item or null if not found
-   */
-  static _findItemInCarried(carried, itemId, currentPath = '') {
-    for (const [key, value] of Object.entries(carried)) {
-      const path = currentPath ? `${currentPath}.${key}` : key;
-      
-      if (key === itemId) {
-        return path;
-      }
-      
-      if (value && typeof value === 'object' && value.collapsed) {
-        const nestedPath = this._findItemInCarried(value.collapsed, itemId, `${path}.collapsed`);
-        if (nestedPath) return nestedPath;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Gets an item from a path in the carried equipment structure
-   * @param {Object} carried - The carried equipment object
-   * @param {string} path - The path to the item
-   * @returns {Object|null} The item data or null if not found
-   */
-  static _getItemFromPath(carried, path) {
-    const pathParts = path.split('.');
-    let current = carried;
-    
-    for (const part of pathParts) {
-      if (current && typeof current === 'object' && current[part] !== undefined) {
-        current = current[part];
-      } else {
-        return null;
-      }
-    }
-    
-    return current;
-  }
-  /**
-   * Emits a sell result to the specified user
-   * @param {string} userId - The user ID to send the result to
-   * @param {boolean} success - Whether the sale was successful
-   * @param {string} message - The message to display
-   * @param {Object} data - Additional data to include
-   */
   static emitSellResult(userId, success, message, data = {}) {
     game.socket.emit(this.SOCKET, {
       type: success ? 'sellCompleted' : 'sellFailed',
@@ -767,97 +795,11 @@ class VendorWalletSystem {
   }
 
   /**
-   * Refreshes all open vendor display windows for a specific vendor
-   * @param {string} vendorId - The vendor ID to refresh displays for
-   * @returns {void}
-   */
-  static refreshVendorDisplays(vendorId) {
-    // Refresh all open vendor display windows for this vendor
-    Object.values(ui.windows).forEach(window => {
-      if (window instanceof VendorDisplayApplication && window.vendorId === vendorId) {
-        window.render();
-      }
-    });
-  }
-
-  /**
-   * Refreshes all open vendor manager windows
-   * @returns {void}
-   */
-  static refreshVendorManagers() {
-    Object.values(ui.windows).forEach(window => {
-      if (window instanceof VendorManagerApplication) {
-        window.render();
-      }
-    });
-  }
-
-  /**
    * Opens the player wallet application showing all available vendors
    * @returns {void}
    */
   static openAllAvailableVendors() {
     new PlayerWalletApplication().render(true);
-  }
-
-  /**
-   * Selects a user actor for transactions, handling multiple actor scenarios
-   * @param {string} [userId] - The user ID to get actors for (defaults to current user)
-   * @returns {Promise<Actor|null>} The selected actor or null if none found/selected
-   */
-  static async selectUserActor(userId = game.user.id) {
-    // Get user's actors with Owner permission
-    const userActors = game.actors.filter(actor => 
-      actor.hasPlayerOwner && actor.ownership[userId] >= 3
-    );
-    
-    if (userActors.length === 0) {
-      ui.notifications.error('No character with Owner permission found! Please check your character sheet permissions.');
-      return null;
-    } else if (userActors.length === 1) {
-      return userActors[0];
-    } else {
-      // Multiple actors - show selection dialog
-      const actorChoices = userActors.reduce((choices, actor) => {
-        choices[actor.id] = actor.name;
-        return choices;
-      }, {});
-      
-      try {
-        const selectedActorId = await Dialog.prompt({
-          title: 'Select Character',
-          content: `
-            <div class="form-group">
-              <label>Choose which character will be used for this transaction:</label>
-              <select id="actorSelect">
-                ${Object.entries(actorChoices).map(([id, name]) => 
-                  `<option value="${id}">${name}</option>`
-                ).join('')}
-              </select>
-            </div>
-          `,
-          callback: (html) => html.find('#actorSelect').val()
-        });
-        
-        return game.actors.get(selectedActorId);
-      } catch (error) {
-        // User cancelled the dialog
-        return null;
-      }
-    }
-  }
-
-  /**
-   * Processes an item purchase transaction
-   * @param {Actor} actor - The purchasing actor
-   * @param {Item} item - The item to purchase
-   * @param {string} vendorId - The vendor ID
-   * @param {string} vendorItemId - The vendor item ID
-   * @param {number} [quantity=1] - Quantity being purchased
-   * @returns {Promise<boolean>} True if purchase was successful
-   */
-  static async processItemPurchase(actor, item, vendorId, vendorItemId, quantity = 1) {
-    return await this.currencyManager.processItemPurchase(actor, item, vendorId, vendorItemId, quantity);
   }
 
   /**
@@ -894,7 +836,7 @@ class VendorWalletSystem {
     await VendorWalletSystem.updateVendor(vendorId, vendor);
 
     // Refresh local vendor manager windows
-    this.refreshVendorManagers();
+    VendorManagerApplication.refreshVendors();
 
     // Notify all clients about the item purchase
     game.socket.emit(this.SOCKET, {
@@ -918,90 +860,6 @@ class VendorWalletSystem {
       }
     }
     return null;
-  }
-
-  /**
-   * Generates random items for a vendor based on the provided criteria
-   * @param {Object} vendorData - The vendor configuration data
-   * @returns {Promise<Array|null>} Array of generated vendor items or null if invalid price range
-   */
-  static async generateRandomItems(vendorData) {
-    if (vendorData.minValue > vendorData.maxValue) {
-      ui.notifications.error('Min Value must be less than or equal to Max Value');
-      return null;
-    }
-
-    const pack = game.packs.get(vendorData.compendium);
-    if (!pack) return [];
-
-    const index = await pack.getIndex({ fields: ['name', 'img', 'system.eqt.techlevel', 'system.eqt.legalityclass'] });
-    let filteredItems = Array.from(index);
-
-    // Apply TL filter if specified
-    if (vendorData.tlFilter) {
-      console.log(`Applying TL filter [${vendorData.tlFilter.join(', ')}] to ${filteredItems.length} items`);
-      filteredItems.forEach(item => {
-        if (item.system?.eqt?.techlevel === undefined) {
-          console.log(`Item sem TL: ${item.name}`);
-        }
-        if (item.system?.eqt?.legalityclass === undefined) {
-          console.log(`Item sem LC: ${item.name}`);
-        }
-      });
-      filteredItems = filteredItems.filter(item => {
-        const tl = item.system?.eqt?.techlevel ?? '';
-
-        return vendorData.tlFilter.includes(String(tl).toLowerCase());
-
-      });
-      console.log(`Items after TL filter: ${filteredItems.length}`);
-    }
-
-    // Apply LC filter if specified
-    if (vendorData.lcFilter != null) {
-
-      console.log(`Applying LC filter ≥ ${vendorData.lcFilter} to ${filteredItems.length} items`);
-
-      filteredItems = filteredItems.filter(item => {
-        const lcValue = item.system?.eqt?.legalityclass;
-        const lc = lcValue === undefined || lcValue === '' ? null : parseInt(lcValue, 10);
-        const isIncluded = lc === null || lc >= vendorData.lcFilter;
-        console.log(`LC check for "${item.name}": ${lc} -> ${isIncluded ? 'kept' : 'discarded'}`);
-        return isIncluded;
-
-      });
-      console.log(`Items after LC filter: ${filteredItems.length} items`);
-    }
-
-    // Randomly select items
-    const shuffled = filteredItems.sort(() => 0.5 - Math.random());
-    const selectedItems = shuffled.slice(0, vendorData.quantity);
-
-    const items = [];
-    for (const indexItem of selectedItems) {
-      const item = await pack.getDocument(indexItem._id);
-      const minStock = Number.isInteger(vendorData.stockMin) ? vendorData.stockMin : 1;
-      const maxStock = Number.isInteger(vendorData.stockMax) ? vendorData.stockMax : minStock;
-      const quantity = Math.floor(Math.random() * (maxStock - minStock + 1)) + minStock;
-
-      const price = item.system?.eqt?.cost || item.system?.cost || 0;
-
-      items.push({
-        id: foundry.utils.randomID(),
-        name: item.name,
-        price,
-        link: item.link,
-        img: item.img,
-        weight: item.system?.eqt?.weight || item.system?.weight || 0,
-        pageref: item.system?.eqt?.pageref || item.system?.pageref || '',
-        uuid: item.uuid,
-
-        quantity
-
-      });
-    }
-
-    return items;
   }
 
   /**
@@ -1041,7 +899,7 @@ class VendorWalletSystem {
         });
       }
 
-      await VendorWalletSystem.processItemPurchase(actor, item, data.vendorId, data.vendorItemId, quantity);
+      await VendorWalletSystem.currencyManager.processItemPurchase(actor, item, data.vendorId, data.vendorItemId, quantity);
       return false; // Prevent default item drop behavior
     } else {
       // Regular item drop, let Foundry handle it normally

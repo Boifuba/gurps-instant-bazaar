@@ -4,6 +4,19 @@
  */
 
 /**
+ * Default currency denominations with exact weights
+ * This is the single source of truth for default values
+ */
+const DEFAULT_CURRENCY_DENOMINATIONS = [
+  { name: "Gold Coin", value: 80, weight: 0.004 },
+  { name: "Silver Coin", value: 4, weight: 0.004 },
+  { name: "Copper Farthing", value: 1, weight: 0.008 },
+  { name: "Dime", value: 0.1, weight: 0.008 }
+];
+
+
+
+/**
  * @class CurrencySettingsApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for managing currency settings
@@ -35,15 +48,26 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
    */
   async _prepareContext() {
     // Load saved currency denominations or use defaults
-    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [
-      { name: "Gold Coin", value: 80 },
-      { name: "Silver Coin", value: 4 },
-      { name: "Copper Piece", value: 0.1 },
-      { name: "Copper Farthing", value: 1 }
-    ];
+    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || DEFAULT_CURRENCY_DENOMINATIONS;
+    
+    // Process denominations to ensure proper weights
+    const processedDenominations = denominations.map(denom => {
+      // If weight is missing, find the correct weight from defaults
+      if (denom.weight === undefined || denom.weight === null) {
+        const defaultMatch = DEFAULT_CURRENCY_DENOMINATIONS.find(def => def.name === denom.name);
+        return {
+          ...denom,
+          weight: defaultMatch ? defaultMatch.weight : 0
+        };
+      }
+      return denom;
+    });
+
+    // Debug log to verify denominations are loaded with weight values
+    console.log('Denominações de moeda carregadas:', processedDenominations);
 
     return {
-      denominations
+      denominations: processedDenominations
     };
   }
 
@@ -73,19 +97,29 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     const existingFields = container.querySelectorAll('.coin-denomination-item');
     existingFields.forEach(field => field.remove());
 
-    // Get denominations from context
-    const context = this._prepareContext();
-    context.then(data => {
-      const denominations = data.denominations || [];
-      
-      // Add fields for each saved denomination
-      denominations.forEach(denom => {
-        this._addCoinDenominationField(denom.name, denom.value);
-      });
-
-      // Update warning visibility
-      this._updateWarningVisibility();
+    // Load saved currency denominations or use defaults
+    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || DEFAULT_CURRENCY_DENOMINATIONS;
+    
+    // Ensure all denominations have a weight property with proper default
+    const processedDenominations = denominations.map(denom => {
+      if (denom.weight === undefined || denom.weight === null) {
+        const defaultMatch = DEFAULT_CURRENCY_DENOMINATIONS.find(def => def.name === denom.name);
+        return {
+          ...denom,
+          weight: defaultMatch ? defaultMatch.weight : 0
+        };
+      }
+      return denom;
     });
+    
+    // Add fields for each saved denomination
+    processedDenominations.forEach(denom => {
+      console.log(`Adicionando campo para: ${denom.name}, valor: ${denom.value}, peso: ${denom.weight}`);
+      this._addCoinDenominationField(denom.name, denom.value, denom.weight);
+    });
+
+    // Update warning visibility
+    this._updateWarningVisibility();
   }
 
   /**
@@ -117,7 +151,7 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
         await this._saveCurrencySettings();
         break;
       case 'cancel':
-        // The onclick in the HBS template handles closing for now
+        this.close();
         break;
     }
   }
@@ -136,11 +170,13 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
    * Adds a new set of input fields for a coin denomination
    * @param {string} [name=''] - Pre-fill name value
    * @param {number} [value=''] - Pre-fill value
+   * @param {number} [weight=''] - Pre-fill weight value
    */
-  _addCoinDenominationField(name = '', value = '') {
+  _addCoinDenominationField(name = '', value = '', weight = '') {
     const container = this.element.querySelector('#coinDenominationsContainer');
     if (!container) return;
 
+    console.log(`Adicionando campo - Nome: ${name}, Valor: ${value}, Peso: ${weight}`);
     const newField = document.createElement('div');
     newField.classList.add('form-group', 'coin-denomination-item');
     newField.innerHTML = `
@@ -151,7 +187,11 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
         </div>
         <div class="form-field">
           <label>Value per Coin:</label>
-          <input type="number" name="coinValue" placeholder="e.g., 100" min="1" step="1" value="${value}" required>
+          <input type="number" name="coinValue" placeholder="e.g., 100" min="0.01" step="0.01" value="${value}" required>
+        </div>
+        <div class="form-field">
+          <label>Weight per Coin:</label>
+          <input type="number" name="coinWeight" placeholder="0.004" min="0" step="0.001" value="${weight}" required>
         </div>
         <button type="button" class="secondary remove-coin-denomination" title="Remove Coin">
           <i class="fas fa-trash"></i>
@@ -227,9 +267,11 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     for (const field of denominationFields) {
       const nameInput = field.querySelector('input[name="coinName"]');
       const valueInput = field.querySelector('input[name="coinValue"]');
+      const weightInput = field.querySelector('input[name="coinWeight"]');
       
       const name = nameInput?.value.trim();
       const value = parseFloat(valueInput?.value);
+      const weight = parseFloat(weightInput?.value);
 
       // Validate name
       if (!name) {
@@ -249,7 +291,13 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
         return;
       }
 
-      denominations.push({ name, value });
+      // Validate weight
+      if (isNaN(weight) || weight < 0) {
+        ui.notifications.error(`Invalid weight for "${name}". Weight must be a non-negative number.`);
+        return;
+      }
+
+      denominations.push({ name, value, weight });
     }
 
     // Sort by value (descending) and validate order

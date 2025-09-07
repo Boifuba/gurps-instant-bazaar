@@ -446,30 +446,29 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
 
     const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
     const coinBreakdown = [];
+
+    // Get all items from the carried equipment
     const carriedItems = this._flattenItemsFromObject(carried);
-
-    for (const denom of denominations) {
-      const matchingItems = carriedItems.filter((entry) => {
-        const itemName = String(entry.data.name || "").trim();
-        const denomName = String(denom.name || "").trim();
-        return itemName === denomName;
-      });
-
-      if (matchingItems.length > 0) {
-        const entry = matchingItems[0];
-        const count = entry.data.count || 0;
-        const value = denom.value || 0;
-
-        if (value > 0) {
+    
+    // Find coin items that match our denominations
+    for (const denomination of denominations) {
+      const coinItem = carriedItems.find(item => 
+        item.data.name === denomination.name
+      );
+      
+      if (coinItem) {
+        const count = coinItem.data.count || 0;
+        if (count > 0) {
           coinBreakdown.push({
-            name: denom.name,
+            name: denomination.name,
             count: count,
-            value: value,
-            itemId: entry.id
+            value: denomination.value,
+            itemId: coinItem.id
           });
         }
       }
     }
+    
     return coinBreakdown;
   }
 
@@ -521,14 +520,8 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
               itemsToDelete.push(currentCoinData.itemId);
             } else {
               // Update the item count
-              const currentItem = actor.system.equipment.carried[currentCoinData.itemId];
               updateData[`system.equipment.carried.${currentCoinData.itemId}.count`] = newCount;
-              updateData[`system.equipment.carried.${currentCoinData.itemId}.costsum`] = parseFloat(
-                (newCount * (currentItem.cost || 0)).toFixed(1)
-              );
-              updateData[`system.equipment.carried.${currentCoinData.itemId}.weightsum`] = parseFloat(
-                (newCount * (currentItem.weight || 0)).toFixed(3)
-              );
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.weight`] = denomination.weight || 0;
             }
           }
         } else if (newCount > 0) {
@@ -540,9 +533,7 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
               eqt: {
                 count: newCount,
                 cost: denomination.value, // Use unscaled value
-                weight: 0,
-                costsum: parseFloat((newCount * denomination.value).toFixed(1)),
-                weightsum: 0
+                weight: denomination.weight || 0
               }
             }
           };

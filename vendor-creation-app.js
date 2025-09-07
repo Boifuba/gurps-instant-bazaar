@@ -46,7 +46,7 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
    * @returns {void}
    */
   _onRender() {
-    this.element.addEventListener('click', this._onClickCreate.bind(this));
+    this.element.addEventListener('click', this._onClickButton.bind(this));
     this.element.addEventListener('submit', this._onSubmitForm.bind(this));
     this.element.addEventListener('click', this._onClickFilePicker.bind(this));
     FormUtilities.setupCurrencyListeners(this.element);
@@ -72,14 +72,22 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
   }
 
   /**
-   * Handles create button clicks
+   * Handles button clicks for various actions
    * @param {Event} event - The click event
    * @returns {Promise<void>}
    */
-  async _onClickCreate(event) {
-    if (event.target.dataset.action !== 'create') return;
-    event.preventDefault();
-    await this._createVendor();
+  async _onClickButton(event) {
+    const action = event.target.dataset.action;
+    
+    switch (action) {
+      case 'create':
+        event.preventDefault();
+        await this._createVendor();
+        break;
+      case 'cancel':
+        this.close();
+        break;
+    }
   }
 
   /**
@@ -120,7 +128,7 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
       active: true
     };
 
-    const items = await this.generateRandomItems(vendorData);
+    const items = await FormUtilities.generateRandomItems(vendorData);
     if (items === null) return;
     
     const vendor = {
@@ -129,9 +137,7 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
       id: foundry.utils.randomID()
     };
 
-    vendor.items = items;
-
-    const items = await VendorWalletSystem.generateRandomItems(vendorData);
+    const vendors = VendorWalletSystem.getVendors();
     vendors[vendor.id] = vendor;
     await game.settings.set(VendorWalletSystem.ID, 'vendors', vendors);
 

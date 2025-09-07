@@ -109,6 +109,90 @@ class FormUtilities {
   static parseLCFilter(lcFilterValue) {
     return lcFilterValue === '' ? null : parseInt(lcFilterValue, 10);
   }
+
+  /**
+   * Generates random items for a vendor based on the provided criteria
+   * @param {Object} vendorData - The vendor configuration data
+   * @returns {Promise<Array|null>} Array of generated vendor items or null if invalid price range
+   */
+  static async generateRandomItems(vendorData) {
+    if (vendorData.minValue > vendorData.maxValue) {
+      ui.notifications.error('Min Value must be less than or equal to Max Value');
+      return null;
+    }
+
+    const pack = game.packs.get(vendorData.compendium);
+    if (!pack) return [];
+
+    const index = await pack.getIndex({ fields: ['name', 'img', 'system.eqt.techlevel', 'system.eqt.legalityclass'] });
+    let filteredItems = Array.from(index);
+
+    // Apply TL filter if specified
+    if (vendorData.tlFilter) {
+      console.log(`Applying TL filter [${vendorData.tlFilter.join(', ')}] to ${filteredItems.length} items`);
+      filteredItems.forEach(item => {
+        if (item.system?.eqt?.techlevel === undefined) {
+          console.log(`Item sem TL: ${item.name}`);
+        }
+        if (item.system?.eqt?.legalityclass === undefined) {
+          console.log(`Item sem LC: ${item.name}`);
+        }
+      });
+      filteredItems = filteredItems.filter(item => {
+        const tl = item.system?.eqt?.techlevel ?? '';
+
+        return vendorData.tlFilter.includes(String(tl).toLowerCase());
+
+      });
+      console.log(`Items after TL filter: ${filteredItems.length}`);
+    }
+
+    // Apply LC filter if specified
+    if (vendorData.lcFilter != null) {
+
+      console.log(`Applying LC filter ≥ ${vendorData.lcFilter} to ${filteredItems.length} items`);
+
+      filteredItems = filteredItems.filter(item => {
+        const lcValue = item.system?.eqt?.legalityclass;
+        const lc = lcValue === undefined || lcValue === '' ? null : parseInt(lcValue, 10);
+        const isIncluded = lc === null || lc >= vendorData.lcFilter;
+        console.log(`LC check for "${item.name}": ${lc} -> ${isIncluded ? 'kept' : 'discarded'}`);
+        return isIncluded;
+
+      });
+      console.log(`Items after LC filter: ${filteredItems.length} items`);
+    }
+
+    // Randomly select items
+    const shuffled = filteredItems.sort(() => 0.5 - Math.random());
+    const selectedItems = shuffled.slice(0, vendorData.quantity);
+
+    const items = [];
+    for (const indexItem of selectedItems) {
+      const item = await pack.getDocument(indexItem._id);
+      const minStock = Number.isInteger(vendorData.stockMin) ? vendorData.stockMin : 1;
+      const maxStock = Number.isInteger(vendorData.stockMax) ? vendorData.stockMax : minStock;
+      const quantity = Math.floor(Math.random() * (maxStock - minStock + 1)) + minStock;
+
+      const price = item.system?.eqt?.cost || item.system?.cost || 0;
+
+      items.push({
+        id: foundry.utils.randomID(),
+        name: item.name,
+        price,
+        link: item.link,
+        img: item.img,
+        weight: item.system?.eqt?.weight || item.system?.weight || 0,
+        pageref: item.system?.eqt?.pageref || item.system?.pageref || '',
+        uuid: item.uuid,
+
+        quantity
+
+      });
+    }
+
+    return items;
+  }
 }
 
 // Expose the utility class globally

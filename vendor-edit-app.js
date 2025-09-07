@@ -128,9 +128,17 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
    * @returns {Promise<void>}
    */
   async _onClickButton(event) {
-    if (event.target.dataset.action !== 'update') return;
-    event.preventDefault();
-    await this._updateVendor();
+    const action = event.target.dataset.action;
+    
+    switch (action) {
+      case 'update':
+        event.preventDefault();
+        await this._updateVendor();
+        break;
+      case 'cancel':
+        this.close();
+        break;
+    }
   }
 
   /**
@@ -175,7 +183,7 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
     };
 
     if (regenerateItems) {
-      updatedVendor.items = await VendorWalletSystem.generateRandomItems(updatedVendor);
+      updatedVendor.items = await FormUtilities.generateRandomItems(updatedVendor);
     }
 
     await VendorWalletSystem.updateVendor(this.vendorId, updatedVendor);

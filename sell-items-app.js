@@ -45,7 +45,7 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
    * @returns {Promise<Object>} Context object containing items, wallet, and settings data
    */
   async _prepareContext() {
-    const wallet = VendorWalletSystem.getUserWallet(game.user.id);
+    const wallet = VendorWalletSystem.currencyManager.getUserWallet(game.user.id);
     const requireGMApproval = game.settings.get(VendorWalletSystem.ID, 'requireGMApproval');
     const automaticSellPercentage = game.settings.get(VendorWalletSystem.ID, 'automaticSellPercentage');
     
@@ -92,7 +92,7 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
     // Get items from GURPS character sheet equipment.carried
     const carried = actor.system?.equipment?.carried;
     if (carried) {
-      const carriedItems = this._flattenItemsFromObject(carried);
+      const carriedItems = window.flattenItemsFromObject(carried);
       
       for (const entry of carriedItems) {
         const itemData = entry.data;
@@ -117,37 +117,6 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
     return items;
   }
 
-  /**
-   * Recursively flattens items from GURPS equipment structure
-   * @param {Object} obj - The equipment object to flatten
-   * @returns {Array} Array of flattened items
-   */
-  _flattenItemsFromObject(obj) {
-    const items = [];
-    if (typeof obj !== "object" || obj === null) return items;
-    
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const value = obj[key];
-        if (typeof value === "object" && value !== null) {
-          if (value.name !== undefined) {
-            // This is an item
-            items.push({ id: key, data: value });
-            
-            // Check for nested items in collapsed property
-            if (value.collapsed && typeof value.collapsed === "object") {
-              const nestedItems = this._flattenItemsFromObject(value.collapsed);
-              items.push(...nestedItems);
-            }
-          } else {
-            // This might be a container, recurse into it
-            items.push(...this._flattenItemsFromObject(value));
-          }
-        }
-      }
-    }
-    return items;
-  }
   /**
    * Handles rendering events by setting up event listeners
    */

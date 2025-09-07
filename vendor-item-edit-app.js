@@ -89,6 +89,9 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
       case 'remove-item':
         await this._removeItem(event);
         break;
+      case 'cancel':
+        this.close();
+        break;
     }
   }
 

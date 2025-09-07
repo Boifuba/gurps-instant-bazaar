@@ -38,7 +38,7 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
     const users = game.users.filter(u => !u.isGM).map(user => ({
       id: user.id,
       name: user.name,
-      wallet: VendorWalletSystem.getUserWallet(user.id)
+      wallet: VendorWalletSystem.currencyManager.getUserWallet(user.id)
     }));
 
     return { 
@@ -61,7 +61,14 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
    * @returns {Promise<void>}
    */
   async _onClickButton(event) {
-    if (event.target.dataset.action !== 'update-wallets') return;
+    const action = event.target.dataset.action;
+    
+    if (action === 'cancel') {
+      this.close();
+      return;
+    }
+    
+    if (action !== 'update-wallets') return;
     
     // Only GMs can manage money
     if (!game.user.isGM) {
@@ -94,9 +101,9 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
       const amountChange = parseInt(input?.value) || 0;
       
       if (amountChange !== 0) {
-        const currentWallet = VendorWalletSystem.getUserWallet(user.id);
+        const currentWallet = VendorWalletSystem.currencyManager.getUserWallet(user.id);
         const newAmount = Math.max(0, currentWallet + amountChange);
-        await VendorWalletSystem.setUserWallet(user.id, newAmount);
+        await VendorWalletSystem.currencyManager.setUserWallet(user.id, newAmount);
         
         // Update the UI directly without re-rendering the entire application
         const userItem = this.element.querySelector(`[data-user-id="${user.id}"]`);

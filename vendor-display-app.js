@@ -65,7 +65,7 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
    */
   async _prepareContext() {
     const vendor = VendorWalletSystem.getVendor(this.vendorId);
-    const wallet = VendorWalletSystem.getUserWallet(game.user.id);
+    const wallet = VendorWalletSystem.currencyManager.getUserWallet(game.user.id);
 
     // Start with a shallow copy to avoid mutating the original vendor
     let filteredVendor = { ...vendor, items: [...(vendor.items || [])] };
@@ -280,181 +280,19 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
   }
 
   /**
-   * Processes the purchase of selected items
-   * @param {Array<HTMLElement>} checkboxesParam - The selected checkboxes
-   * @returns {Promise<void>}
-   */
-  async _purchaseSelectedItems(checkboxesParam) {
-    this._updatePurchaseDisplay();
-    const checkboxes = checkboxesParam || this.element.querySelectorAll('.item-checkbox:checked');
-    if (checkboxes.length === 0) return;
-
-    // Validate quantities
-    for (const checkbox of checkboxes) {
-      const itemId = checkbox.dataset.itemId;
-      const quantityInput = this.element.querySelector(`.item-quantity-input[data-item-id="${itemId}"]`);
-      const max = parseInt(quantityInput?.max);
-      const quantity = parseInt(quantityInput?.value);
-      if (!quantityInput || isNaN(quantity) || quantity < 1 || (!isNaN(max) && quantity > max)) {
-        ui.notifications.warn('Invalid quantity selected.');
-        return;
-      }
-    }
-
-    // If user is GM, process directly
-    if (game.user.isGM) {
-      return this._purchaseSelectedItemsDirectly(checkboxes);
-    }
-
-    // For players, send request to GM via socket
-    return this._sendPurchaseRequestToGM(checkboxes);
-  }
-  
-  /**
-   * Sends a purchase request to the GM via socket
+   * Processes the purchase of selected items using centralized logic
    * @param {Array<HTMLElement>} checkboxes - The selected checkboxes
    * @returns {Promise<void>}
    */
-  async _sendPurchaseRequestToGM(checkboxes) {
-    console.log("💰 PLAYER: Sending purchase request to GM...");
-    
-    // Select target actor using centralized logic
-    const targetActor = await VendorWalletSystem.selectUserActor();
-    
-    if (!targetActor) return;
-    console.log("💰 PLAYER: Target actor selected:", targetActor.name);
-    
-    // Collect selected items data
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
-    const selectedItems = [];
-    
-    for (const checkbox of checkboxes) {
-      const itemId = checkbox.dataset.itemId;
-      const quantityInput = this.element.querySelector(`.item-quantity-input[data-item-id="${itemId}"]`);
-      const quantity = parseInt(quantityInput?.value) || 1;
-      const vendorItem = vendor.items.find(item => item.id === itemId);
-      if (vendorItem) {
-        selectedItems.push({
-          id: vendorItem.id,
-          name: vendorItem.name,
-          price: vendorItem.price,
-          uuid: vendorItem.uuid,
-          quantity: quantity
-        });
-      }
-    }
-    
-    console.log("💰 PLAYER: Selected items for purchase:", selectedItems);
-    
-    // Log the full names of selected items
-    for (const item of selectedItems) {
-      const itemDoc = await fromUuid(item.uuid);
-      console.log(`💰 PLAYER SELECTED: ${item.quantity}x "${itemDoc?.name || 'Unknown item'}" (UUID: ${item.uuid})`);
-    }
-    
-    // Send purchase request to GM
-    console.log("💰 PLAYER: Emitting socket event...");
-    game.socket.emit(VendorWalletSystem.SOCKET, {
-      type: 'playerPurchaseRequest',
-      userId: game.user.id,
-      actorId: targetActor.id,
+  async _purchaseSelectedItems(checkboxes) {
+    await PlayerWalletApplication.processClientPurchase({
       vendorId: this.vendorId,
-      selectedItems: selectedItems
+      checkboxes,
+      element: this.element,
+      userId: game.user.id
     });
-    
-    ui.notifications.info('Purchase request sent to GM for processing...');
-  }
-  
-  /**
-   * Processes selected items directly (for GM users)
-   * @param {Array<HTMLElement>} checkboxesParam - The selected checkboxes
-   * @returns {Promise<void>}
-   */
-  async _purchaseSelectedItemsDirectly(checkboxesParam) {
-    console.log("💰 GM: Processing direct purchase...");
-    const checkboxes = Array.from(
-      checkboxesParam || this.element.querySelectorAll('.item-checkbox:checked')
-    );
-    
-    // Select target actor using centralized logic
-    const targetActor = await VendorWalletSystem.selectUserActor();
-    
-    if (!targetActor) return;
-    console.log("💰 GM: Target actor selected:", targetActor.name);
-    
-    // Gather items with sufficient stock
-    const vendor = VendorWalletSystem.getVendor(this.vendorId);
-    const itemsToProcess = [];
-    
-    for (const checkbox of checkboxes) {
-      const itemId = checkbox.dataset.itemId;
-      const quantityInput = this.element.querySelector(`.item-quantity-input[data-item-id="${itemId}"]`);
-      const purchaseQuantity = parseInt(quantityInput?.value, 10);
-      const vendorItem = vendor.items.find(item => item.id === itemId);
-      const stock = vendorItem?.quantity;
 
-      if (!vendorItem || isNaN(purchaseQuantity) || purchaseQuantity < 1 || (stock !== undefined && purchaseQuantity > stock)) {
-        ui.notifications.warn(`${vendorItem?.name || 'Item'} is out of stock.`);
-        continue;
-      }
-
-      itemsToProcess.push({ checkbox, vendorItem, purchaseQuantity, itemId: vendorItem.id });
-    }
-
-    if (itemsToProcess.length === 0) return;
-
-    // Calculate total cost of attempted purchases
-    const totalCostRequired = itemsToProcess.reduce((sum, { vendorItem, purchaseQuantity }) =>
-      sum + (vendorItem.price * purchaseQuantity), 0);
-    const roundedTotalCostRequired = Math.ceil(totalCostRequired);
-
-    // Check wallet
-    const currentWallet = VendorWalletSystem.getUserWallet(game.user.id);
-    if (currentWallet < roundedTotalCostRequired) {
-      ui.notifications.warn(`Not enough coins! Need ${VendorWalletSystem.formatCurrency(roundedTotalCostRequired)} but only have ${VendorWalletSystem.formatCurrency(currentWallet)}.`);
-      return;
-    }
-
-    // Process each selected item
-    let totalItemsProcessed = 0;
-    let totalCostProcessed = 0;
-
-    console.log("💰 GM: Processing selected items...");
-    for (const { vendorItem, purchaseQuantity, itemId } of itemsToProcess) {
-      console.log("💰 GM: Processing vendor item:", vendorItem.name, "Quantity:", purchaseQuantity);
-      const success = await VendorWalletSystem.addItemToActor(targetActor, vendorItem.uuid, purchaseQuantity);
-      
-      if (!success) {
-        ui.notifications.error(`Failed to add ${vendorItem.name} to ${targetActor.name}.`);
-        continue;
-      }
-
-      totalItemsProcessed += purchaseQuantity;
-      totalCostProcessed += vendorItem.price * purchaseQuantity;
-      
-      // Remove purchased quantity from vendor
-      const currentStock = vendorItem.quantity ?? 0;
-      await VendorWalletSystem.updateItemQuantityInVendor(this.vendorId, vendorItem.id, -purchaseQuantity);
-
-      // Update displayed stock
-      const newStock = currentStock - purchaseQuantity;
-      vendorItem.quantity = newStock;
-      const itemCard = this.element.querySelector(`.vendor-item-card[data-vendor-item-id="${itemId}"]`);
-      const stockEl = itemCard?.querySelector('.item-stock');
-      if (stockEl) stockEl.textContent = `(${newStock} available)`;
-      const qtyInput = itemCard?.querySelector('.item-quantity-input');
-      if (qtyInput) qtyInput.max = newStock;
-    }
-
-    // Round up the final cost processed
-    totalCostProcessed = Math.ceil(totalCostProcessed);
-
-    // Deduct money from wallet
-    await VendorWalletSystem.setUserWallet(game.user.id, currentWallet - totalCostProcessed);
-
-    ui.notifications.info(`Purchased ${totalItemsProcessed} items for ${VendorWalletSystem.formatCurrency(totalCostProcessed)}!`);
-
-    // Clear selection and refresh
+    // Clear selection and refresh if successful
     if (this.element) {
       this._clearSelection();
       this.render();
@@ -506,6 +344,19 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
     }
   }
 }
+
+/**
+ * Static method to refresh all vendor display windows for a specific vendor
+ * @param {string} vendorId - The vendor ID to refresh displays for
+ * @returns {void}
+ */
+VendorDisplayApplication.refreshDisplays = function(vendorId) {
+  Object.values(ui.windows).forEach(window => {
+    if (window instanceof VendorDisplayApplication && window.vendorId === vendorId) {
+      window.render(false);
+    }
+  });
+};
 
 // Expose the application to the global scope so other scripts can access it
 globalThis.VendorDisplayApplication = VendorDisplayApplication;
