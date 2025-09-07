@@ -473,7 +473,7 @@ class VendorWalletSystem {
           
           function updatePayment(percentage) {
             const payment = (totalValue * percentage) / 100;
-            display.textContent = '${this.currencyManager.formatCurrency(0)}'.replace(/[\\d.,]+/, payment.toFixed(2));
+            display.textContent = window.VendorWalletSystem.currencyManager.formatCurrency(payment);
           }
           
           slider.addEventListener('input', function() {
@@ -517,34 +517,51 @@ class VendorWalletSystem {
       let totalValueProcessed = 0;
 
       for (const selectedItem of selectedItems) {
-        const { id, quantity, price } = selectedItem;
-        const item = actor.items.get(id);
+        const { id, quantity, price, uuid } = selectedItem;
         
-        if (!item) {
-          console.warn(`Item ${id} not found on actor ${actor.name}`);
+        // For GURPS equipment items, we need to update the carried equipment directly
+        const carried = actor.system?.equipment?.carried;
+        if (!carried) {
+          console.warn(`No carried equipment found for actor ${actor.name}`);
           continue;
         }
-
-        const currentQuantity = item.system?.eqt?.count || item.system?.quantity || 1;
+        
+        // Find the item in the carried equipment structure
+        const itemPath = this._findItemInCarried(carried, id);
+        if (!itemPath) {
+          console.warn(`Item ${id} not found in carried equipment for actor ${actor.name}`);
+          continue;
+        }
+        
+        const itemData = this._getItemFromPath(carried, itemPath);
+        if (!itemData) {
+          console.warn(`Could not retrieve item data for ${id}`);
+          continue;
+        }
+        
+        const currentQuantity = itemData.count || 1;
         
         if (currentQuantity < quantity) {
-          this.emitSellResult(userId, false, `Not enough ${item.name} to sell (have ${currentQuantity}, trying to sell ${quantity}).`);
+          this.emitSellResult(userId, false, `Not enough ${itemData.name} to sell (have ${currentQuantity}, trying to sell ${quantity}).`);
           continue;
         }
 
-        // Remove items from character
+        // Update the item quantity in the carried equipment
         const newQuantity = currentQuantity - quantity;
+        const updatePath = `system.equipment.carried.${itemPath}.count`;
         
         if (newQuantity <= 0) {
-          // Delete the item completely
-          await item.delete();
+          // Remove the item completely by setting it to null
+          await actor.update({ [`system.equipment.carried.-=${itemPath}`]: null });
         } else {
-          // Update the quantity
-          if (item.system?.eqt?.count !== undefined) {
-            await item.update({ "system.eqt.count": newQuantity });
-          } else {
-            await item.update({ "system.quantity": newQuantity });
-          }
+          // Update the quantity and recalculate costsum and weightsum
+          const cost = itemData.cost || 0;
+          const weight = itemData.weight || 0;
+          await actor.update({ 
+            [updatePath]: newQuantity,
+            [`system.equipment.carried.${itemPath}.costsum`]: parseFloat((newQuantity * cost).toFixed(1)),
+            [`system.equipment.carried.${itemPath}.weightsum`]: parseFloat((newQuantity * weight).toFixed(3))
+          });
         }
 
         totalItemsProcessed += quantity;
@@ -559,13 +576,28 @@ class VendorWalletSystem {
       // Calculate final payment
       const finalPayment = (totalValueProcessed * sellPercentage) / 100;
       
+      // Check if module currency system is disabled
+      const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
+      let processedFinalPayment = finalPayment;
+      
+      if (!useModuleCurrency) {
+        // Round up to nearest integer when using character sheet currency
+        processedFinalPayment = Math.ceil(finalPayment);
+        
+        // Validate minimum sale value
+        if (processedFinalPayment < 1) {
+          this.emitSellResult(userId, false, 'Não vale a pena negociar só isso! O valor da venda deve ser pelo menos 1.');
+          return;
+        }
+      }
+      
       // Add money to wallet
       const currentWallet = this.getUserWallet(userId);
-      await this.setUserWallet(userId, currentWallet + finalPayment);
+      await this.setUserWallet(userId, currentWallet + processedFinalPayment);
 
       const saleMessage = requireGMApproval 
-        ? `Sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(finalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`
-        : `Automatically sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(finalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`;
+        ? `Sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(processedFinalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`
+        : `Automatically sold ${totalItemsProcessed} items for ${this.currencyManager.formatCurrency(processedFinalPayment)} (${sellPercentage}% of ${this.currencyManager.formatCurrency(totalValueProcessed)})!`;
       
       this.emitSellResult(userId, true, saleMessage);
 
@@ -575,6 +607,49 @@ class VendorWalletSystem {
     }
   }
 
+  /**
+   * Recursively finds an item in the carried equipment structure
+   * @param {Object} carried - The carried equipment object
+   * @param {string} itemId - The item ID to find
+   * @param {string} [currentPath=''] - Current path in the structure
+   * @returns {string|null} The path to the item or null if not found
+   */
+  static _findItemInCarried(carried, itemId, currentPath = '') {
+    for (const [key, value] of Object.entries(carried)) {
+      const path = currentPath ? `${currentPath}.${key}` : key;
+      
+      if (key === itemId) {
+        return path;
+      }
+      
+      if (value && typeof value === 'object' && value.collapsed) {
+        const nestedPath = this._findItemInCarried(value.collapsed, itemId, `${path}.collapsed`);
+        if (nestedPath) return nestedPath;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets an item from a path in the carried equipment structure
+   * @param {Object} carried - The carried equipment object
+   * @param {string} path - The path to the item
+   * @returns {Object|null} The item data or null if not found
+   */
+  static _getItemFromPath(carried, path) {
+    const pathParts = path.split('.');
+    let current = carried;
+    
+    for (const part of pathParts) {
+      if (current && typeof current === 'object' && current[part] !== undefined) {
+        current = current[part];
+      } else {
+        return null;
+      }
+    }
+    
+    return current;
+  }
   /**
    * Emits a sell result to the specified user
    * @param {string} userId - The user ID to send the result to
@@ -883,5 +958,27 @@ Hooks.on('ready', () => {
   });
 });
 
+// Hook for handling item drops on canvas
+Hooks.on('dropCanvasData', async (canvas, data) => {
+  // Only handle item drops
+  if (data.type !== 'Item') return true;
+  
+  // Get the target actor (if any)
+  const targetToken = canvas.tokens.controlled[0];
+  if (!targetToken || !targetToken.actor) return true;
+  
+  const actor = targetToken.actor;
+  
+  // Check if user has permission to modify this actor
+  if (!actor.isOwner) return true;
+  
+  // Handle the item drop using our system
+  const result = await VendorWalletSystem.handleItemDrop(actor, data);
+  
+  // Return false to prevent default behavior if we handled it
+  return result;
+});
 // Expose the main class globally
 window.VendorWalletSystem = VendorWalletSystem;
+// Also expose handleItemDrop globally for compatibility with other modules
+window.handleItemDrop = VendorWalletSystem.handleItemDrop.bind(VendorWalletSystem);

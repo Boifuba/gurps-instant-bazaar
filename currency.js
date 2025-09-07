@@ -405,13 +405,22 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
   _flattenItemsFromObject(obj) {
     const items = [];
     if (typeof obj !== "object" || obj === null) return items;
+    
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const value = obj[key];
         if (typeof value === "object" && value !== null) {
           if (value.name !== undefined) {
+            // This is an item
             items.push({ id: key, data: value });
+            
+            // Check for nested items in collapsed property
+            if (value.collapsed && typeof value.collapsed === "object") {
+              const nestedItems = this._flattenItemsFromObject(value.collapsed);
+              items.push(...nestedItems);
+            }
           } else {
+            // This might be a container, recurse into it
             items.push(...this._flattenItemsFromObject(value));
           }
         }
@@ -480,79 +489,85 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     if (!actor) return false;
 
     const currentCoinBreakdown = this._getCharacterSheetCoinBreakdown(userId);
-    if (currentCoinBreakdown.length === 0) return false;
 
     const denominations = (game.settings.get(this.moduleId, "currencyDenominations") || [])
       .slice()
       .sort((a, b) => b.value - a.value);
     if (denominations.length === 0) return false;
 
-    const unscaledCurrentTotal = currentCoinBreakdown.reduce(
-      (sum, coin) => sum + coin.count * coin.value,
-      0
-    );
-    const scaledCurrentTotal = unscaledCurrentTotal * this._baseUnitMultiplier;
-
     const finalScaledAmount = Math.max(0, scaledNewAmount);
-    if (finalScaledAmount > scaledCurrentTotal) {
-      // apenas reduz via ficha
-      return false;
-    }
 
     try {
-      const currentCoinBag = {};
-      for (const coinData of currentCoinBreakdown) currentCoinBag[coinData.name] = coinData.count;
-
-      const optimizeOnConstruct = game.settings.get(this.moduleId, "optimizeOnConstruct");
-
-      const wallet = new Wallet(
-        currentCoinBag,
-        {
-          optimizeOnConstruct: optimizeOnConstruct,
-          optimizeOnAdd: false,
-          optimizeOnSubtract: false,
-          spendSmallestFirst: true,
-          repackAfterSubtract: "up"
-        },
-        denominations
-      );
-
-      const amountToSubtractScaled = scaledCurrentTotal - finalScaledAmount;
-      const amountToSubtract = amountToSubtractScaled / this._baseUnitMultiplier;
-
-      if (amountToSubtract > 0) wallet.subtract(amountToSubtract);
-
-      const newCoinBag = wallet.toObject();
+      // Calculate the desired coin distribution for the final amount
+      const scaledDenominations = denominations.map((denom) => ({
+        ...denom,
+        value: Math.round(denom.value * this._baseUnitMultiplier)
+      }));
+      
+      const newCoinBag = makeChange(finalScaledAmount, scaledDenominations);
       const updateData = {};
+      const itemsToDelete = [];
+      const itemsToCreate = [];
 
       for (const denomination of denominations) {
         const newCount = newCoinBag[denomination.name] || 0;
         const currentCoinData = currentCoinBreakdown.find((coin) => coin.name === denomination.name);
 
         if (currentCoinData && currentCoinData.itemId) {
+          // Update existing coin item
           if (newCount !== currentCoinData.count) {
-            const currentItem = actor.system.equipment.carried[currentCoinData.itemId];
-            updateData[`system.equipment.carried.${currentCoinData.itemId}.count`] = newCount;
-            updateData[`system.equipment.carried.${currentCoinData.itemId}.costsum`] = parseFloat(
-              (newCount * (currentItem.cost || 0)).toFixed(1)
-            );
-            updateData[`system.equipment.carried.${currentCoinData.itemId}.weightsum`] = parseFloat(
-              (newCount * (currentItem.weight || 0)).toFixed(3)
-            );
+            if (newCount === 0) {
+              // Remove the item if count is 0
+              itemsToDelete.push(currentCoinData.itemId);
+            } else {
+              // Update the item count
+              const currentItem = actor.system.equipment.carried[currentCoinData.itemId];
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.count`] = newCount;
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.costsum`] = parseFloat(
+                (newCount * (currentItem.cost || 0)).toFixed(1)
+              );
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.weightsum`] = parseFloat(
+                (newCount * (currentItem.weight || 0)).toFixed(3)
+              );
+            }
           }
         } else if (newCount > 0) {
-          return false;
+          // Create new coin item
+          const newCoinItem = {
+            name: denomination.name,
+            type: "equipment",
+            system: {
+              eqt: {
+                count: newCount,
+                cost: denomination.value, // Use unscaled value
+                weight: 0,
+                costsum: parseFloat((newCount * denomination.value).toFixed(1)),
+                weightsum: 0
+              }
+            }
+          };
+          itemsToCreate.push(newCoinItem);
         }
       }
 
+      // Apply all changes
       if (Object.keys(updateData).length > 0) {
         await actor.update(updateData);
+      }
+
+      if (itemsToDelete.length > 0) {
+        await actor.deleteEmbeddedDocuments("Item", itemsToDelete);
+      }
+
+      if (itemsToCreate.length > 0) {
+        await actor.createEmbeddedDocuments("Item", itemsToCreate);
       }
 
       if (actor.sheet && actor.sheet.rendered) actor.sheet.render(false);
       this._refreshWalletApplications();
       return true;
     } catch (error) {
+      console.error("Error updating character sheet currency:", error);
       return false;
     }
   }

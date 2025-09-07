@@ -89,28 +89,65 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
 
     const items = [];
     
-    // Get items from character sheet
-    for (const item of actor.items) {
-      const quantity = item.system?.eqt?.count || item.system?.quantity || 1;
-      const price = item.system?.eqt?.cost || item.system?.cost || 0;
+    // Get items from GURPS character sheet equipment.carried
+    const carried = actor.system?.equipment?.carried;
+    if (carried) {
+      const carriedItems = this._flattenItemsFromObject(carried);
       
-      // Only include items with quantity > 0 and price > 0
-      if (quantity > 0 && price > 0) {
-        items.push({
-          id: item.id,
-          name: item.name,
-          price: price,
-          quantity: quantity,
-          weight: item.system?.eqt?.weight || item.system?.weight || 0,
-          pageref: item.system?.eqt?.pageref || item.system?.pageref || '',
-          uuid: item.uuid
-        });
+      for (const entry of carriedItems) {
+        const itemData = entry.data;
+        const quantity = itemData.count || 1;
+        const price = itemData.cost || 0;
+        
+        // Only include items with quantity > 0 and price > 0
+        if (quantity > 0 && price > 0) {
+          items.push({
+            id: entry.id,
+            name: itemData.name,
+            price: price,
+            quantity: quantity,
+            weight: itemData.weight || 0,
+            pageref: itemData.pageref || '',
+            uuid: itemData.uuid || `${actor.id}.${entry.id}`
+          });
+        }
       }
     }
 
     return items;
   }
 
+  /**
+   * Recursively flattens items from GURPS equipment structure
+   * @param {Object} obj - The equipment object to flatten
+   * @returns {Array} Array of flattened items
+   */
+  _flattenItemsFromObject(obj) {
+    const items = [];
+    if (typeof obj !== "object" || obj === null) return items;
+    
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const value = obj[key];
+        if (typeof value === "object" && value !== null) {
+          if (value.name !== undefined) {
+            // This is an item
+            items.push({ id: key, data: value });
+            
+            // Check for nested items in collapsed property
+            if (value.collapsed && typeof value.collapsed === "object") {
+              const nestedItems = this._flattenItemsFromObject(value.collapsed);
+              items.push(...nestedItems);
+            }
+          } else {
+            // This might be a container, recurse into it
+            items.push(...this._flattenItemsFromObject(value));
+          }
+        }
+      }
+    }
+    return items;
+  }
   /**
    * Handles rendering events by setting up event listeners
    */
@@ -309,25 +346,36 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    // Collect selected items data
+    // Get all sellable items to match with selected checkboxes
+    const allSellableItems = await this._getPlayerItems();
+    
+    // Collect selected items data by matching with the sellable items list
     const selectedItems = [];
     
     for (const checkbox of checkboxes) {
       const itemId = checkbox.dataset.itemId;
       const quantityInput = this.element.querySelector(`.item-quantity-input[data-item-id="${itemId}"]`);
       const quantity = parseInt(quantityInput?.value) || 1;
-      const item = actor.items.get(itemId);
       
-      if (item) {
-        const price = item.system?.eqt?.cost || item.system?.cost || 0;
+      // Find the item in our sellable items list
+      const sellableItem = allSellableItems.find(item => item.id === itemId);
+      
+      if (sellableItem) {
         selectedItems.push({
-          id: item.id,
-          name: item.name,
-          price: price,
+          id: sellableItem.id,
+          name: sellableItem.name,
+          price: sellableItem.price,
           quantity: quantity,
-          uuid: item.uuid
+          uuid: sellableItem.uuid
         });
+      } else {
+        console.warn(`Sellable item with ID ${itemId} not found in player's inventory`);
       }
+    }
+
+    if (selectedItems.length === 0) {
+      ui.notifications.warn('No valid items selected for sale.');
+      return;
     }
 
     console.log("💰 PLAYER: Selected items for sale:", selectedItems);
