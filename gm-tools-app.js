@@ -61,6 +61,9 @@ export default class GMToolsApplication extends foundry.applications.api.Handleb
       case 'currency-settings':
         new CurrencySettingsApplication().render(true);
         break;
+      case 'initialize-actor-coins':
+        VendorWalletSystem.initializeMissingActorCoins();
+        break;
     }
   }
 }

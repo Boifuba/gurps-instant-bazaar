@@ -1,7 +1,7 @@
 <div>
   {{#unless useModuleCurrency}}
   <div class="warning-message" style="margin-bottom: 1rem;">
-    <p><strong>Character Sheet Currency Mode:</strong> Player money is managed through character sheet items. Direct wallet modifications are disabled. Configure currency denominations in Currency Settings.</p>
+    <p><strong>Character Sheet Currency Mode:</strong> Player money is managed through character sheet items. Values entered will be converted to physical coins on character sheets based on your currency denominations.</p>
   </div>
   {{else}}
   {{#unless hasDenominations}}
@@ -10,6 +10,17 @@
   </div>
   {{/unless}}
   {{/unless}}
+
+  <div class="form-group" style="margin-bottom: 1rem; padding: 1rem; border: 2px solid var(--color-border-highlight); border-radius: 8px; background-color: var(--color-bg-option);">
+    <label for="allMoneyInput" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Apply to All Players:</label>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <input type="number" id="allMoneyInput" class="all-money-input" value="0" step="1" style="flex: 1;" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+      <button type="button" class="primary" data-action="apply-to-all" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+        <i class="fas fa-users"></i> Apply to All
+      </button>
+    </div>
+    <small style="color: var(--color-text-dark-secondary); font-style: italic;">Enter a value to add/subtract from all player wallets at once.</small>
+  </div>
 
   <div class="user-list">
   {{#each users}}
@@ -24,7 +35,7 @@
       {{/unless}}
     </div>
     <div class="user-money-controls">
-      <input type="number" class="money-input" name="amount-{{id}}" value="0" step="1" {{#unless ../useModuleCurrency}}disabled{{/unless}} {{#unless ../hasDenominations}}disabled{{/unless}}>
+      <input type="number" class="money-input" name="amount-{{id}}" value="0" step="1" {{#unless ../hasDenominations}}{{#unless ../useModuleCurrency}}disabled{{/unless}}{{/unless}}>
     </div>
   </div>
   {{/each}}
@@ -35,8 +46,8 @@
   </div>
 
   <div class="button-row">
-    <button type="button" class="primary" data-action="update-wallets" {{#unless useModuleCurrency}}disabled{{/unless}} {{#unless hasDenominations}}disabled{{/unless}}>
-      {{#if useModuleCurrency}}{{#if hasDenominations}}Update All Wallets{{else}}Configure Currency First{{/if}}{{else}}Character Sheet Mode{{/if}}
+    <button type="button" class="primary" data-action="update-wallets" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+      {{#unless hasDenominations}}{{#unless useModuleCurrency}}Configure Currency First{{else}}Update Individual Wallets{{/unless}}{{else}}Update Individual Wallets{{/unless}}
     </button>
       <button type="button" class="secondary" data-action="cancel">Cancel</button>
     </div>

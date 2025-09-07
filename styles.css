@@ -472,7 +472,6 @@
 
 .file-picker {
   padding: 0.5rem;
-  border: 1px solid var(--color-border-dark);
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
@@ -547,12 +546,7 @@
 
 .button-row button {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid var(--color-border-dark);
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s ease;
+
 }
 
 .button-row button:hover {
@@ -569,62 +563,8 @@
   justify-content: flex-end;
 }
 
-/* Common Button Styles */
-button.primary {
-  border-width: 2px;
-  font-weight: bold;
-}
-
-button.secondary {
-  opacity: 0.7;
-}
-
 button.secondary:hover {
   opacity: 1;
-}
-
-/* Responsive Design */
-@media (max-width: 600px) {
-  .item-details {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .item-selection {
-    flex-direction: row;
-    width: 100%;
-    justify-content: flex-start;
-  }
-  
-  .item-meta {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .purchase-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-  
-  .purchase-actions {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .form-group.stacked .form-fields {
-    grid-template-columns: 1fr;
-  }
-  
-  .vendor-actions {
-    flex-direction: column;
-  }
-  
-  .button-row {
-    flex-direction: column;
-  }
 }
 
 /* Animation for item removal */
@@ -946,35 +886,6 @@ button.secondary:hover {
   font-style: italic;
 }
 
-/* Responsive Design for Sell Items */
-@media (max-width: 600px) {
-  .sell-item-card .item-details {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .sell-item-card .item-selection {
-    flex-direction: row;
-    width: 100%;
-    justify-content: flex-start;
-  }
-  
-  .sell-item-card .item-meta {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .sell-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-  
-  .sell-actions {
-    flex-direction: column;
-  }
-}
 /* Wallet Accordion Styles */
 .wallet-accordion {
   margin-bottom: 1rem;

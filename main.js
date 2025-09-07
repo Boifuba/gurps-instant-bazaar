@@ -124,6 +124,33 @@ export default class VendorWalletSystem {
   static openAllAvailableVendors() {
     new PlayerWalletApplication().render(true);
   }
+
+  /**
+   * Initializes missing currency denominations for all actors without affecting existing coins
+   * @returns {Promise<void>}
+   */
+  static async initializeMissingActorCoins() {
+    // Only GMs can reset actor coins
+    if (!game.user.isGM) {
+      ui.notifications.error('Only Game Masters can initialize actor coins!');
+      return;
+    }
+
+    // Check if module currency system is enabled
+    const useModuleCurrency = game.settings.get(this.ID, 'useModuleCurrencySystem');
+    if (useModuleCurrency) {
+      ui.notifications.warn('This tool is for character sheet currency management. The module currency system is currently enabled. Disable it in settings to use this feature.');
+      return;
+    }
+
+    try {
+      await this.currencyManager.initializeMissingActorCoins();
+      ui.notifications.info('Missing actor currency denominations have been initialized successfully!');
+    } catch (error) {
+      console.error('Error initializing actor coins:', error);
+      ui.notifications.error('Failed to initialize actor coins. Check console for details.');
+    }
+  }
 }
 
 // Make all classes and utilities globally accessible for macros and external scripts

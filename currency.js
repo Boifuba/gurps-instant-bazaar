@@ -352,6 +352,47 @@ export class Wallet {
 }
 
 /**
+ * Creates a complete GURPS currency item with all required properties
+ * @param {Object} denomination - The currency denomination configuration
+ * @param {number} count - The initial count for this currency
+ * @returns {Object} Complete GURPS currency item object
+ */
+function createCompleteGURPSCoinItem(denomination, count = 0) {
+  const currentDate = new Date().toISOString();
+  const uuid = foundry.utils.randomID(16);
+  const itemId = foundry.utils.randomID(16);
+  
+  return {
+    name: denomination.name,
+    notes: "",
+    pageref: denomination.pageref || "B264",
+    count: count,
+    weight: denomination.weight || 0,
+    cost: denomination.value,
+    location: "",
+    carried: true,
+    equipped: true,
+    techlevel: denomination.techlevel || "1",
+    categories: denomination.categories || "",
+    legalityclass: denomination.legalityclass || "",
+    costsum: parseFloat((count * denomination.value).toFixed(2)),
+    weightsum: parseFloat((count * (denomination.weight || 0)).toFixed(3)),
+    uses: null,
+    maxuses: 0,
+    parentuuid: "",
+    uuid: uuid,
+    contains: {},
+    originalName: denomination.name,
+    originalCount: "",
+    ignoreImportQty: false,
+    last_import: currentDate,
+    save: true,
+    itemid: itemId,
+    img: denomination.img || "icons/svg/item-bag.svg"
+  };
+}
+
+/**
  * Integrates wallets with Foundry actors and settings.
  * @class CurrencyManager
  */
@@ -564,25 +605,21 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
               // Remove the item if count is 0
               itemsToDelete.push(currentCoinData.itemId);
             } else {
-              // Update the item count
+              // Update the item count and related sums
+              const cost = denomination.value;
+              const weight = denomination.weight || 0;
               updateData[`system.equipment.carried.${currentCoinData.itemId}.count`] = newCount;
-              updateData[`system.equipment.carried.${currentCoinData.itemId}.weight`] = denomination.weight || 0;
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.weight`] = weight;
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.cost`] = cost;
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.costsum`] = parseFloat((newCount * cost).toFixed(2));
+              updateData[`system.equipment.carried.${currentCoinData.itemId}.weightsum`] = parseFloat((newCount * weight).toFixed(3));
             }
           }
         } else if (newCount > 0) {
-          // Create new coin item
-          const newCoinItem = {
-            name: denomination.name,
-            type: "equipment",
-            system: {
-              eqt: {
-                count: newCount,
-                cost: denomination.value, // Use unscaled value
-                weight: denomination.weight || 0
-              }
-            }
-          };
-          itemsToCreate.push(newCoinItem);
+          // Create new complete coin item
+          const newCoinId = foundry.utils.randomID(16);
+          const completeCoinData = createCompleteGURPSCoinItem(denomination, newCount);
+          updateData[`system.equipment.carried.${newCoinId}`] = completeCoinData;
         }
       }
 
@@ -592,15 +629,14 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
       }
 
       if (itemsToDelete.length > 0) {
-        // Filter out items that no longer exist in the actor's collection
-        const existingItemsToDelete = itemsToDelete.filter(itemId => actor.items.get(itemId));
-        if (existingItemsToDelete.length > 0) {
-          await actor.deleteEmbeddedDocuments("Item", existingItemsToDelete);
+        // Remove items from carried equipment by setting them to null
+        const deleteData = {};
+        for (const itemId of itemsToDelete) {
+          deleteData[`system.equipment.carried.-=${itemId}`] = null;
         }
-      }
-
-      if (itemsToCreate.length > 0) {
-        await actor.createEmbeddedDocuments("Item", itemsToCreate);
+        if (Object.keys(deleteData).length > 0) {
+          await actor.update(deleteData);
+        }
       }
 
       if (actor.sheet && actor.sheet.rendered) actor.sheet.render(false);
@@ -741,6 +777,71 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
   refreshSettings() {
     const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
     this._baseUnitMultiplier = _calculateBaseUnitMultiplier(denominations);
+  }
+
+  /**
+   * Initializes missing currency denominations for all actors without affecting existing coins
+   * @returns {Promise<void>}
+   */
+  async initializeMissingActorCoins() {
+    const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
+    
+    if (denominations.length === 0) {
+      ui.notifications.warn('No currency denominations configured. Please configure currency settings first.');
+      return;
+    }
+
+    let processedActors = 0;
+    let totalCoinsAdded = 0;
+
+    // Iterate through all actors in the game
+    for (const actor of game.actors.contents) {
+      // Only process character-type actors that the GM has owner permission for
+      if (actor.type !== 'character' || !actor.isOwner) {
+        continue;
+      }
+
+      const carried = actor.system?.equipment?.carried;
+      if (!carried) {
+        console.warn(`Actor ${actor.name} has no carried equipment structure`);
+        continue;
+      }
+
+      // Get all items from the carried equipment to check existing coins
+      const carriedItems = flattenItemsFromObject(carried);
+      let actorCoinsAdded = 0;
+      const updateData = {};
+
+      // Process each denomination for this actor
+      for (const denomination of denominations) {
+        // Check if the actor already has this coin in carried equipment
+        const existingCoin = carriedItems.find(item => item.data.name === denomination.name);
+
+        if (existingCoin) {
+          // Skip if coin already exists - don't modify existing coins
+          continue;
+        } else {
+          // Create new complete coin in carried equipment with quantity 0
+          const newCoinId = foundry.utils.randomID(16);
+          const completeCoinData = createCompleteGURPSCoinItem(denomination, 0);
+
+          updateData[`system.equipment.carried.${newCoinId}`] = completeCoinData;
+          actorCoinsAdded++;
+        }
+      }
+
+      // Apply all coin additions for this actor at once
+      if (Object.keys(updateData).length > 0) {
+        await actor.update(updateData);
+        processedActors++;
+        totalCoinsAdded += actorCoinsAdded;
+      }
+    }
+
+    // Refresh any open wallet applications
+    this._refreshWalletApplications();
+
+    console.log(`Initialized missing coins for ${processedActors} actors, added ${totalCoinsAdded} new coin items total.`);
   }
 }
 export { isNonNegInt };

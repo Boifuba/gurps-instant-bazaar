@@ -49,9 +49,24 @@ export default class SellItemsApplication extends foundry.applications.api.Handl
    */
   async _prepareContext() {
     const wallet = VendorWalletSystem.currencyManager.getUserWallet(game.user.id);
+    const useModuleCurrency = game.settings.get(VendorWalletSystem.ID, 'useModuleCurrencySystem');
     const requireGMApproval = game.settings.get(VendorWalletSystem.ID, 'requireGMApproval');
     const automaticSellPercentage = game.settings.get(VendorWalletSystem.ID, 'automaticSellPercentage');
     
+    // Get coin breakdown for display
+    let coinBreakdown;
+    if (useModuleCurrency) {
+      coinBreakdown = VendorWalletSystem.currencyManager.getModuleCurrencyBreakdown(game.user.id);
+    } else {
+      // Get character sheet currency breakdown
+      coinBreakdown = VendorWalletSystem.currencyManager._getCharacterSheetCoinBreakdown(game.user.id);
+    }
+
+    // Ensure coinBreakdown is always an array
+    if (!Array.isArray(coinBreakdown)) {
+      coinBreakdown = [];
+    }
+
     // Get player's character items
     const items = await this._getPlayerItems();
     
@@ -67,6 +82,8 @@ export default class SellItemsApplication extends foundry.applications.api.Handl
     return {
       items: filteredItems,
       wallet,
+      useModuleCurrency,
+      coinBreakdown,
       requireGMApproval,
       automaticSellPercentage,
       searchTerm: this.searchTerm
@@ -90,6 +107,10 @@ export default class SellItemsApplication extends foundry.applications.api.Handl
 
     if (!actor) return [];
 
+    // Get currency denominations to filter out coins
+    const denominations = game.settings.get(VendorWalletSystem.ID, 'currencyDenominations') || [];
+    const coinNames = new Set(denominations.map(denom => denom.name.toLowerCase()));
+
     const items = [];
     
     // Get items from GURPS character sheet equipment.carried
@@ -102,8 +123,8 @@ export default class SellItemsApplication extends foundry.applications.api.Handl
         const quantity = itemData.count || 1;
         const price = itemData.cost || 0;
         
-        // Only include items with quantity > 0 and price > 0
-        if (quantity > 0 && price > 0) {
+        // Only include items with quantity > 0 and price > 0, but exclude coins
+        if (quantity > 0 && price > 0 && !coinNames.has(itemData.name.toLowerCase())) {
           items.push({
             id: entry.id,
             name: itemData.name,

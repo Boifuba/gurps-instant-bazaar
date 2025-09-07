@@ -1,7 +1,35 @@
 <div class="sell-items-content">
-  <div class="wallet-display">
-    Your Wallet: {{formatCurrency wallet}}
-  </div>
+  <details class="wallet-accordion">
+    <summary class="wallet-summary">
+      <span class="wallet-title">Your Wallet: {{formatCurrency wallet}}</span>
+      <i class="fas fa-chevron-down accordion-icon"></i>
+    </summary>
+    <div class="wallet-details-content">
+      {{#unless useModuleCurrency}}
+        {{#if coinBreakdown}}
+        <div class="coin-breakdown">
+          <h4>Coin Details:</h4>
+          <div class="coin-list">
+            {{#each coinBreakdown}}
+            <div class="coin-item">
+              <span class="coin-count">{{count}}</span>
+              <span class="coin-name">{{name}}</span>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+        {{else}}
+        <div class="no-coins-message">
+          <p>No coin breakdown available for character sheet currency.</p>
+        </div>
+        {{/if}}
+      {{else}}
+      <div class="no-coins-message">
+        <p>Coin breakdown is only available when using character sheet currency.</p>
+      </div>
+      {{/unless}}
+    </div>
+  </details>
 
   <div class="search-container">
     <div class="search-input-wrapper">
