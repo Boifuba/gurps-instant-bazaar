@@ -318,40 +318,8 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
   async _sendPurchaseRequestToGM(checkboxes) {
     console.log("💰 PLAYER: Sending purchase request to GM...");
     
-    // Get user's actors
-    const userActors = game.actors.filter(actor => actor.hasPlayerOwner && actor.ownership[game.user.id] >= 3);
-    console.log("💰 PLAYER: User actors found:", userActors.map(a => a.name));
-    
-    let targetActor;
-    if (userActors.length === 0) {
-      ui.notifications.error('No character with Owner permission found! Please check your character sheet permissions.');
-      return;
-    } else if (userActors.length === 1) {
-      targetActor = userActors[0];
-    } else {
-      // Multiple actors - show selection dialog
-      const actorChoices = userActors.reduce((choices, actor) => {
-        choices[actor.id] = actor.name;
-        return choices;
-      }, {});
-      
-      const selectedActorId = await Dialog.prompt({
-        title: 'Select Character',
-        content: `
-          <div class="form-group">
-            <label>Choose which character will purchase these items:</label>
-            <select id="actorSelect">
-              ${Object.entries(actorChoices).map(([id, name]) => 
-                `<option value="${id}">${name}</option>`
-              ).join('')}
-            </select>
-          </div>
-        `,
-        callback: (html) => html.find('#actorSelect').val()
-      });
-      
-      targetActor = game.actors.get(selectedActorId);
-    }
+    // Select target actor using centralized logic
+    const targetActor = await VendorWalletSystem.selectUserActor();
     
     if (!targetActor) return;
     console.log("💰 PLAYER: Target actor selected:", targetActor.name);
@@ -408,39 +376,8 @@ class VendorDisplayApplication extends foundry.applications.api.HandlebarsApplic
       checkboxesParam || this.element.querySelectorAll('.item-checkbox:checked')
     );
     
-    // Get user's actors
-    const userActors = game.actors.filter(actor => actor.hasPlayerOwner && actor.ownership[game.user.id] >= 3);
-    
-    let targetActor;
-    if (userActors.length === 0) {
-      ui.notifications.error('No character with Owner permission found! Please check your character sheet permissions.');
-      return;
-    } else if (userActors.length === 1) {
-      targetActor = userActors[0];
-    } else {
-      // Multiple actors - show selection dialog
-      const actorChoices = userActors.reduce((choices, actor) => {
-        choices[actor.id] = actor.name;
-        return choices;
-      }, {});
-      
-      const selectedActorId = await Dialog.prompt({
-        title: 'Select Character',
-        content: `
-          <div class="form-group">
-            <label>Choose which character will purchase these items:</label>
-            <select id="actorSelect">
-              ${Object.entries(actorChoices).map(([id, name]) => 
-                `<option value="${id}">${name}</option>`
-              ).join('')}
-            </select>
-          </div>
-        `,
-        callback: (html) => html.find('#actorSelect').val()
-      });
-      
-      targetActor = game.actors.get(selectedActorId);
-    }
+    // Select target actor using centralized logic
+    const targetActor = await VendorWalletSystem.selectUserActor();
     
     if (!targetActor) return;
     console.log("💰 GM: Target actor selected:", targetActor.name);

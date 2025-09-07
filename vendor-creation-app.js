@@ -49,7 +49,7 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     this.element.addEventListener('click', this._onClickCreate.bind(this));
     this.element.addEventListener('submit', this._onSubmitForm.bind(this));
     this.element.addEventListener('click', this._onClickFilePicker.bind(this));
-    this._setupCurrencyListeners();
+    FormUtilities.setupCurrencyListeners(this.element);
   }
 
   /**
@@ -58,40 +58,7 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
    * @returns {Promise<void>}
    */
   async _onClickFilePicker(event) {
-    if (event.target.closest('.file-picker')) {
-      event.preventDefault();
-      const button = event.target.closest('.file-picker');
-      const target = button.dataset.target;
-      const type = button.dataset.type;
-      
-      const fp = new FilePicker({
-        type: type,
-        callback: (path) => {
-          this.element.querySelector(`#${target}`).value = path;
-        }
-      });
-      
-      fp.render(true);
-    }
-  }
-
-  /**
-   * Sets up listeners for currency input fields to format values
-   * @returns {void}
-   */
-  _setupCurrencyListeners() {
-    const fields = this.element.querySelectorAll('#minValue, #maxValue');
-    fields.forEach(field => {
-      field.addEventListener('focus', e => {
-        e.target.value = e.target.value.replace(/[^0-9.-]+/g, '');
-      });
-      field.addEventListener('blur', e => {
-        const value = parseFloat(e.target.value.replace(/[^0-9.-]+/g, '')) || 0;
-        e.target.value = VendorWalletSystem.formatCurrency(value);
-      });
-      const value = parseFloat(field.value.replace(/[^0-9.-]+/g, '')) || 0;
-      field.value = VendorWalletSystem.formatCurrency(value);
-    });
+    await FormUtilities.handleFilePicker(event, this.element);
   }
 
   /**
@@ -123,45 +90,48 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     const form = this.element.querySelector('form');
     const formData = new FormData(form);
 
-    const tlFilterRaw = formData.get('tlFilter')?.trim();
-    const tlFilterArray = tlFilterRaw
-      ? tlFilterRaw
-          .split(',')
-          .map((t) => t.trim().toLowerCase())
-          .filter(Boolean)
-      : null;
+    const tlFilterArray = FormUtilities.parseTLFilter(formData.get('tlFilter'));
+    const stockMin = parseInt(formData.get('stockMin'), 10);
+    const stockMax = parseInt(formData.get('stockMax'), 10);
+    const minValue = VendorWalletSystem.parseCurrency(formData.get('minValue'));
+    const maxValue = VendorWalletSystem.parseCurrency(formData.get('maxValue'));
+
+    // Validate stock range
+    if (!FormUtilities.validateStockRange(stockMin, stockMax)) {
+      return;
+    }
+
+    // Validate price range
+    if (!FormUtilities.validatePriceRange(minValue, maxValue)) {
+      return;
+    }
+
     const vendorData = {
       name: formData.get('name'),
       image: formData.get('vendorImage'),
       compendium: formData.get('compendium'),
       quantity: parseInt(formData.get('quantity')),
-      stockMin: parseInt(formData.get('stockMin'), 10),
-      stockMax: parseInt(formData.get('stockMax'), 10),
-
-      minValue: VendorWalletSystem.parseCurrency(formData.get('minValue')),
-      maxValue: VendorWalletSystem.parseCurrency(formData.get('maxValue')),
-
+      stockMin,
+      stockMax,
+      minValue,
+      maxValue,
       tlFilter: tlFilterArray,
-      lcFilter: formData.get('lcFilter') === '' ? null : parseInt(formData.get('lcFilter'), 10),
-
+      lcFilter: FormUtilities.parseLCFilter(formData.get('lcFilter')),
       active: true
     };
-
-    if (vendorData.stockMin > vendorData.stockMax) {
-      ui.notifications.error('Stock Min must be less than or equal to Stock Max');
-      return;
-    }
 
     const items = await this.generateRandomItems(vendorData);
     if (items === null) return;
     
     const vendor = {
       ...vendorData,
-      items,
+      items: items || [],
       id: foundry.utils.randomID()
     };
 
-    const vendors = VendorWalletSystem.getVendors();
+    vendor.items = items;
+
+    const items = await VendorWalletSystem.generateRandomItems(vendorData);
     vendors[vendor.id] = vendor;
     await game.settings.set(VendorWalletSystem.ID, 'vendors', vendors);
 
@@ -169,89 +139,6 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     this.close();
   }
 
-  /**
-   * Generates random items for the vendor based on the provided criteria
-   * @param {Object} vendorData - The vendor configuration data
-   * @returns {Promise<Array|null>} Array of generated vendor items or null if invalid price range
-   */
-  async generateRandomItems(vendorData) {
-    if (vendorData.minValue > vendorData.maxValue) {
-      ui.notifications.error('Min Value must be less than or equal to Max Value');
-      return null;
-    }
-
-    const pack = game.packs.get(vendorData.compendium);
-    if (!pack) return [];
-
-    const index = await pack.getIndex({ fields: ['name', 'img', 'system.eqt.techlevel', 'system.eqt.legalityclass'] });
-    let filteredItems = Array.from(index);
-
-    // Apply TL filter if specified
-    if (vendorData.tlFilter) {
-      console.log(`Applying TL filter [${vendorData.tlFilter.join(', ')}] to ${filteredItems.length} items`);
-      filteredItems.forEach(item => {
-        if (item.system?.eqt?.techlevel === undefined) {
-          console.log(`Item sem TL: ${item.name}`);
-        }
-        if (item.system?.eqt?.legalityclass === undefined) {
-          console.log(`Item sem LC: ${item.name}`);
-        }
-      });
-      filteredItems = filteredItems.filter(item => {
-        const tl = item.system?.eqt?.techlevel ?? '';
-
-        return vendorData.tlFilter.includes(String(tl).toLowerCase());
-
-      });
-      console.log(`Items after TL filter: ${filteredItems.length}`);
-    }
-
-    // Apply LC filter if specified
-    if (vendorData.lcFilter != null) {
-
-      console.log(`Applying LC filter ≥ ${vendorData.lcFilter} to ${filteredItems.length} items`);
-
-      filteredItems = filteredItems.filter(item => {
-        const lcValue = item.system?.eqt?.legalityclass;
-        const lc = lcValue === undefined || lcValue === '' ? null : parseInt(lcValue, 10);
-        const isIncluded = lc === null || lc >= vendorData.lcFilter;
-        console.log(`LC check for "${item.name}": ${lc} -> ${isIncluded ? 'kept' : 'discarded'}`);
-        return isIncluded;
-
-      });
-      console.log(`Items after LC filter: ${filteredItems.length} items`);
-    }
-
-    // Randomly select items
-    const shuffled = filteredItems.sort(() => 0.5 - Math.random());
-    const selectedItems = shuffled.slice(0, vendorData.quantity);
-
-    const items = [];
-    for (const indexItem of selectedItems) {
-      const item = await pack.getDocument(indexItem._id);
-      const minStock = Number.isInteger(vendorData.stockMin) ? vendorData.stockMin : 1;
-      const maxStock = Number.isInteger(vendorData.stockMax) ? vendorData.stockMax : minStock;
-      const quantity = Math.floor(Math.random() * (maxStock - minStock + 1)) + minStock;
-
-      const price = item.system?.eqt?.cost || item.system?.cost || 0;
-
-      items.push({
-        id: foundry.utils.randomID(),
-        name: item.name,
-        price,
-        link: item.link,
-        img: item.img,
-        weight: item.system?.eqt?.weight || item.system?.weight || 0,
-        pageref: item.system?.eqt?.pageref || item.system?.pageref || '',
-        uuid: item.uuid,
-
-        quantity
-
-      });
-    }
-
-    return items;
-  }
 }
 
 window.VendorCreationApplication = VendorCreationApplication;
