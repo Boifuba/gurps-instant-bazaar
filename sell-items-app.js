@@ -3,12 +3,15 @@
  * @description Allows players to select and sell items from their inventory
  */
 
+import VendorWalletSystem from './main.js';
+import { flattenItemsFromObject } from './utils.js';
+
 /**
  * @class SellItemsApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for selling player items
  */
-class SellItemsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class SellItemsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   constructor(options = {}) {
     super(options);
     this.searchTerm = '';
@@ -92,7 +95,7 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
     // Get items from GURPS character sheet equipment.carried
     const carried = actor.system?.equipment?.carried;
     if (carried) {
-      const carriedItems = window.flattenItemsFromObject(carried);
+      const carriedItems = flattenItemsFromObject(carried);
       
       for (const entry of carriedItems) {
         const itemData = entry.data;
@@ -180,7 +183,8 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
   _updateClearButtonVisibility() {
     const clearSearchBtn = this.element.querySelector('#clearSearch');
     if (clearSearchBtn) {
-      clearSearchBtn.style.display = this.searchTerm ? 'flex' : 'none';
+      // Toggle the 'hidden' class based on whether searchTerm is empty
+      clearSearchBtn.classList.toggle('hidden', !this.searchTerm);
     }
   }
 
@@ -347,7 +351,9 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
       return;
     }
 
-    console.log("💰 PLAYER: Selected items for sale:", selectedItems);
+    if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+      console.log("💰 PLAYER: Selected items for sale:", selectedItems);
+    }
 
     // Send sell request to GM via socket
     game.socket.emit(VendorWalletSystem.SOCKET, {
@@ -395,6 +401,3 @@ class SellItemsApplication extends foundry.applications.api.HandlebarsApplicatio
     return super.close(options);
   }
 }
-
-// Expose the application to the global scope
-window.SellItemsApplication = SellItemsApplication;

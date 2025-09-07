@@ -8,7 +8,7 @@
  * @param {Object} obj - The equipment object to flatten
  * @returns {Array} Array of flattened items
  */
-function flattenItemsFromObject(obj) {
+export function flattenItemsFromObject(obj) {
   const items = [];
   if (typeof obj !== "object" || obj === null) return items;
   
@@ -42,7 +42,7 @@ function flattenItemsFromObject(obj) {
  * @param {string} [currentPath=''] - Current path in the structure
  * @returns {string|null} The path to the item or null if not found
  */
-function findItemInCarried(carried, itemId, currentPath = '') {
+export function findItemInCarried(carried, itemId, currentPath = '') {
   for (const [key, value] of Object.entries(carried)) {
     const path = currentPath ? `${currentPath}.${key}` : key;
     
@@ -64,7 +64,7 @@ function findItemInCarried(carried, itemId, currentPath = '') {
  * @param {string} path - The path to the item
  * @returns {Object|null} The item data or null if not found
  */
-function getItemFromPath(carried, path) {
+export function getItemFromPath(carried, path) {
   const pathParts = path.split('.');
   let current = carried;
   
@@ -77,11 +77,4 @@ function getItemFromPath(carried, path) {
   }
   
   return current;
-}
-
-// Expose the utility functions globally for use by other modules
-if (typeof window !== "undefined") {
-  window.flattenItemsFromObject = flattenItemsFromObject;
-  window.findItemInCarried = findItemInCarried;
-  window.getItemFromPath = getItemFromPath;
 }

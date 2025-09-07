@@ -3,12 +3,17 @@
  * @description Main application that provides access to money management, vendor creation, and vendor management
  */
 
+import MoneyManagementApplication from './money-management-app.js';
+import VendorCreationApplication from './vendor-creation-app.js';
+import VendorManagerApplication from './vendor-manager-app.js';
+import CurrencySettingsApplication from './currency-settings-app.js';
+
 /**
  * @class GMToolsApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Main GM tools application that provides access to all GM functionality
  */
-class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: 'gm-tools',
     tag: 'form',
@@ -59,5 +64,3 @@ class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationM
     }
   }
 }
-
-window.GMToolsApplication = GMToolsApplication;

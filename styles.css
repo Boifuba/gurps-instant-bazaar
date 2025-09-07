@@ -206,7 +206,7 @@
   cursor: pointer;
   color: #6c757d;
   border-radius: 3px;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 24px;
@@ -1022,4 +1022,9 @@ button.secondary:hover {
   padding: 1.3rem 0.75rem 0.75rem 0.75rem;
   border-top: 1px solid var(--color-border);
   background-color: var(--color-bg);
+}
+
+/* New class for hiding elements */
+.hidden {
+  display: none;
 }

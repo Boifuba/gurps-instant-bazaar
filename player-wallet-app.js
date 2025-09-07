@@ -1,9 +1,11 @@
+import VendorWalletSystem from './main.js';
+
 /**
  * @class PlayerWalletApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for displaying player wallet and available vendors
  */
-class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   /**
    * @param {Object} options - Application options
    * @param {string} options.vendorId - The ID of the vendor to display
@@ -320,7 +322,8 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
   _updateClearButtonVisibility() {
     const clearSearchBtn = this.element.querySelector('#clearSearch');
     if (clearSearchBtn) {
-      clearSearchBtn.style.display = this.searchTerm ? 'flex' : 'none';
+      // Toggle the 'hidden' class based on whether searchTerm is empty
+      clearSearchBtn.classList.toggle('hidden', !this.searchTerm);
     }
   }
 
@@ -332,12 +335,16 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
     // Only handle events for this user
     if (data.userId !== game.user.id) return;
     
-    console.log('💰 DEBUG: Socket event received:', data.type, data);
+    if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+      console.log('💰 DEBUG: Socket event received:', data.type, data);
+    }
     
     switch (data.type) {
       case 'purchaseCompleted':
         ui.notifications.info(data.message);
-        console.log('💰 DEBUG: Purchase completed, refreshing wallet display');
+        if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+          console.log('💰 DEBUG: Purchase completed, refreshing wallet display');
+        }
         // Check if element still exists before clearing selection
         if (this.element) {
           this._clearSelection();
@@ -349,7 +356,9 @@ class PlayerWalletApplication extends foundry.applications.api.HandlebarsApplica
         break;
       case 'purchaseFailed':
         ui.notifications.warn(data.message);
-        console.log('💰 DEBUG: Purchase failed:', data.message);
+        if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+          console.log('💰 DEBUG: Purchase failed:', data.message);
+        }
         break;
     }
   }
@@ -564,7 +573,9 @@ PlayerWalletApplication.selectUserActor = async function(userId = game.user.id) 
  * @returns {Promise<void>}
  */
 PlayerWalletApplication.processClientPurchase = async function({ vendorId, checkboxes, element, userId = game.user.id }) {
-  console.log("💰 CLIENT: Processing purchase request...");
+  if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+    console.log("💰 CLIENT: Processing purchase request...");
+  }
   
   if (!checkboxes || checkboxes.length === 0) return;
 
@@ -584,7 +595,9 @@ PlayerWalletApplication.processClientPurchase = async function({ vendorId, check
   const targetActor = await PlayerWalletApplication.selectUserActor(userId);
   
   if (!targetActor) return;
-  console.log("💰 CLIENT: Target actor selected:", targetActor.name);
+  if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+    console.log("💰 CLIENT: Target actor selected:", targetActor.name);
+  }
   
   // Collect selected items data
   const vendor = VendorWalletSystem.getVendor(vendorId);
@@ -611,21 +624,20 @@ PlayerWalletApplication.processClientPurchase = async function({ vendorId, check
     }
   }
   
-  console.log("💰 CLIENT: Selected items for purchase:", selectedItems);
-  
-  // Log the full names of selected items for debugging
-  for (const item of selectedItems) {
-    const itemDoc = await fromUuid(item.uuid);
-    console.log(`💰 CLIENT SELECTED: ${item.quantity}x "${itemDoc?.name || 'Unknown item'}" (UUID: ${item.uuid})`);
+  if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+    console.log("💰 CLIENT: Selected items for purchase:", selectedItems);
+    
+    // Log the full names of selected items for debugging
+    for (const item of selectedItems) {
+      const itemDoc = await fromUuid(item.uuid);
+      console.log(`💰 CLIENT SELECTED: ${item.quantity}x "${itemDoc?.name || 'Unknown item'}" (UUID: ${item.uuid})`);
+    }
   }
   
   // If user is GM, process directly; otherwise send request to GM
   if (game.user.isGM) {
-    await VendorWalletSystem._processDirectPurchase(targetActor, vendorId, selectedItems, element);
+    await VendorWalletSystem.transactionManager.processDirectPurchase(targetActor, vendorId, selectedItems);
   } else {
-    await VendorWalletSystem._sendPurchaseRequestToGM(targetActor, vendorId, selectedItems, userId);
+    await VendorWalletSystem.transactionManager.sendPurchaseRequestToGM(targetActor, vendorId, selectedItems, userId);
   }
 };
-
-// Expose the application to the global scope so other scripts can access it
-globalThis.PlayerWalletApplication = PlayerWalletApplication;

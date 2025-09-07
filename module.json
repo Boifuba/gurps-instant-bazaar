@@ -12,21 +12,8 @@
       "name": "Boifubá"
     }
   ],
-  "scripts": [
-    "currency.js",
-    "utils.js",
-    "form-utilities.js",
-    "main.js",
-    "player-wallet-app.js",
-    "money-management-app.js",
-    "vendor-creation-app.js",
-    "vendor-item-edit-app.js",
-    "vendor-edit-app.js",
-    "vendor-display-app.js",
-    "vendor-manager-app.js",
-    "gm-tools-app.js",
-    "currency-settings-app.js",
-    "sell-items-app.js"
+  "esmodules": [
+    "main.js"
   ],
   "styles": [
     "styles.css"

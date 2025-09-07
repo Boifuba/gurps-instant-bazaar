@@ -2,6 +2,8 @@
  * @file Utility functions and classes for managing currency and wallets
  */
 
+import { flattenItemsFromObject } from './utils.js';
+
 const isNonNegInt = (n) => Number.isInteger(n) && n >= 0;
 
 function _calculateBaseUnitMultiplier(denominations) {
@@ -18,7 +20,7 @@ function _calculateBaseUnitMultiplier(denominations) {
   return Math.pow(10, maxDecimalPlaces);
 }
 
-function valueFromCoins(coins = {}, denominations = null) {
+export function valueFromCoins(coins = {}, denominations = null) {
   if (!denominations || !Array.isArray(denominations)) {
     throw new Error("Denominations array is required");
   }
@@ -35,7 +37,7 @@ function valueFromCoins(coins = {}, denominations = null) {
   return totalValue;
 }
 
-function makeChange(total, denominations = null) {
+export function makeChange(total, denominations = null) {
   if (!isNonNegInt(total)) throw new Error(`Invalid total: ${total}`);
   if (!denominations || !Array.isArray(denominations)) {
     throw new Error("Denominations array is required");
@@ -51,11 +53,11 @@ function makeChange(total, denominations = null) {
   return out;
 }
 
-function normalizeCoins(coins, denominations = null) {
+export function normalizeCoins(coins, denominations = null) {
   return makeChange(valueFromCoins(coins, denominations), denominations);
 }
 
-class Wallet {
+export class Wallet {
   constructor(coins = {}, opts = {}, denominations = null) {
     const {
       optimizeOnConstruct = true,
@@ -166,27 +168,49 @@ class Wallet {
     if (!isNonNegInt(delta)) throw new Error(`Invalid value to add: ${delta}`);
 
     if (this._opts.optimizeOnAdd) {
-      this._set(makeChange(this.total() + delta, D));
+      this._addOptimized(delta, D);
     } else {
-      if (isNumber) {
-        if (D.length > 0) {
-          const smallest = D[D.length - 1];
-          const unit = smallest.value;
-          const whole = Math.floor(delta / unit);
-          const rem = delta % unit;
-          this._coins[smallest.name] = (this._coins[smallest.name] || 0) + whole;
-          if (rem) {
-            const tmp = makeChange(this.total() + rem, D);
-            this._set(tmp);
-          }
-        }
-      } else {
-        for (const [denomName, count] of Object.entries(arg)) {
-          this._coins[denomName] = (this._coins[denomName] || 0) + count;
-        }
-      }
+      this._addNonOptimized(arg, delta, isNumber, D);
     }
     return this;
+  }
+
+  /**
+   * Handles optimized addition by converting to optimal coin distribution
+   * @param {number} delta - The scaled amount to add
+   * @param {Array} denominations - The scaled denominations
+   * @private
+   */
+  _addOptimized(delta, denominations) {
+    this._set(makeChange(this.total() + delta, denominations));
+  }
+
+  /**
+   * Handles non-optimized addition by adding coins directly
+   * @param {number|Object} arg - Original argument passed to add()
+   * @param {number} delta - The scaled amount to add
+   * @param {boolean} isNumber - Whether arg is a number
+   * @param {Array} denominations - The scaled denominations
+   * @private
+   */
+  _addNonOptimized(arg, delta, isNumber, denominations) {
+    if (isNumber) {
+      if (denominations.length > 0) {
+        const smallest = denominations[denominations.length - 1];
+        const unit = smallest.value;
+        const whole = Math.floor(delta / unit);
+        const rem = delta % unit;
+        this._coins[smallest.name] = (this._coins[smallest.name] || 0) + whole;
+        if (rem) {
+          const tmp = makeChange(this.total() + rem, denominations);
+          this._set(tmp);
+        }
+      }
+    } else {
+      for (const [denomName, count] of Object.entries(arg)) {
+        this._coins[denomName] = (this._coins[denomName] || 0) + count;
+      }
+    }
   }
 
   /**
@@ -210,58 +234,104 @@ class Wallet {
     if (tot < delta) throw new Error(`Insufficient funds: short by ${delta - tot} (base units).`);
 
     if (this._opts.optimizeOnSubtract) {
-      this._set(makeChange(tot - delta, D));
-      return this;
+      this._subtractOptimized(tot, delta, D);
+    } else {
+      this._subtractNonOptimized(delta, D);
     }
+    return this;
+  }
 
+  /**
+   * Handles optimized subtraction by converting to optimal coin distribution
+   * @param {number} total - Current wallet total
+   * @param {number} delta - The scaled amount to subtract
+   * @param {Array} denominations - The scaled denominations
+   * @private
+   */
+  _subtractOptimized(total, delta, denominations) {
+    this._set(makeChange(total - delta, denominations));
+  }
+
+  /**
+   * Handles non-optimized subtraction with coin breaking logic
+   * @param {number} delta - The scaled amount to subtract
+   * @param {Array} denominations - The scaled denominations
+   * @private
+   */
+  _subtractNonOptimized(delta, denominations) {
     const work = { ...this._coins };
     let remaining = delta;
 
     if (this._opts.spendSmallestFirst) {
-      while (remaining > 0) {
-        let spentThisPass = 0;
-
-        // menor → maior
-        for (let i = D.length - 1; i >= 0 && remaining > 0; i--) {
-          const name = D[i].name, v = D[i].value;
-          const have = work[name] | 0;
-          const take = Math.min(have, Math.floor(remaining / v));
-          if (take > 0) {
-            work[name] = have - take;
-            remaining -= take * v;
-            spentThisPass += take * v;
-          }
-        }
-
-        if (remaining === 0) break;
-
-        if (spentThisPass === 0) {
-          let broke = false;
-          for (let i = D.length - 2; i >= 0; i--) {
-            if (this._breakOne(work, i)) { broke = true; break; }
-          }
-          if (!broke) throw new Error("Insufficient funds (unexpected).");
-        }
-      }
+      remaining = this._subtractSmallestFirst(remaining, denominations, work);
     } else {
-      // maior → menor (sem normalizar tudo)
-      for (let i = 0; i < D.length && remaining > 0; i++) {
-        const name = D[i].name, v = D[i].value;
+      remaining = this._subtractLargestFirst(remaining, denominations, work);
+    }
+
+    const result = this._opts.repackAfterSubtract === "up" ? this._coalesceUp(work) : work;
+    this._set(result);
+  }
+
+  /**
+   * Subtracts coins starting from smallest denomination with coin breaking
+   * @param {number} remaining - Amount still to subtract
+   * @param {Array} denominations - The scaled denominations
+   * @param {Object} work - Working copy of coins
+   * @returns {number} Remaining amount after subtraction
+   * @private
+   */
+  _subtractSmallestFirst(remaining, denominations, work) {
+    while (remaining > 0) {
+      let spentThisPass = 0;
+
+      // menor → maior
+      for (let i = denominations.length - 1; i >= 0 && remaining > 0; i--) {
+        const name = denominations[i].name, v = denominations[i].value;
         const have = work[name] | 0;
         const take = Math.min(have, Math.floor(remaining / v));
         if (take > 0) {
           work[name] = have - take;
           remaining -= take * v;
+          spentThisPass += take * v;
         }
       }
-      if (remaining > 0) {
-        throw new Error("Need to break higher coins; enable spendSmallestFirst.");
+
+      if (remaining === 0) break;
+
+      if (spentThisPass === 0) {
+        let broke = false;
+        for (let i = denominations.length - 2; i >= 0; i--) {
+          if (this._breakOne(work, i)) { broke = true; break; }
+        }
+        if (!broke) throw new Error("Insufficient funds (unexpected).");
       }
     }
+    return remaining;
+  }
 
-    const result = this._opts.repackAfterSubtract === "up" ? this._coalesceUp(work) : work;
-    this._set(result);
-    return this;
+  /**
+   * Subtracts coins starting from largest denomination without coin breaking
+   * @param {number} remaining - Amount still to subtract
+   * @param {Array} denominations - The scaled denominations
+   * @param {Object} work - Working copy of coins
+   * @returns {number} Remaining amount after subtraction
+   * @private
+   */
+  _subtractLargestFirst(remaining, denominations, work) {
+    // maior → menor (sem normalizar tudo)
+    for (let i = 0; i < denominations.length && remaining > 0; i++) {
+      const name = denominations[i].name, v = denominations[i].value;
+      const have = work[name] | 0;
+      const take = Math.min(have, Math.floor(remaining / v));
+      if (take > 0) {
+        work[name] = have - take;
+        remaining -= take * v;
+      }
+    }
+    if (remaining > 0) {
+      throw new Error("Need to break higher coins; enable spendSmallestFirst.");
+    }
+    return remaining;
   }
 
   normalize() {
@@ -285,7 +355,7 @@ class Wallet {
  * Integrates wallets with Foundry actors and settings.
  * @class CurrencyManager
  */
-class CurrencyManager {
+export default class CurrencyManager {
   /**
    * @param {string} moduleId - Module identifier used for settings keys
    */
@@ -302,25 +372,27 @@ class CurrencyManager {
   }
 
   formatCurrency(amount) {
-    const useModuleCurrency = game.settings.get(this.moduleId, "useModuleCurrencySystem");
-    const currencyName = game.settings.get(this.moduleId, "currencyName") || "coins";
+    const currencySymbol = game.settings.get(this.moduleId, "currencySymbol") || "$";
 
-    let finalAmount = Number(amount) || 0;
-
-    if (useModuleCurrency) {
-      if (finalAmount > 0 && finalAmount < 0.01) finalAmount = 0.01;
-      finalAmount = Math.round(finalAmount * 100) / 100;
-      return finalAmount.toLocaleString('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    } else {
-      if (finalAmount > 0 && finalAmount < 0.1) finalAmount = 0.1;
-      else if (finalAmount > 0) finalAmount = Math.round(finalAmount * 10) / 10;
-      return finalAmount.toString();
+    // Ensure we have a valid number
+    let finalAmount = Number(amount);
+    if (!Number.isFinite(finalAmount)) {
+      finalAmount = 0;
     }
+
+    // Ensure minimum value for display purposes
+    if (finalAmount > 0 && finalAmount < 0.01) finalAmount = 0.01;
+    
+    // Round to 2 decimal places
+    finalAmount = Math.round(finalAmount * 100) / 100;
+    
+    // Format with American standard (1,000.00) and configurable symbol
+    const formattedNumber = finalAmount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    
+    return `${currencySymbol}${formattedNumber}`;
   }
 
   parseCurrency(value) {
@@ -402,33 +474,6 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     return breakdown;
   }
 
-  _flattenItemsFromObject(obj) {
-    const items = [];
-    if (typeof obj !== "object" || obj === null) return items;
-    
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const value = obj[key];
-        if (typeof value === "object" && value !== null) {
-          if (value.name !== undefined) {
-            // This is an item
-            items.push({ id: key, data: value });
-            
-            // Check for nested items in collapsed property
-            if (value.collapsed && typeof value.collapsed === "object") {
-              const nestedItems = this._flattenItemsFromObject(value.collapsed);
-              items.push(...nestedItems);
-            }
-          } else {
-            // This might be a container, recurse into it
-            items.push(...this._flattenItemsFromObject(value));
-          }
-        }
-      }
-    }
-    return items;
-  }
-
   _getCharacterSheetCoinBreakdown(userId) {
     const user = game.users.get(userId);
     let actor = user?.character;
@@ -448,7 +493,7 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     const coinBreakdown = [];
 
     // Get all items from the carried equipment
-    const carriedItems = this._flattenItemsFromObject(carried);
+    const carriedItems = flattenItemsFromObject(carried);
     
     // Find coin items that match our denominations
     for (const denomination of denominations) {
@@ -473,7 +518,7 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
   }
 
   async _setCharacterSheetCurrency(userId, newAmount) {
-    const scaledNewAmount = (Number(newAmount) || 0) * this._baseUnitMultiplier;
+    const scaledNewAmount = Math.round((Number(newAmount) || 0) * this._baseUnitMultiplier);
 
     const user = game.users.get(userId);
     if (!user) return false;
@@ -572,12 +617,12 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
    * @returns {void}
    */
   _refreshWalletApplications() {
-    const { PlayerWalletApplication, VendorDisplayApplication, MoneyManagementApplication } = window;
+    // Import these at the top of the file instead of accessing via window
     Object.values(ui.windows).forEach((app) => {
       if (
-        (PlayerWalletApplication && app instanceof PlayerWalletApplication) ||
-        (VendorDisplayApplication && app instanceof VendorDisplayApplication) ||
-        (MoneyManagementApplication && app instanceof MoneyManagementApplication)
+        app.constructor.name === 'PlayerWalletApplication' ||
+        app.constructor.name === 'VendorDisplayApplication' ||
+        app.constructor.name === 'MoneyManagementApplication'
       ) {
         app.render(false);
       }
@@ -698,12 +743,4 @@ const scaledTotalValue = Math.round(unscaledTotalValue * this._getScale());
     this._baseUnitMultiplier = _calculateBaseUnitMultiplier(denominations);
   }
 }
-
-if (typeof window !== "undefined") {
-  window.Wallet = Wallet;
-  window.valueFromCoins = valueFromCoins;
-  window.makeChange = makeChange;
-  window.normalizeCoins = normalizeCoins;
-  window.isNonNegInt = isNonNegInt;
-  window.CurrencyManager = CurrencyManager;
-}
+export { isNonNegInt };

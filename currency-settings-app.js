@@ -3,6 +3,8 @@
  * @description Allows GMs to define currency names and denominations for the module's wallet system
  */
 
+import VendorWalletSystem from './main.js';
+
 /**
  * Default currency denominations with exact weights
  * This is the single source of truth for default values
@@ -21,7 +23,7 @@ const DEFAULT_CURRENCY_DENOMINATIONS = [
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for managing currency settings
  */
-class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: 'currency-settings',
     tag: 'form',
@@ -169,10 +171,10 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
   /**
    * Adds a new set of input fields for a coin denomination
    * @param {string} [name=''] - Pre-fill name value
-   * @param {number} [value=''] - Pre-fill value
-   * @param {number} [weight=''] - Pre-fill weight value
+   * @param {number} [value=0.01] - Pre-fill value
+   * @param {number} [weight=0] - Pre-fill weight value
    */
-  _addCoinDenominationField(name = '', value = '', weight = '') {
+  _addCoinDenominationField(name = '', value = 0.01, weight = 0) {
     const container = this.element.querySelector('#coinDenominationsContainer');
     if (!container) return;
 
@@ -187,11 +189,11 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
         </div>
         <div class="form-field">
           <label>Value per Coin:</label>
-          <input type="number" name="coinValue" placeholder="e.g., 100" min="0.01" step="0.01" value="${value}" required>
+          <input type="number" name="coinValue" placeholder="e.g., 100" min="0.01" step="0.01" value="${value || 0.01}" required>
         </div>
         <div class="form-field">
           <label>Weight per Coin:</label>
-          <input type="number" name="coinWeight" placeholder="0.004" min="0" step="0.001" value="${weight}" required>
+          <input type="number" name="coinWeight" placeholder="0.004" min="0" step="0.001" value="${weight || 0}" required>
         </div>
         <button type="button" class="secondary remove-coin-denomination" title="Remove Coin">
           <i class="fas fa-trash"></i>
@@ -316,11 +318,11 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
       await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', sortedDenominations);
       
       // Refresh CurrencyManager settings after saving
-      if (window.VendorWalletSystem && window.VendorWalletSystem.currencyManager) {
-        window.VendorWalletSystem.currencyManager.refreshSettings();
-      } else if (window.CurrencyManager) {
+      if (VendorWalletSystem && VendorWalletSystem.currencyManager) {
+        VendorWalletSystem.currencyManager.refreshSettings();
+      } else {
         // Try to find and refresh any global CurrencyManager instances
-        console.warn("Global VendorWalletSystem.currencyManager not found, settings may need manual refresh");
+        console.warn("VendorWalletSystem.currencyManager not found, settings may need manual refresh");
       }
       
       // Notify user if we had to reorder denominations
@@ -339,6 +341,3 @@ class CurrencySettingsApplication extends foundry.applications.api.HandlebarsApp
     }
   }
 }
-
-// Expose the application to the global scope so other scripts can access it
-window.CurrencySettingsApplication = CurrencySettingsApplication;

@@ -3,12 +3,15 @@
  * @description Allows GMs to create new vendors with randomly selected items from compendiums
  */
 
+import VendorWalletSystem from './main.js';
+import FormUtilities from './form-utilities.js';
+
 /**
  * @class VendorCreationApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for creating new vendors with configurable parameters
  */
-class VendorCreationApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class VendorCreationApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: 'vendor-creation',
     tag: 'form',
@@ -129,11 +132,10 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     };
 
     const items = await FormUtilities.generateRandomItems(vendorData);
-    if (items === null) return;
     
     const vendor = {
       ...vendorData,
-      items: items || [],
+      items: items,
       id: foundry.utils.randomID()
     };
 
@@ -144,7 +146,4 @@ class VendorCreationApplication extends foundry.applications.api.HandlebarsAppli
     ui.notifications.info(`Vendor ${vendor.name} created with ${items.length} items!`);
     this.close();
   }
-
 }
-
-window.VendorCreationApplication = VendorCreationApplication;

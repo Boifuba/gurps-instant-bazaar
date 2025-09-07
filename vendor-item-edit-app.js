@@ -3,12 +3,14 @@
  * @description Allows GMs to edit individual items within a vendor's inventory
  */
 
+import VendorWalletSystem from './main.js';
+
 /**
  * @class VendorItemEditApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for editing individual vendor items
  */
-class VendorItemEditApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class VendorItemEditApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   /**
    * @param {Object} options - Application options
    * @param {string} options.vendorId - The ID of the vendor
@@ -149,5 +151,3 @@ class VendorItemEditApplication extends foundry.applications.api.HandlebarsAppli
     }
   }
 }
-
-window.VendorItemEditApplication = VendorItemEditApplication;

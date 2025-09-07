@@ -3,12 +3,15 @@
  * @description Allows GMs to edit vendor properties and optionally regenerate items
  */
 
+import VendorWalletSystem from './main.js';
+import * as FormUtilities from './form-utilities.js';
+
 /**
  * @class VendorEditApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for editing existing vendor data and settings
  */
-class VendorEditApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class VendorEditApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   /**
    * @param {Object} options - Application options
    * @param {string} options.vendorId - The ID of the vendor to edit
@@ -191,7 +194,4 @@ class VendorEditApplication extends foundry.applications.api.HandlebarsApplicati
     ui.notifications.info(`Vendor ${updatedVendor.name} updated successfully!`);
     this.close();
   }
-
 }
-
-window.VendorEditApplication = VendorEditApplication;

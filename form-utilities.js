@@ -3,11 +3,13 @@
  * @description Provides common form functionality for vendor creation and editing
  */
 
+import VendorWalletSystem from './main.js';
+
 /**
  * @class FormUtilities
  * @description Utility class containing common form functions for vendor applications
  */
-class FormUtilities {
+export default class FormUtilities {
   /**
    * Handles file picker button clicks
    * @param {Event} event - The click event
@@ -113,14 +115,9 @@ class FormUtilities {
   /**
    * Generates random items for a vendor based on the provided criteria
    * @param {Object} vendorData - The vendor configuration data
-   * @returns {Promise<Array|null>} Array of generated vendor items or null if invalid price range
+   * @returns {Promise<Array>} Array of generated vendor items
    */
   static async generateRandomItems(vendorData) {
-    if (vendorData.minValue > vendorData.maxValue) {
-      ui.notifications.error('Min Value must be less than or equal to Max Value');
-      return null;
-    }
-
     const pack = game.packs.get(vendorData.compendium);
     if (!pack) return [];
 
@@ -129,38 +126,48 @@ class FormUtilities {
 
     // Apply TL filter if specified
     if (vendorData.tlFilter) {
-      console.log(`Applying TL filter [${vendorData.tlFilter.join(', ')}] to ${filteredItems.length} items`);
-      filteredItems.forEach(item => {
-        if (item.system?.eqt?.techlevel === undefined) {
-          console.log(`Item sem TL: ${item.name}`);
-        }
-        if (item.system?.eqt?.legalityclass === undefined) {
-          console.log(`Item sem LC: ${item.name}`);
-        }
-      });
+      if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+        console.log(`Applying TL filter [${vendorData.tlFilter.join(', ')}] to ${filteredItems.length} items`);
+        filteredItems.forEach(item => {
+          if (item.system?.eqt?.techlevel === undefined) {
+            console.log(`Item sem TL: ${item.name}`);
+          }
+          if (item.system?.eqt?.legalityclass === undefined) {
+            console.log(`Item sem LC: ${item.name}`);
+          }
+        });
+      }
       filteredItems = filteredItems.filter(item => {
         const tl = item.system?.eqt?.techlevel ?? '';
 
         return vendorData.tlFilter.includes(String(tl).toLowerCase());
 
       });
-      console.log(`Items after TL filter: ${filteredItems.length}`);
+      if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+        console.log(`Items after TL filter: ${filteredItems.length}`);
+      }
     }
 
     // Apply LC filter if specified
     if (vendorData.lcFilter != null) {
 
-      console.log(`Applying LC filter ≥ ${vendorData.lcFilter} to ${filteredItems.length} items`);
+      if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+        console.log(`Applying LC filter ≥ ${vendorData.lcFilter} to ${filteredItems.length} items`);
+      }
 
       filteredItems = filteredItems.filter(item => {
         const lcValue = item.system?.eqt?.legalityclass;
         const lc = lcValue === undefined || lcValue === '' ? null : parseInt(lcValue, 10);
         const isIncluded = lc === null || lc >= vendorData.lcFilter;
-        console.log(`LC check for "${item.name}": ${lc} -> ${isIncluded ? 'kept' : 'discarded'}`);
+        if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+          console.log(`LC check for "${item.name}": ${lc} -> ${isIncluded ? 'kept' : 'discarded'}`);
+        }
         return isIncluded;
 
       });
-      console.log(`Items after LC filter: ${filteredItems.length} items`);
+      if (game.settings.get(VendorWalletSystem.ID, 'debugMode')) {
+        console.log(`Items after LC filter: ${filteredItems.length} items`);
+      }
     }
 
     // Randomly select items
@@ -194,6 +201,3 @@ class FormUtilities {
     return items;
   }
 }
-
-// Expose the utility class globally
-window.FormUtilities = FormUtilities;

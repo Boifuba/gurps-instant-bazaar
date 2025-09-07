@@ -3,12 +3,14 @@
  * @description Allows Game Masters to add or remove money from player wallets
  */
 
+import VendorWalletSystem from './main.js';
+
 /**
  * @class MoneyManagementApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
  * @description Application for managing player money (GM only)
  */
-class MoneyManagementApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+export default class MoneyManagementApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: 'money-management',
     tag: 'form',
@@ -124,5 +126,3 @@ class MoneyManagementApplication extends foundry.applications.api.HandlebarsAppl
     ui.notifications.info('Player wallets updated successfully!');
   }
 }
-
-window.MoneyManagementApplication = MoneyManagementApplication;

@@ -1,33 +1,28 @@
 /**
- * @file Vendor manager application for managing all vendors
- * @description Allows GMs to view, edit, activate/deactivate, and delete vendors
+ * @file Vendor manager application for managing existing vendors
+ * @description Allows GMs to view, edit, and delete existing vendors
  */
+
+import VendorWalletSystem from './main.js';
 
 /**
  * @class VendorManagerApplication
  * @extends {foundry.applications.api.HandlebarsApplicationMixin}
- * @description Application for managing all vendors in the system
+ * @description Application for managing existing vendors
  */
-class VendorManagerApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
-  /**
-   * @param {...any} args - Constructor arguments
-   */
-  constructor(...args) {
-    super(...args);
-    this._onClickActionBound = this._onClickAction.bind(this);
-  }
-  
+export default class VendorManagerApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: 'vendor-manager',
-    tag: 'form',
+    tag: 'div',
     window: {
       title: 'Manage Vendors',
       icon: 'fas fa-store-alt'
     },
     position: {
-      width: 400,
+      width: 600,
+      height: 500
     },
-    classes: ["gurps-instant-bazaar"]
+    classes: ['gurps-instant-bazaar']
   };
 
   static PARTS = {
@@ -38,16 +33,17 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
 
   /**
    * Prepares the context data for rendering the template
-   * @returns {Promise<Object>} Context object containing all vendors data
+   * @returns {Promise<Object>} Context object containing vendors data
    */
   async _prepareContext() {
-    const vendors = VendorWalletSystem.getVendors();
-    return {
-      vendors: Object.entries(vendors).map(([id, vendor]) => ({
-        id,
-        ...vendor
-      }))
-    };
+    const allVendors = VendorWalletSystem.getVendors();
+    const vendors = Object.entries(allVendors).map(([id, vendor]) => ({
+      id,
+      ...vendor,
+      itemCount: vendor.items ? vendor.items.length : 0
+    }));
+
+    return { vendors };
   }
 
   /**
@@ -55,39 +51,54 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
    * @returns {void}
    */
   _onRender() {
-    this.element.addEventListener('click', this._onClickActionBound);
+    this.element.addEventListener('click', this._onClickAction.bind(this));
   }
 
   /**
-   * Handles action button clicks for vendor management
+   * Handles action button clicks
    * @param {Event} event - The click event
    * @returns {Promise<void>}
    */
   async _onClickAction(event) {
     const action = event.target.dataset.action;
-    const vendorId = event.target.closest('[data-vendor-id]')?.dataset.vendorId;
-    
-    if (!vendorId) return;
+    const vendorId = event.target.dataset.vendorId;
 
     switch (action) {
-      case 'toggle':
-        await this.toggleVendor(vendorId);
-        break;
       case 'edit':
-        new VendorEditApplication({ vendorId }).render(true);
+        // Note: VendorEditApplication needs to be imported when available
+        new window.VendorEditApplication({ vendorId }).render(true);
         break;
       case 'delete':
-        await this.deleteVendor(vendorId);
+        await this._deleteVendor(vendorId);
         break;
-      case 'view': {
-        const DisplayApp = globalThis.VendorDisplayApplication;
-        if (DisplayApp) {
-          new DisplayApp({ vendorId }).render(true);
-        } else {
-          console.error('VendorDisplayApplication is not defined');
-        }
+      case 'toggle-active':
+        await this._toggleVendorActive(vendorId);
         break;
-      }
+      case 'view':
+        // Note: VendorDisplayApplication needs to be imported when available
+        new window.VendorDisplayApplication({ vendorId }).render(true);
+        break;
+    }
+  }
+
+  /**
+   * Deletes a vendor after confirmation
+   * @param {string} vendorId - The vendor ID to delete
+   * @returns {Promise<void>}
+   */
+  async _deleteVendor(vendorId) {
+    const vendor = VendorWalletSystem.getVendor(vendorId);
+    if (!vendor) return;
+
+    const confirmed = await Dialog.confirm({
+      title: 'Delete Vendor',
+      content: `<p>Are you sure you want to delete vendor "${vendor.name}"?</p><p>This action cannot be undone.</p>`
+    });
+
+    if (confirmed) {
+      await VendorWalletSystem.deleteVendor(vendorId);
+      ui.notifications.info(`Vendor "${vendor.name}" has been deleted.`);
+      this.render();
     }
   }
 
@@ -96,42 +107,27 @@ class VendorManagerApplication extends foundry.applications.api.HandlebarsApplic
    * @param {string} vendorId - The vendor ID to toggle
    * @returns {Promise<void>}
    */
-  async toggleVendor(vendorId) {
+  async _toggleVendorActive(vendorId) {
     const vendor = VendorWalletSystem.getVendor(vendorId);
+    if (!vendor) return;
+
     vendor.active = !vendor.active;
     await VendorWalletSystem.updateVendor(vendorId, vendor);
+    
+    const status = vendor.active ? 'activated' : 'deactivated';
+    ui.notifications.info(`Vendor "${vendor.name}" has been ${status}.`);
     this.render();
   }
 
   /**
-   * Deletes a vendor after confirmation
-   * @param {string} vendorId - The vendor ID to delete
-   * @returns {Promise<void>}
+   * Static method to refresh all open vendor manager applications
+   * @returns {void}
    */
-  async deleteVendor(vendorId) {
-    const confirmed = await Dialog.confirm({
-      title: 'Delete Vendor',
-      content: 'Are you sure you want to delete this vendor?'
+  static refreshVendors() {
+    Object.values(ui.windows).forEach(app => {
+      if (app instanceof VendorManagerApplication) {
+        app.render(false);
+      }
     });
-
-    if (confirmed) {
-      await VendorWalletSystem.deleteVendor(vendorId);
-      this.render();
-    }
   }
 }
-
-/**
- * Static method to refresh all open vendor manager windows
- * @returns {void}
- */
-VendorManagerApplication.refreshVendors = function() {
-  Object.values(ui.windows).forEach(window => {
-    if (window instanceof VendorManagerApplication) {
-      window.render(false);
-    }
-  });
-};
-
-// Make the manager accessible globally for other scripts and tests
-globalThis.VendorManagerApplication = VendorManagerApplication;
