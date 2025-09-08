@@ -20,7 +20,7 @@ export function _calculateBaseUnitMultiplier(denominations) {
   return Math.pow(10, maxDecimalPlaces);
 }
 
-export function valueFromCoins(coins = {}, denominations = null) {
+export function valueFromCoins(coins = {}, denominations) {
   if (!denominations || !Array.isArray(denominations)) {
     throw new Error("Denominations array is required");
   }
@@ -38,7 +38,7 @@ export function valueFromCoins(coins = {}, denominations = null) {
 }
 
 export { makeChange };
-function makeChange(total, denominations = null) {
+function makeChange(total, denominations) {
   if (!isNonNegInt(total)) throw new Error(`Invalid total: ${total}`);
   if (!denominations || !Array.isArray(denominations)) {
     throw new Error("Denominations array is required");

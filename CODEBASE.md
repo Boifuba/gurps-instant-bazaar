@@ -53,7 +53,7 @@ Utility functions and classes for coin-based currency.
  * Convert a bag of coins into total copper.
  * @function valueFromCoins
  * @param {CoinBag} [coins] - Object with `gold`, `silver`, and `copper` counts.
- * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
+ * @param {{name:string, value:number}[]} denominations - Coin denominations used for conversion.
  * @returns {number} Total value expressed in copper units.
  * @throws {Error} When any coin count is not a non‑negative integer.
  */
@@ -62,7 +62,12 @@ Utility functions and classes for coin-based currency.
 **Example**
 
 ```javascript
-const total = valueFromCoins({ gold: 1, silver: 2, copper: 5 });
+const denoms = [
+  { name: "gold", value: 100 },
+  { name: "silver", value: 10 },
+  { name: "copper", value: 1 }
+];
+const total = valueFromCoins({ gold: 1, silver: 2, copper: 5 }, denoms);
 // total === 125
 ```
 
@@ -71,7 +76,7 @@ const total = valueFromCoins({ gold: 1, silver: 2, copper: 5 });
  * Break a copper total into an optimal set of coins.
  * @function makeChange
  * @param {number} total - Amount in copper to decompose.
- * @param {{key:string, value:number}[]} [denominations] - Optional coin values.
+ * @param {{name:string, value:number}[]} denominations - Coin denominations used for conversion.
  * @returns {CoinBag} Bag with minimal coin counts.
  * @throws {Error} If `total` is negative or non‑integer.
  */
@@ -80,7 +85,12 @@ const total = valueFromCoins({ gold: 1, silver: 2, copper: 5 });
 **Example**
 
 ```javascript
-makeChange(125); // { gold: 1, silver: 2, copper: 5 }
+const denoms = [
+  { name: "gold", value: 100 },
+  { name: "silver", value: 10 },
+  { name: "copper", value: 1 }
+];
+makeChange(125, denoms); // { gold: 1, silver: 2, copper: 5 }
 ```
 
 ```javascript
