@@ -284,10 +284,7 @@ We welcome suggestions for new features! Consider:
 
 Consider supporting the project to help ongoing development.
 
-<p align="center">
-  <a href="https://github.com/sponsors/Boifuba">
-    <img src="https://img.shields.io/badge/Sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=white" width="200" alt="Support this project"/>
-  </a>
-</p>
 
-
+<a href="https://www.buymeacoffee.com/boifuba" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40">
+</a>
