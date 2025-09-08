@@ -4,7 +4,7 @@
  */
 
 import VendorWalletSystem from './main.js';
-import * as FormUtilities from './form-utilities.js';
+import FormUtilities from './form-utilities.js';
 
 /**
  * @class VendorEditApplication

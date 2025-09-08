@@ -15,6 +15,9 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
   constructor(options = {}) {
     super(options);
     this.vendorId = options.vendorId;
+    
+    // Bind event handlers for later removal
+    this._boundOnClickEditItem = this._onClickEditItem.bind(this);
   }
 
   static DEFAULT_OPTIONS = {
@@ -70,9 +73,30 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
       }
     }
 
-    if (!game.user.isGM) {
+    if (game.user.isGM) {
+      // Add edit functionality for GMs
+      this.element.addEventListener('click', this._boundOnClickEditItem);
+    } else {
       // Add purchase functionality for players
       this.element.addEventListener('click', this._onPurchaseItem.bind(this));
+    }
+  }
+
+  /**
+   * Handles edit item button clicks (GM only)
+   * @param {Event} event - The click event
+   * @returns {void}
+   */
+  _onClickEditItem(event) {
+    if (event.target.closest('.edit-item-btn')) {
+      event.preventDefault();
+      const button = event.target.closest('.edit-item-btn');
+      const itemId = button.dataset.itemId;
+      
+      new VendorItemEditApplication({ 
+        vendorId: this.vendorId, 
+        itemId: itemId 
+      }).render(true);
     }
   }
 
@@ -134,6 +158,20 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
 
     // Refresh display
     this.render();
+  }
+
+  /**
+   * Closes the application and cleans up event listeners
+   * @param {Object} options - Close options
+   * @returns {Promise<any>} Result of the parent close method
+   */
+  async close(options) {
+    // Clean up event listeners
+    if (this.element && this._boundOnClickEditItem) {
+      this.element.removeEventListener('click', this._boundOnClickEditItem);
+    }
+    
+    return super.close(options);
   }
 
   /**

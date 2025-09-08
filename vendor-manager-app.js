@@ -11,6 +11,12 @@ import VendorWalletSystem from './main.js';
  * @description Application for managing existing vendors
  */
 export default class VendorManagerApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+  constructor(options = {}) {
+    super(options);
+    // Bind the click handler to maintain proper context
+    this._boundOnClickAction = this._onClickAction.bind(this);
+  }
+
   static DEFAULT_OPTIONS = {
     id: 'vendor-manager',
     tag: 'div',
@@ -51,7 +57,23 @@ export default class VendorManagerApplication extends foundry.applications.api.H
    * @returns {void}
    */
   _onRender() {
-    this.element.addEventListener('click', this._onClickAction.bind(this));
+    // Remove any existing event listener to prevent duplicates
+    this.element.removeEventListener('click', this._boundOnClickAction);
+    // Add the event listener
+    this.element.addEventListener('click', this._boundOnClickAction);
+  }
+
+  /**
+   * Closes the application and cleans up event listeners
+   * @param {Object} options - Close options
+   * @returns {Promise<any>} Result of the parent close method
+   */
+  async close(options) {
+    // Clean up event listeners to prevent memory leaks
+    if (this.element) {
+      this.element.removeEventListener('click', this._boundOnClickAction);
+    }
+    return super.close(options);
   }
 
   /**
@@ -61,7 +83,7 @@ export default class VendorManagerApplication extends foundry.applications.api.H
    */
   async _onClickAction(event) {
     const action = event.target.dataset.action;
-    const vendorId = event.target.dataset.vendorId;
+    const vendorId = event.target.closest('[data-vendor-id]')?.dataset.vendorId;
 
     switch (action) {
       case 'edit':
@@ -71,7 +93,7 @@ export default class VendorManagerApplication extends foundry.applications.api.H
       case 'delete':
         await this._deleteVendor(vendorId);
         break;
-      case 'toggle-active':
+      case 'toggle':
         await this._toggleVendorActive(vendorId);
         break;
       case 'view':
@@ -116,7 +138,6 @@ export default class VendorManagerApplication extends foundry.applications.api.H
     
     const status = vendor.active ? 'activated' : 'deactivated';
     ui.notifications.info(`Vendor "${vendor.name}" has been ${status}.`);
-    this.render();
   }
 
   /**
