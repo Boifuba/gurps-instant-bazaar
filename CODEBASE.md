@@ -251,7 +251,7 @@ wallet.add(125);
 
 ## File: `main.js`
 
-Defines the `VendorWalletSystem` static controller.
+Defines the `VendorWalletSystem` static controller. Module settings, transaction logic and vendor data storage are handled by `settings.js`, `transaction-manager.js`, and `vendor-data-manager.js`.
 
 ```javascript
 /**
@@ -262,16 +262,8 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Initialize settings, sockets, and helpers.
+ * Initialize settings, socket listeners and helpers.
  * @function VendorWalletSystem.initialize
- * @returns {Promise<void>}
- */
-```
-
-```javascript
-/**
- * Register all module settings.
- * @function VendorWalletSystem.registerSettings
  * @returns {void}
  */
 ```
@@ -295,139 +287,7 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Add a wallet button to the player list.
- * @function VendorWalletSystem.addPlayerWalletButton
- * @param {Application} app - Player list app.
- * @param {jQuery} html - Rendered HTML.
- * @returns {void}
- */
-```
-
-```javascript
-/**
- * Format a copper value using the `CurrencyManager`.
- * @function VendorWalletSystem.formatCurrency
- * @param {number} amount - Copper amount.
- * @returns {string} Human readable currency.
- */
-```
-
-```javascript
-/**
- * Parse a currency string into copper.
- * @function VendorWalletSystem.parseCurrency
- * @param {string} value - Formatted string.
- * @returns {number} Copper amount.
- */
-```
-
-```javascript
-/**
- * Get a user’s wallet balance.
- * @function VendorWalletSystem.getUserWallet
- * @param {string} userId - Foundry user id.
- * @returns {Wallet} User wallet.
- */
-```
-
-```javascript
-/**
- * Set a user’s wallet balance.
- * @function VendorWalletSystem.setUserWallet
- * @param {string} userId - Foundry user id.
- * @param {CoinBag|number} amount - New balance.
- * @returns {Promise<void>}
- */
-```
-
-```javascript
-/**
- * Retrieve all stored vendors.
- * @function VendorWalletSystem.getVendors
- * @returns {Object<string,VendorData>} Map of vendor ids to data.
- */
-```
-
-```javascript
-/**
- * Get data for a single vendor.
- * @function VendorWalletSystem.getVendor
- * @param {string} vendorId - Identifier.
- * @returns {VendorData|undefined} Vendor record.
- */
-```
-
-```javascript
-/**
- * Update vendor data and notify listeners.
- * @function VendorWalletSystem.updateVendor
- * @param {string} vendorId - Identifier.
- * @param {VendorData} vendorData - Updated data.
- * @returns {Promise<void>}
- */
-```
-
-```javascript
-/**
- * Remove a vendor from settings.
- * @function VendorWalletSystem.deleteVendor
- * @param {string} vendorId - Identifier.
- * @returns {Promise<void>}
- */
-```
-
-```javascript
-/**
- * Process a purchase initiated by a player.
- * @function VendorWalletSystem.processPlayerPurchaseRequest
- * @param {SocketRequest} data - Purchase request payload.
- * @returns {Promise<void>}
- */
-```
-
-```javascript
-/**
- * Send purchase result back to a user.
- * @function VendorWalletSystem.emitPurchaseResult
- * @param {string} userId - Recipient user id.
- * @param {boolean} success - Whether the purchase succeeded.
- * @param {string} message - Human readable result.
- * @param {Object} [payload] - Optional extra data.
- * @returns {void}
- */
-```
-
-```javascript
-/**
- * Add an item to an actor's inventory.
- * @function VendorWalletSystem.addItemToActor
- * @param {Actor} actor - Destination actor.
- * @param {string} uuid - Item UUID.
- * @param {number} quantity - Number of copies.
- * @returns {Promise<Item>} The created item.
- */
-```
-
-```javascript
-/**
- * Update vendor displays after data changes.
- * @function VendorWalletSystem.refreshVendorDisplays
- * @param {string} vendorId - Vendor to refresh.
- * @returns {void}
- */
-```
-
-```javascript
-/**
- * Update all vendor managers after data changes.
- * @function VendorWalletSystem.refreshVendorManagers
- * @returns {void}
- */
-```
-
-```javascript
-/**
- * Open all active vendors for the current user.
+ * Open the player wallet showing all available vendors.
  * @function VendorWalletSystem.openAllAvailableVendors
  * @returns {void}
  */
@@ -435,43 +295,8 @@ Defines the `VendorWalletSystem` static controller.
 
 ```javascript
 /**
- * Process an item purchase transaction.
- * @function VendorWalletSystem.processItemPurchase
- * @param {Actor} actor - Buying actor.
- * @param {Item} item - Item being purchased.
- * @param {string} vendorId - Vendor identifier.
- * @param {string} vendorItemId - Vendor item identifier.
- * @param {number} [quantity=1] - Quantity to purchase.
- * @returns {Promise<boolean>} True on success.
- */
-```
-
-```javascript
-/**
- * Adjust quantity of a vendor's item.
- * @function VendorWalletSystem.updateItemQuantityInVendor
- * @param {string} vendorId - Vendor identifier.
- * @param {string} vendorItemId - Item identifier.
- * @param {number} change - Quantity delta.
- * @returns {Promise<void>}
- */
-```
-
-```javascript
-/**
- * Find which vendor sells a given item UUID.
- * @function VendorWalletSystem.findVendorByItemUuid
- * @param {string} itemUuid - Item UUID to search.
- * @returns {{vendorId:string,vendorItemId:string}|null} Match data or null.
- */
-```
-
-```javascript
-/**
- * Handle items dropped onto an actor sheet.
- * @function VendorWalletSystem.handleItemDrop
- * @param {Actor} actor - Target actor.
- * @param {object} data - Drag data containing vendor info.
+ * Initialize missing currency denominations for actors.
+ * @function VendorWalletSystem.initializeMissingActorCoins
  * @returns {Promise<void>}
  */
 ```
