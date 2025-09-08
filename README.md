@@ -277,12 +277,12 @@ We welcome suggestions for new features! Consider:
 - How the feature would benefit gameplay
 - Whether it fits the module's scope
 - Potential implementation complexity
-- Any donation will motivate me
 
 ---
 
+### Support the Project
 
-
+Consider supporting the project to help ongoing development.
 
 <p align="center">
   <a href="https://github.com/sponsors/Boifuba">
