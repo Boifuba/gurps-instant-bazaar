@@ -61,20 +61,13 @@ https://raw.githubusercontent.com/Boifuba/gurps-instant-bazaar/refs/heads/main/m
 
 ### For Players
 1. Type `/shop` in chat to open your wallet and browse vendors
+or `/sell` to sell your itens
 
 2. View your current wallet balance
 3. Browse available vendors and their items
 4. Select items and purchase them directly to your character
 
 ## Player Guide
-
-### Accessing Your Wallet
-
-The wallet system is your gateway to the game's economy:
-
-1. **Find the Wallet Button**: Look for the wallet icon (💰) in the player list
-2. **View Your Balance**: Your current money is displayed prominently
-3. **Browse Vendors**: See all active vendors and their item counts
 
 ### Browsing Vendors
 
@@ -283,7 +276,6 @@ We welcome suggestions for new features! Consider:
 ### Support the Project
 
 Consider supporting the project to help ongoing development.
-
 
 <a href="https://www.buymeacoffee.com/boifuba" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40">
