@@ -972,5 +972,5 @@ Defines the `VendorWalletSystem` static controller.
 - Handlebars templates (`*.hbs`) define UI layouts for each application.
 - `styles.css` provides module-wide styling.
 - `module.json` declares module metadata.
-- `README.md`, `CHANGELOG.md`, and `LICENSE` document usage, history, and licensing.
+- `README.md` and `LICENSE` document usage and licensing; no changelog file is currently included.
 
