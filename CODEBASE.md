@@ -20,17 +20,26 @@ files, exported symbols, arguments, parameter types, and return values.
   - `"up"` – convert smaller coins into larger ones when possible.
 
 ## Índice
+- [currency-crud.js](#file-currency-crudjs)
+- [currency-settings-app.js](#file-currency-settings-appjs)
 - [currency.js](#file-currencyjs)
-- [main.js](#file-mainjs)
+- [form-utilities.js](#file-form-utilitiesjs)
 - [gm-tools-app.js](#file-gm-tools-appjs)
+- [item-drop-handler.js](#file-item-drop-handlerjs)
+- [main.js](#file-mainjs)
 - [money-management-app.js](#file-money-management-appjs)
+- [player-wallet-app.js](#file-player-wallet-appjs)
+- [sell-items-app.js](#file-sell-items-appjs)
+- [settings.js](#file-settingsjs)
+- [transaction-manager.js](#file-transaction-managerjs)
+- [ui-integrations.js](#file-ui-integrationsjs)
+- [utils.js](#file-utilsjs)
 - [vendor-creation-app.js](#file-vendor-creation-appjs)
-- [vendor-manager-app.js](#file-vendor-manager-appjs)
+- [vendor-data-manager.js](#file-vendor-data-managerjs)
+- [vendor-display-app.js](#file-vendor-display-appjs)
 - [vendor-edit-app.js](#file-vendor-edit-appjs)
 - [vendor-item-edit-app.js](#file-vendor-item-edit-appjs)
-- [player-wallet-app.js](#file-player-wallet-appjs)
-- [vendor-display-app.js](#file-vendor-display-appjs)
-- [currency-settings-app.js](#file-currency-settings-appjs)
+- [vendor-manager-app.js](#file-vendor-manager-appjs)
 
 ## File: `currency.js`
 
@@ -962,6 +971,519 @@ Defines the `VendorWalletSystem` static controller.
  * @method CurrencySettingsApplication#_saveCurrencySettings
  * @param {Event} event - Form submission event.
  * @returns {Promise<void>}
+ */
+```
+
+---
+
+## File: `currency-crud.js`
+
+### Functions
+
+```javascript
+/**
+ * Create a fully populated GURPS coin item.
+ * @function createCompleteGURPSCoinItem
+ * @param {Object} denomination - Currency denomination configuration.
+ * @param {number} [count=0] - Initial coin count.
+ * @returns {Object} New coin item data.
+ */
+```
+
+### Class: `CharacterCurrencyService`
+
+```javascript
+/**
+ * Manage currency items on character sheets.
+ * @class CharacterCurrencyService
+ */
+```
+
+```javascript
+/**
+ * Get total currency value from a sheet.
+ * @method CharacterCurrencyService#getCharacterSheetCurrency
+ * @param {string} userId - User identifier.
+ * @returns {number} Total value.
+ */
+```
+
+```javascript
+/**
+ * Break down coins from a character sheet.
+ * @method CharacterCurrencyService#getCharacterSheetCoinBreakdown
+ * @param {string} userId - User identifier.
+ * @returns {Array} Coin data entries.
+ */
+```
+
+```javascript
+/**
+ * Set currency amount on a character sheet.
+ * @method CharacterCurrencyService#setCharacterSheetCurrency
+ * @param {string} userId - User identifier.
+ * @param {number} newAmount - Desired amount.
+ * @returns {Promise<boolean>} Success state.
+ */
+```
+
+```javascript
+/**
+ * Add money directly to character coins.
+ * @method CharacterCurrencyService#addMoneyToCharacterCoins
+ * @param {Actor} actor - Target actor.
+ * @param {number} amount - Amount to add.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Initialize placeholder coin items on actors.
+ * @method CharacterCurrencyService#initializeMissingActorCoins
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Refresh any open wallet applications.
+ * @method CharacterCurrencyService#refreshWalletApplications
+ * @returns {void}
+ */
+```
+
+---
+
+## File: `form-utilities.js`
+
+### Class: `FormUtilities`
+
+```javascript
+/**
+ * Common helper methods for vendor forms.
+ * @class FormUtilities
+ */
+```
+
+```javascript
+/**
+ * Open a file picker and assign the result.
+ * @method FormUtilities.handleFilePicker
+ * @param {Event} event - Click event.
+ * @param {HTMLElement} element - Form container.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Validate stock range input.
+ * @method FormUtilities.validateStockRange
+ * @param {number} stockMin - Minimum stock.
+ * @param {number} stockMax - Maximum stock.
+ * @returns {boolean} True if valid.
+ */
+```
+
+```javascript
+/**
+ * Validate price range input.
+ * @method FormUtilities.validatePriceRange
+ * @param {number} minValue - Minimum price.
+ * @param {number} maxValue - Maximum price.
+ * @returns {boolean} True if valid.
+ */
+```
+
+```javascript
+/**
+ * Parse a TL filter string.
+ * @method FormUtilities.parseTLFilter
+ * @param {string} tlFilterRaw - Raw TL string.
+ * @returns {Array|null} Parsed values.
+ */
+```
+
+```javascript
+/**
+ * Parse an LC filter value.
+ * @method FormUtilities.parseLCFilter
+ * @param {string} lcFilterValue - Raw LC value.
+ * @returns {number|null} Parsed number.
+ */
+```
+
+```javascript
+/**
+ * Generate random items from a compendium.
+ * @method FormUtilities.generateRandomItems
+ * @param {Object} vendorData - Generation settings.
+ * @returns {Promise<Array>} Created item list.
+ */
+```
+
+---
+
+## File: `item-drop-handler.js`
+
+### Functions
+
+```javascript
+/**
+ * Process canvas item drops for vendor purchases.
+ * @function handleCanvasItemDrop
+ * @param {Canvas} canvas - Target canvas.
+ * @param {Object|string} data - Drop payload.
+ * @returns {Promise<boolean>} True to allow default handling.
+ */
+```
+
+```javascript
+/**
+ * Register drop hooks.
+ * @function initializeItemDropHandling
+ * @returns {void}
+ */
+```
+
+---
+
+## File: `sell-items-app.js`
+
+### Class: `SellItemsApplication`
+
+```javascript
+/**
+ * Interface for players to sell inventory items.
+ * @class SellItemsApplication
+ * @extends {foundry.applications.api.HandlebarsApplicationMixin}
+ */
+```
+
+```javascript
+/**
+ * Build context with items and wallet data.
+ * @method SellItemsApplication#_prepareContext
+ * @returns {Promise<Object>} Template data.
+ */
+```
+
+```javascript
+/**
+ * Retrieve sellable items from the player's character.
+ * @method SellItemsApplication#_getPlayerItems
+ * @returns {Promise<Array>} Item list.
+ */
+```
+
+```javascript
+/**
+ * Register UI listeners and socket events.
+ * @method SellItemsApplication#_onRender
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Debounced search handler.
+ * @method SellItemsApplication#_onSearchInput
+ * @param {Event} event - Input event.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Handle selection and quantity changes.
+ * @method SellItemsApplication#_onItemSelection
+ * @param {Event} event - Change event.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * React to sell or clear buttons.
+ * @method SellItemsApplication#_onSellAction
+ * @param {Event} event - Click event.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Update display of selected items and total value.
+ * @method SellItemsApplication#_updateSellDisplay
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Clear all selections.
+ * @method SellItemsApplication#_clearSelection
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Send sell request to the GM.
+ * @method SellItemsApplication#_sellSelectedItems
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle socket responses from the GM.
+ * @method SellItemsApplication#_onSocketEvent
+ * @param {Object} data - Socket payload.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Clean up listeners and socket hooks.
+ * @method SellItemsApplication#close
+ * @param {Object} [options] - Close options.
+ * @returns {Promise<any>}
+ */
+```
+
+---
+
+## File: `transaction-manager.js`
+
+### Class: `TransactionManager`
+
+```javascript
+/**
+ * Handle purchase and sell transactions.
+ * @class TransactionManager
+ */
+```
+
+```javascript
+/**
+ * Send a purchase request to the GM.
+ * @method TransactionManager#sendPurchaseRequestToGM
+ * @param {Actor} targetActor - Buyer actor.
+ * @param {string} vendorId - Vendor identifier.
+ * @param {Array} selectedItems - Items to buy.
+ * @param {string} userId - Player identifier.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Process a purchase directly on the GM client.
+ * @method TransactionManager#processDirectPurchase
+ * @param {Actor} targetActor - Buyer actor.
+ * @param {string} vendorId - Vendor identifier.
+ * @param {Array} selectedItems - Items to buy.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Handle a player's purchase request.
+ * @method TransactionManager#processPlayerPurchaseRequest
+ * @param {Object} data - Socket data.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Emit a purchase result back to a user.
+ * @method TransactionManager#emitPurchaseResult
+ * @param {string} userId - Target user ID.
+ * @param {boolean} success - Whether it succeeded.
+ * @param {string} message - Status message.
+ * @param {Object} [data] - Extra payload.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Handle a player's sell request.
+ * @method TransactionManager#processPlayerSellRequest
+ * @param {Object} data - Socket data.
+ * @returns {Promise<void>}
+ */
+```
+
+```javascript
+/**
+ * Emit a sell result back to a user.
+ * @method TransactionManager#emitSellResult
+ * @param {string} userId - Target user ID.
+ * @param {boolean} success - Whether it succeeded.
+ * @param {string} message - Status message.
+ * @param {Object} [data] - Extra payload.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Add an item to an actor's inventory.
+ * @method TransactionManager#addItemToActor
+ * @param {Actor} actor - Target actor.
+ * @param {string} uuid - Item UUID.
+ * @param {number} quantity - Quantity to add.
+ * @returns {Promise<boolean>} Success state.
+ */
+```
+
+---
+
+## File: `ui-integrations.js`
+
+### Functions
+
+```javascript
+/**
+ * Add a wallet button to the player list.
+ * @function addPlayerWalletButton
+ * @param {Application} app - PlayerList application.
+ * @param {jQuery} html - Rendered HTML.
+ * @returns {void}
+ */
+```
+
+```javascript
+/**
+ * Register UI hooks for wallet access.
+ * @function initializeUIIntegrations
+ * @returns {void}
+ */
+```
+
+---
+
+## File: `utils.js`
+
+### Functions
+
+```javascript
+/**
+ * Flatten nested equipment items into an array.
+ * @function flattenItemsFromObject
+ * @param {Object} obj - Equipment structure.
+ * @returns {Array} Item entries.
+ */
+```
+
+```javascript
+/**
+ * Find an item path within carried equipment.
+ * @function findItemInCarried
+ * @param {Object} carried - Equipment structure.
+ * @param {string} itemId - Item identifier.
+ * @param {string} [currentPath] - Current traversal path.
+ * @returns {string|null} Path string or null.
+ */
+```
+
+```javascript
+/**
+ * Retrieve an item by path from carried equipment.
+ * @function getItemFromPath
+ * @param {Object} carried - Equipment structure.
+ * @param {string} path - Dot-separated item path.
+ * @returns {Object|null} Item data or null.
+ */
+```
+
+---
+
+## File: `settings.js`
+
+### Functions
+
+```javascript
+/**
+ * Register module settings with FoundryVTT.
+ * @function registerModuleSettings
+ * @param {string} moduleId - Module identifier.
+ * @returns {void}
+ */
+```
+
+---
+
+## File: `vendor-data-manager.js`
+
+### Class: `VendorDataManager`
+
+```javascript
+/**
+ * Manage vendor persistence and lookups.
+ * @class VendorDataManager
+ */
+```
+
+```javascript
+/**
+ * Retrieve all vendors from settings.
+ * @method VendorDataManager#getVendors
+ * @returns {Object} Vendor map.
+ */
+```
+
+```javascript
+/**
+ * Retrieve a vendor by ID.
+ * @method VendorDataManager#getVendor
+ * @param {string} vendorId - Vendor identifier.
+ * @returns {Object|undefined} Vendor data.
+ */
+```
+
+```javascript
+/**
+ * Update a vendor and broadcast changes.
+ * @method VendorDataManager#updateVendor
+ * @param {string} vendorId - Vendor identifier.
+ * @param {Object} vendorData - Updated data.
+ * @returns {Promise<boolean>} Success state.
+ */
+```
+
+```javascript
+/**
+ * Delete a vendor and broadcast changes.
+ * @method VendorDataManager#deleteVendor
+ * @param {string} vendorId - Vendor identifier.
+ * @returns {Promise<boolean>} Success state.
+ */
+```
+
+```javascript
+/**
+ * Adjust an item's quantity in a vendor.
+ * @method VendorDataManager#updateItemQuantityInVendor
+ * @param {string} vendorId - Vendor identifier.
+ * @param {string} vendorItemId - Item identifier.
+ * @param {number} change - Quantity delta.
+ * @returns {Promise<boolean>} Success state.
+ */
+```
+
+```javascript
+/**
+ * Locate a vendor containing a given item UUID.
+ * @method VendorDataManager#findVendorByItemUuid
+ * @param {string} itemUuid - Item UUID.
+ * @returns {Object|null} Vendor and item info.
  */
 ```
 
