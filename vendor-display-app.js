@@ -41,6 +41,16 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
   };
 
   /**
+   * Prevents position update errors when element is removed from DOM
+   * @param {...any} args - Position arguments
+   * @returns {any} Result of _updatePosition or undefined if element is not in DOM
+   */
+  _updatePosition(...args) {
+    if (!this.element || !document.body.contains(this.element)) return;
+    return super._updatePosition(...args);
+  }
+
+  /**
    * Prepares the context data for rendering the template
    * @returns {Promise<Object>} Context object containing vendor and user data
    */

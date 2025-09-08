@@ -190,23 +190,27 @@ Hooks.once('init', () => {
   window.flattenItemsFromObject = Utils.flattenItemsFromObject;
 });
 
-// Register the /shop chat command properly
-Hooks.on("chatCommandsReady", (chatCommands) => {
-  chatCommands.registerCommand(
-    chatCommands.createCommand({
-      name: "shop",
-      module: VendorWalletSystem.ID,
-      description: "Abre a interface da loja GURPS Instant Bazaar.",
-      icon: "fas fa-store",
-      shouldDisplayToChat: false,
-      handler: (message, args, chatData) => {
-        if (game.user.isGM) {
-          new window.GMToolsApplication().render(true);
-        } else {
-          window.VendorWalletSystem.openAllAvailableVendors();
-        }
-        return false;
-      },
-    })
-  );
+// /shop sem dependências (Foundry v13 core)
+Hooks.on("chatMessage", (chatLog, message, chatData) => {
+  const txt = String(message).trim();
+  if (!/^\/shop(\s|$)/i.test(txt)) return; // não é /shop → deixa passar
+
+  // ação do comando
+  if (game.user.isGM) {
+    new window.GMToolsApplication().render(true);
+  } else {
+    window.VendorWalletSystem.openAllAvailableVendors();
+  }
+
+  return false; // bloqueia processamento padrão e a mensagem no chat
+});
+Hooks.on("chatMessage", (chatLog, message, chatData) => {
+  const txt = String(message).trim();
+  if (!/^\/sell(\s|$)/i.test(txt)) return; // não é /shop → deixa passar
+
+  // ação do comando
+  
+new window.SellItemsApplication().render(true); 
+
+  return false; // bloqueia processamento padrão e a mensagem no chat
 });
