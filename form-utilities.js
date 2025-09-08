@@ -35,26 +35,6 @@ export default class FormUtilities {
   }
 
   /**
-   * Sets up listeners for currency input fields to format values
-   * @param {HTMLElement} element - The form element containing currency fields
-   * @returns {void}
-   */
-  static setupCurrencyListeners(element) {
-    const fields = element.querySelectorAll('#minValue, #maxValue');
-    fields.forEach(field => {
-      field.addEventListener('focus', e => {
-        e.target.value = e.target.value.replace(/[^0-9.-]+/g, '');
-      });
-      field.addEventListener('blur', e => {
-        const value = parseFloat(e.target.value.replace(/[^0-9.-]+/g, '')) || 0;
-        e.target.value = VendorWalletSystem.formatCurrency(value);
-      });
-      const value = parseFloat(field.value.replace(/[^0-9.-]+/g, '')) || 0;
-      field.value = VendorWalletSystem.formatCurrency(value);
-    });
-  }
-
-  /**
    * Validates stock range values
    * @param {number} stockMin - Minimum stock value
    * @param {number} stockMax - Maximum stock value

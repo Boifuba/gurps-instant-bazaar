@@ -4,7 +4,7 @@
  */
 
 import VendorWalletSystem from './main.js';
-import * as FormUtilities from './form-utilities.js';
+import FormUtilities from './form-utilities.js';
 
 /**
  * @class VendorEditApplication
@@ -91,7 +91,35 @@ export default class VendorEditApplication extends foundry.applications.api.Hand
     this.element.addEventListener('click', this._boundClickButton);
     this.element.addEventListener('submit', this._boundSubmitForm);
     this.element.addEventListener('click', this._boundClickFilePicker);
-    FormUtilities.setupCurrencyListeners(this.element);
+    this._setupCurrencyListeners();
+  }
+
+  /**
+   * Sets up listeners for currency input fields to format values
+   * @returns {void}
+   */
+  _setupCurrencyListeners() {
+    const fields = this.element.querySelectorAll('#minValue, #maxValue');
+    this._currencyFields = Array.from(fields);
+    
+    // Store bound handlers for later removal
+    this._currencyFocusHandler = (e) => {
+      e.target.value = e.target.value.replace(/[^0-9.-]+/g, '');
+    };
+    
+    this._currencyBlurHandler = (e) => {
+      const value = parseFloat(e.target.value.replace(/[^0-9.-]+/g, '')) || 0;
+      e.target.value = VendorWalletSystem.formatCurrency(value);
+    };
+    
+    this._currencyFields.forEach(field => {
+      field.addEventListener('focus', this._currencyFocusHandler);
+      field.addEventListener('blur', this._currencyBlurHandler);
+      
+      // Format initial values
+      const value = parseFloat(field.value.replace(/[^0-9.-]+/g, '')) || 0;
+      field.value = VendorWalletSystem.formatCurrency(value);
+    });
   }
 
   /**
@@ -103,6 +131,15 @@ export default class VendorEditApplication extends foundry.applications.api.Hand
     this.element.removeEventListener('click', this._boundClickButton);
     this.element.removeEventListener('submit', this._boundSubmitForm);
     this.element.removeEventListener('click', this._boundClickFilePicker);
+    
+    // Clean up currency field listeners
+    if (this._currencyFields && this._currencyFocusHandler && this._currencyBlurHandler) {
+      this._currencyFields.forEach(field => {
+        field.removeEventListener('focus', this._currencyFocusHandler);
+        field.removeEventListener('blur', this._currencyBlurHandler);
+      });
+    }
+    
     return super.close(options);
   }
 

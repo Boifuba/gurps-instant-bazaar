@@ -59,7 +59,7 @@ export default class SellItemsApplication extends foundry.applications.api.Handl
       coinBreakdown = VendorWalletSystem.currencyManager.getModuleCurrencyBreakdown(game.user.id);
     } else {
       // Get character sheet currency breakdown
-      coinBreakdown = VendorWalletSystem.currencyManager._getCharacterSheetCoinBreakdown(game.user.id);
+      coinBreakdown = VendorWalletSystem.currencyManager.characterCurrencyService.getCharacterSheetCoinBreakdown(game.user.id);
     }
 
     // Ensure coinBreakdown is always an array

@@ -154,22 +154,6 @@ export default class VendorWalletSystem {
 }
 
 // Make all classes and utilities globally accessible for macros and external scripts
-window.VendorWalletSystem = VendorWalletSystem;
-window.PlayerWalletApplication = PlayerWalletApplication;
-window.GMToolsApplication = GMToolsApplication;
-window.SellItemsApplication = SellItemsApplication;
-window.VendorCreationApplication = VendorCreationApplication;
-window.VendorEditApplication = VendorEditApplication;
-window.VendorItemEditApplication = VendorItemEditApplication;
-window.CurrencySettingsApplication = CurrencySettingsApplication;
-window.VendorDisplayApplication = VendorDisplayApplication;
-window.VendorManagerApplication = VendorManagerApplication;
-window.MoneyManagementApplication = MoneyManagementApplication;
-
-// Make utility functions globally available for compatibility
-window.findItemInCarried = Utils.findItemInCarried;
-window.getItemFromPath = Utils.getItemFromPath;
-window.flattenItemsFromObject = Utils.flattenItemsFromObject;
 
 // Initialize the system when FoundryVTT is ready
 Hooks.once('init', () => {
@@ -186,6 +170,24 @@ Hooks.once('init', () => {
   
   // Initialize item drop handling
   initializeItemDropHandling();
+  
+  // Make all classes and utilities globally accessible for macros and external scripts
+  window.VendorWalletSystem = VendorWalletSystem;
+  window.PlayerWalletApplication = PlayerWalletApplication;
+  window.GMToolsApplication = GMToolsApplication;
+  window.SellItemsApplication = SellItemsApplication;
+  window.VendorCreationApplication = VendorCreationApplication;
+  window.VendorEditApplication = VendorEditApplication;
+  window.VendorItemEditApplication = VendorItemEditApplication;
+  window.CurrencySettingsApplication = CurrencySettingsApplication;
+  window.VendorDisplayApplication = VendorDisplayApplication;
+  window.VendorManagerApplication = VendorManagerApplication;
+  window.MoneyManagementApplication = MoneyManagementApplication;
+
+  // Make utility functions globally available for compatibility
+  window.findItemInCarried = Utils.findItemInCarried;
+  window.getItemFromPath = Utils.getItemFromPath;
+  window.flattenItemsFromObject = Utils.flattenItemsFromObject;
 });
 
 // Register the /shop chat command properly

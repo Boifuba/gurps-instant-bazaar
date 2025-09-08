@@ -77,8 +77,19 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
    * Handles rendering events by setting up event listeners
    */
   _onRender() {
-    this.element.addEventListener('click', this._onClickButton.bind(this));
+    // Bind event handlers for later removal
+    this._boundOnClickButton = this._onClickButton.bind(this);
+    this._boundOnClickContainer = this._onClickContainer.bind(this);
+    
+    this.element.addEventListener('click', this._boundOnClickButton);
     this.element.addEventListener('submit', this._onSubmitForm.bind(this));
+    
+    // Use event delegation for dynamically added remove buttons
+    const container = this.element.querySelector('#coinDenominationsContainer');
+    if (container) {
+      container.addEventListener('click', this._boundOnClickContainer);
+    }
+    
     // Populate denomination fields with saved data
     this._populateDenominationFields();
     
@@ -86,6 +97,21 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
     setTimeout(() => {
       this._updateWarningVisibility();
     }, 100);
+  }
+
+  /**
+   * Handles clicks within the coin denominations container (event delegation)
+   * @param {Event} event - The click event
+   */
+  _onClickContainer(event) {
+    if (event.target.classList.contains('remove-coin-denomination') || 
+        event.target.closest('.remove-coin-denomination')) {
+      const fieldToRemove = event.target.closest('.coin-denomination-item');
+      if (fieldToRemove) {
+        fieldToRemove.remove();
+        this._updateWarningVisibility();
+      }
+    }
   }
 
   /**
@@ -130,17 +156,6 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
    * @returns {Promise<void>}
    */
   async _onClickButton(event) {
-    // Handle clicks on remove buttons
-    if (event.target.classList.contains('remove-coin-denomination') || 
-        event.target.closest('.remove-coin-denomination')) {
-      const fieldToRemove = event.target.closest('.coin-denomination-item');
-      if (fieldToRemove) {
-        fieldToRemove.remove();
-        this._updateWarningVisibility();
-      }
-      return;
-    }
-
     const action = event.target.dataset.action || event.target.id;
 
     switch (action) {
@@ -203,12 +218,6 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
 
     // Insert the new field at the end of the container
     container.appendChild(newField);
-
-    // Add event listener to the new remove button
-    newField.querySelector('.remove-coin-denomination').addEventListener('click', (event) => {
-      event.target.closest('.coin-denomination-item').remove();
-      this._updateWarningVisibility();
-    });
 
     // Update warning visibility after adding field
     this._updateWarningVisibility();
@@ -339,5 +348,26 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
       console.error('Error saving currency settings:', error);
       ui.notifications.error('Failed to save currency settings. Please try again.');
     }
+  }
+
+  /**
+   * Closes the application and cleans up event listeners
+   * @param {Object} options - Close options
+   * @returns {Promise<any>} Result of the parent close method
+   */
+  async close(options) {
+    // Clean up event listeners to prevent memory leaks
+    if (this.element) {
+      if (this._boundOnClickButton) {
+        this.element.removeEventListener('click', this._boundOnClickButton);
+      }
+      
+      const container = this.element.querySelector('#coinDenominationsContainer');
+      if (container && this._boundOnClickContainer) {
+        container.removeEventListener('click', this._boundOnClickContainer);
+      }
+    }
+    
+    return super.close(options);
   }
 }

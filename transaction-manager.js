@@ -545,12 +545,8 @@ export default class TransactionManager {
         await actor.update({ [`system.equipment.carried.-=${itemPath}`]: null });
       } else {
         // Update the quantity and recalculate costsum and weightsum
-        const cost = itemData.cost || 0;
-        const weight = itemData.weight || 0;
         await actor.update({ 
-          [updatePath]: newQuantity,
-          [`system.equipment.carried.${itemPath}.costsum`]: parseFloat((newQuantity * cost).toFixed(1)),
-          [`system.equipment.carried.${itemPath}.weightsum`]: parseFloat((newQuantity * weight).toFixed(3))
+          [updatePath]: newQuantity
         });
       }
 
@@ -569,140 +565,8 @@ export default class TransactionManager {
    * @private
    */
   async _addMoneyToCharacterCoins(actor, amount) {
-    const denominations = game.settings.get(this.moduleId, 'currencyDenominations') || [];
-    
-    if (denominations.length === 0) {
-      console.warn('No currency denominations configured for adding money to character');
-      return;
-    }
-
-    // Get current coins from character
-    const carried = actor.system?.equipment?.carried;
-    if (!carried) {
-      console.warn(`Actor ${actor.name} has no carried equipment structure`);
-      return;
-    }
-
-    const carriedItems = window.flattenItemsFromObject(carried);
-    const currentCoins = {};
-    const coinItemIds = {};
-
-    // Find existing coin items
-    for (const denomination of denominations) {
-      const coinItem = carriedItems.find(item => item.data.name === denomination.name);
-      if (coinItem) {
-        currentCoins[denomination.name] = coinItem.data.count || 0;
-        coinItemIds[denomination.name] = coinItem.id;
-      } else {
-        currentCoins[denomination.name] = 0;
-      }
-    }
-
-    // Calculate current total value
-    let currentTotalValue = 0;
-    for (const [coinName, count] of Object.entries(currentCoins)) {
-      const denomination = denominations.find(d => d.name === coinName);
-      if (denomination) {
-        currentTotalValue += count * denomination.value;
-      }
-    }
-
-    // Calculate new total and optimal distribution
-    const newTotalValue = currentTotalValue + amount;
-    const sortedDenominations = [...denominations].sort((a, b) => b.value - a.value);
-    
-    // Calculate optimal coin distribution for new total
-    const newCoinDistribution = {};
-    let remainingValue = newTotalValue;
-    
-    for (const denomination of sortedDenominations) {
-      const count = Math.floor(remainingValue / denomination.value);
-      newCoinDistribution[denomination.name] = count;
-      remainingValue = remainingValue % denomination.value;
-    }
-
-    // Update actor with new coin counts
-    const updateData = {};
-    
-    for (const denomination of denominations) {
-      const newCount = newCoinDistribution[denomination.name] || 0;
-      const currentCount = currentCoins[denomination.name] || 0;
-      const itemId = coinItemIds[denomination.name];
-
-      if (newCount !== currentCount) {
-        if (itemId) {
-          // Update existing coin item
-          if (newCount === 0) {
-            // Remove the item if count is 0
-            updateData[`system.equipment.carried.-=${itemId}`] = null;
-          } else {
-            // Update the item count and related sums
-            const cost = denomination.value;
-            const weight = denomination.weight || 0;
-            updateData[`system.equipment.carried.${itemId}.count`] = newCount;
-            updateData[`system.equipment.carried.${itemId}.costsum`] = parseFloat((newCount * cost).toFixed(2));
-            updateData[`system.equipment.carried.${itemId}.weightsum`] = parseFloat((newCount * weight).toFixed(3));
-          }
-        } else if (newCount > 0) {
-          // Create new coin item
-          const newCoinId = foundry.utils.randomID(16);
-          const completeCoinData = this._createCompleteGURPSCoinItem(denomination, newCount);
-          updateData[`system.equipment.carried.${newCoinId}`] = completeCoinData;
-        }
-      }
-    }
-
-    // Apply all changes
-    if (Object.keys(updateData).length > 0) {
-      await actor.update(updateData);
-      
-      // Refresh character sheet if open
-      if (actor.sheet && actor.sheet.rendered) {
-        actor.sheet.render(false);
-      }
-    }
-  }
-
-  /**
-   * Creates a complete GURPS currency item with all required properties
-   * @param {Object} denomination - The currency denomination configuration
-   * @param {number} count - The initial count for this currency
-   * @returns {Object} Complete GURPS currency item object
-   * @private
-   */
-  _createCompleteGURPSCoinItem(denomination, count = 0) {
-    const currentDate = new Date().toISOString();
-    const uuid = foundry.utils.randomID(16);
-    const itemId = foundry.utils.randomID(16);
-    
-    return {
-      name: denomination.name,
-      notes: "",
-      pageref: denomination.pageref || "B264",
-      count: count,
-      weight: denomination.weight || 0,
-      cost: denomination.value,
-      location: "",
-      carried: true,
-      equipped: true,
-      techlevel: denomination.techlevel || "1",
-      categories: denomination.categories || "",
-      legalityclass: denomination.legalityclass || "",
-      costsum: parseFloat((count * denomination.value).toFixed(2)),
-      weightsum: parseFloat((count * (denomination.weight || 0)).toFixed(3)),
-      uses: null,
-      maxuses: 0,
-      parentuuid: "",
-      uuid: uuid,
-      contains: {},
-      originalName: denomination.name,
-      originalCount: "",
-      ignoreImportQty: false,
-      last_import: currentDate,
-      save: true,
-      itemid: itemId,
-      img: denomination.img || "icons/svg/item-bag.svg"
-    };
+    // Delegate to the character currency service through currency manager
+    await this.currencyManager.characterCurrencyService.addMoneyToCharacterCoins(actor, amount);
   }
 
   /**

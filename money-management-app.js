@@ -204,6 +204,7 @@ export default class MoneyManagementApplication extends foundry.applications.api
       ui.notifications.info(`${updatedCount} player wallet${updatedCount > 1 ? 's' : ''} updated successfully!`);
     } else {
       ui.notifications.info('No changes were made to player wallets.');
-    }
+      coinBreakdown = VendorWalletSystem.currencyManager.characterCurrencyService.getCharacterSheetCoinBreakdown(game.user.id);
+      }
   }
 }
