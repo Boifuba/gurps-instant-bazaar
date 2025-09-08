@@ -3,6 +3,8 @@
  * @description Manages all transaction-related operations including purchases, sales, and item transfers
  */
 
+import { findItemInCarried, getItemFromPath } from './utils.js';
+
 /**
  * @class TransactionManager
  * @description Handles all transaction operations for the vendor wallet system
@@ -517,13 +519,13 @@ export default class TransactionManager {
       }
       
       // Find the item in the carried equipment structure
-      const itemPath = window.findItemInCarried(carried, id);
+      const itemPath = findItemInCarried(carried, id);
       if (!itemPath) {
         console.warn(`Item ${id} not found in carried equipment for actor ${actor.name}`);
         continue;
       }
       
-      const itemData = window.getItemFromPath(carried, itemPath);
+      const itemData = getItemFromPath(carried, itemPath);
       if (!itemData) {
         console.warn(`Could not retrieve item data for ${id}`);
         continue;
@@ -566,7 +568,12 @@ export default class TransactionManager {
    */
   async _addMoneyToCharacterCoins(actor, amount) {
     // Delegate to the character currency service through currency manager
-    await this.currencyManager.characterCurrencyService.addMoneyToCharacterCoins(actor, amount);
+    if (this.currencyManager.characterCurrencyService) {
+      await this.currencyManager.characterCurrencyService.addMoneyToCharacterCoins(actor, amount);
+    } else {
+      console.error('Character currency service not available');
+      throw new Error('Character currency service not initialized');
+    }
   }
 
   /**

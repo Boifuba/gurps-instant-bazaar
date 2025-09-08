@@ -87,8 +87,9 @@ export default class VendorManagerApplication extends foundry.applications.api.H
 
     switch (action) {
       case 'edit':
-        // Note: VendorEditApplication needs to be imported when available
-        new window.VendorEditApplication({ vendorId }).render(true);
+        // Get the API from the module
+        const api = game.modules.get('gurps-instant-bazaar').api;
+        new api.applications.VendorEditApplication({ vendorId }).render(true);
         break;
       case 'delete':
         await this._deleteVendor(vendorId);
@@ -97,8 +98,9 @@ export default class VendorManagerApplication extends foundry.applications.api.H
         await this._toggleVendorActive(vendorId);
         break;
       case 'view':
-        // Note: VendorDisplayApplication needs to be imported when available
-        new window.VendorDisplayApplication({ vendorId }).render(true);
+        // Get the API from the module
+        const api2 = game.modules.get('gurps-instant-bazaar').api;
+        new api2.applications.VendorDisplayApplication({ vendorId }).render(true);
         break;
     }
   }

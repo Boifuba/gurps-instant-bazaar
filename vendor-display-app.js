@@ -159,7 +159,9 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
     quantityInput.value = quantity;
     mockElement.appendChild(quantityInput);
 
-    await window.PlayerWalletApplication.processClientPurchase({
+    // Get the API from the module
+    const api = game.modules.get('gurps-instant-bazaar').api;
+    await api.applications.PlayerWalletApplication.processClientPurchase({
       vendorId: this.vendorId,
       checkboxes,
       element: mockElement,

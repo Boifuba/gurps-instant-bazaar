@@ -327,12 +327,7 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
       await game.settings.set(VendorWalletSystem.ID, 'currencyDenominations', sortedDenominations);
       
       // Refresh CurrencyManager settings after saving
-      if (VendorWalletSystem && VendorWalletSystem.currencyManager) {
-        VendorWalletSystem.currencyManager.refreshSettings();
-      } else {
-        // Try to find and refresh any global CurrencyManager instances
-        console.warn("VendorWalletSystem.currencyManager not found, settings may need manual refresh");
-      }
+      VendorWalletSystem.refreshCurrencySettings();
       
       // Notify user if we had to reorder denominations
       const wasReordered = !denominations.every((denom, index) => 

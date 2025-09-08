@@ -1,16 +1,13 @@
 /**
  * @file Character currency CRUD operations
- * @description Centralized service for managing currency items directly on character sheets
+ * @description Centralized service for managing currency items directly on character sheets (GURPS/GGA)
  */
 
 import { makeChange, _calculateBaseUnitMultiplier } from './currency.js';
-import { flattenItemsFromObject } from './utils.js';
 
 /**
- * Creates a complete GURPS currency item with all required properties
- * @param {Object} denomination - The currency denomination configuration
- * @param {number} count - The initial count for this currency
- * @returns {Object} Complete GURPS currency item object
+ * (Opcional) Constrói dados completos de moeda. Útil para inicializações diretas.
+ * No fluxo GGA abaixo, usamos Equipment/toItemData e internalUpdate.
  */
 export function createCompleteGURPSCoinItem(denomination, count = 0) {
   const currentDate = new Date().toISOString();
@@ -22,11 +19,11 @@ export function createCompleteGURPSCoinItem(denomination, count = 0) {
     notes: "",
     pageref: denomination.pageref || "B264",
     count: Number.isFinite(count) ? count : 0,
-    weight: denomination.weight || 0,
-    cost: denomination.value,
+    weight: Number(denomination.weight) || 0,
+    cost: Number(denomination.value) || 0,
     location: "",
     carried: true,
-    equipped: false,                  // moedas não “equipadas”
+    equipped: false,
     techlevel: denomination.techlevel ?? 1,
     categories: denomination.categories || "",
     legalityclass: denomination.legalityclass || "",
@@ -36,7 +33,7 @@ export function createCompleteGURPSCoinItem(denomination, count = 0) {
     uuid,
     contains: {},
     originalName: denomination.name,
-    originalCount: 0,                 // número, não string
+    originalCount: 0,
     ignoreImportQty: false,
     last_import: currentDate,
     save: true,
@@ -45,296 +42,242 @@ export function createCompleteGURPSCoinItem(denomination, count = 0) {
   };
 }
 
+/* ============================== HELPERS GGA ============================== */
+
+/** Caminho da lista de itens carregados na ficha GURPS. */
+const CARRIED_PATH = "system.equipment.carried";
+
 /**
- * Service class for managing currency items on character sheets
+ * Lê a lista GGA do caminho indicado.
+ * @param {Actor} actor
+ * @param {string} path
+ * @returns {Record<string, any>}
  */
+function readGGAList(actor, path = CARRIED_PATH) {
+  return GURPS.decode(actor, path) || {};
+}
+
+/**
+ * Upsert de uma moeda via GGA. Mantém um único item por denominação, remove duplicatas e preserva placeholder com count=0.
+ * Cria Item Foundry quando `gurps.use-foundry-items` estiver ativo.
+ * @param {Actor} actor
+ * @param {Object} denomination { name, value, weight, ... }
+ * @param {number} count
+ * @param {string} path
+ */
+async function upsertCoinGGA(actor, denomination, count, path = CARRIED_PATH) {
+  const { Equipment } = await import("/systems/gurps/module/actor/actor-components.js");
+
+  const list = readGGAList(actor, path);
+  const entries = Object.entries(list).filter(([_, it]) => it?.name === denomination.name);
+
+  // Primeira ocorrência (mantida)
+  let keepId = entries[0]?.[0];
+  const keepData = entries[0]?.[1];
+
+  // Monta o Equipment atualizado
+  const eq = new Equipment(denomination.name, true);
+  eq.count = Number(count) || 0;
+  eq.cost = Number(denomination.value) || 0;
+  eq.weight = Number(denomination.weight) || 0;
+  eq.notes = "";
+  eq.equipped = false;
+  eq.carried = true;
+  eq.techlevel = denomination.techlevel ?? 1;
+  eq.categories = denomination.categories || "";
+  eq.legalityclass = denomination.legalityclass || "";
+  eq.img = denomination.img || "icons/svg/item-bag.svg";
+
+  // Foundry Items (opcional)
+  if (game.settings.get("gurps", "use-foundry-items")) {
+    eq.save = true;
+    if (keepData?.itemid) {
+      eq.itemid = keepData.itemid;
+    } else {
+      const type = path.split(".")[2] || "carried";
+      const [item] = await actor.createEmbeddedDocuments("Item", [eq.toItemData(actor, type)]);
+      eq.itemid = item._id;
+    }
+  }
+
+  // UUID GGA
+  eq.uuid = keepData?.uuid || eq._getGGAId({ name: eq.name, type: path.split(".")[2] || "carried", generator: "" });
+
+  // grava/atualiza
+  if (!keepId) {
+    GURPS.put(list, foundry.utils.duplicate(eq)); // cria placeholder mesmo se count=0
+  } else {
+    list[keepId] = foundry.utils.duplicate(eq);
+    // remove duplicatas excedentes
+    for (const [dupId] of entries.slice(1)) delete list[dupId];
+  }
+
+  await actor.internalUpdate({ [path]: list });
+  if (actor.sheet?.rendered) actor.sheet.render(false);
+}
+
+/**
+ * Obtém ator do usuário. Prioriza personagem atribuído.
+ * @param {string} userId
+ * @returns {Actor|null}
+ */
+function resolveActorFromUser(userId) {
+  const user = game.users.get(userId);
+  if (!user) return null;
+  if (user.character) return user.character;
+
+  const OWNER = foundry.CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+  const owned = game.actors.filter(a => a.hasPlayerOwner && a.ownership?.[userId] >= OWNER);
+  return owned[0] ?? null;
+}
+
+/* ============================ SERVICE PRINCIPAL =========================== */
+
 export default class CharacterCurrencyService {
   /**
-   * @param {string} moduleId - The module identifier
-   * @param {number} baseUnitMultiplier - The base unit multiplier for currency calculations
+   * @param {string} moduleId
+   * @param {number} baseUnitMultiplier
    */
   constructor(moduleId, baseUnitMultiplier) {
     this.moduleId = moduleId;
-    this.baseUnitMultiplier = baseUnitMultiplier;
+    this.baseUnitMultiplier = Number(baseUnitMultiplier) || 0;
   }
 
   /**
-   * Gets the total currency value from a character's sheet
-   * @param {string} userId - The user ID
-   * @returns {number} Total currency value
+   * Soma total em valor nominal.
+   * @param {string} userId
+   * @returns {number}
    */
   getCharacterSheetCurrency(userId) {
-    const coinBreakdown = this.getCharacterSheetCoinBreakdown(userId);
-    let totalValue = 0;
-    for (const coin of coinBreakdown) {
-      totalValue += (Number(coin.count) || 0) * (Number(coin.value) || 0);
-    }
-    return totalValue;
+    const coins = this.getCharacterSheetCoinBreakdown(userId);
+    let total = 0;
+    for (const c of coins) total += (Number(c.count) || 0) * (Number(c.value) || 0);
+    return total;
   }
 
   /**
-   * Gets the breakdown of coins from a character's sheet
-   * Always returns entries for all denominations and preserves itemIds even when count=0
-   * @param {string} userId - The user ID
-   * @returns {Array} Array of coin breakdown objects
+   * Quebra por denominação. Sempre retorna todas as denominações.
+   * @param {string} userId
+   * @returns {{name:string,count:number,value:number,itemIds:string[]}[]}
    */
   getCharacterSheetCoinBreakdown(userId) {
-    const user = game.users.get(userId);
-    let actor = user?.character;
-
-    if (!actor) {
-      const userActors = game.actors.filter(
-        (a) => a.hasPlayerOwner && a.ownership[userId] >= 3
-      );
-      if (userActors.length > 0) actor = userActors[0];
-    }
+    const actor = resolveActorFromUser(userId);
     if (!actor) return [];
 
-    const carried = actor.system?.equipment?.carried;
-    if (!carried) return [];
+    const denoms = game.settings.get(this.moduleId, "currencyDenominations") || [];
+    const list = readGGAList(actor);
+    const carriedEntries = Object.entries(list); // [id, data]
 
-    const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
-    const carriedItems = flattenItemsFromObject(carried);
-
-    const coinBreakdown = [];
-    for (const denomination of denominations) {
-      const coinItems = carriedItems.filter(item => item.data.name === denomination.name);
-      const totalCount = coinItems.reduce((sum, item) => sum + (Number(item.data.count) || 0), 0);
-      const itemIds = coinItems.map(item => item.id);
-
-      coinBreakdown.push({
-        name: denomination.name,
-        count: totalCount,                 // pode ser 0
-        value: denomination.value,
-        itemIds                             // pode ter ids mesmo com count 0
-      });
+    const out = [];
+    for (const d of denoms) {
+      const matches = carriedEntries.filter(([_, it]) => it?.name === d.name);
+      const count = matches.reduce((s, [_, it]) => s + (Number(it?.count) || 0), 0);
+      const ids = matches.map(([id]) => id);
+      out.push({ name: d.name, count, value: Number(d.value) || 0, itemIds: ids });
     }
-
-    return coinBreakdown;
+    return out;
   }
 
   /**
-   * Sets the currency amount on a character's sheet
-   * Keeps one placeholder item with count=0 instead of deleting all
-   * @param {string} userId - The user ID
-   * @param {number} newAmount - The new currency amount
-   * @returns {Promise<boolean>} True if successful
+   * Define o total de moedas. Distribui via makeChange. Preserva placeholder.
+   * @param {string} userId
+   * @param {number} newAmount
+   * @returns {Promise<boolean>}
    */
   async setCharacterSheetCurrency(userId, newAmount) {
-    const scaledNewAmount = Math.round((Number(newAmount) || 0) * (Number(this.baseUnitMultiplier) || 1));
-
-    const user = game.users.get(userId);
-    if (!user) return false;
-
-    let actor = user.character;
-    if (!actor) {
-      const userActors = game.actors.filter(
-        (a) => a.hasPlayerOwner && a.ownership[userId] >= 3
-      );
-      if (userActors.length > 0) actor = userActors[0];
-    }
+    const actor = resolveActorFromUser(userId);
     if (!actor) return false;
 
-    const currentCoinBreakdown = this.getCharacterSheetCoinBreakdown(userId);
+    const denoms = (game.settings.get(this.moduleId, "currencyDenominations") || []).slice();
+    if (!denoms.length) return false;
 
-    const denominations = (game.settings.get(this.moduleId, "currencyDenominations") || [])
-      .slice()
-      .sort((a, b) => b.value - a.value);
-    if (denominations.length === 0) return false;
+    denoms.sort((a, b) => Number(b.value) - Number(a.value));
 
-    const finalScaledAmount = Math.max(0, scaledNewAmount);
+    const mul = this.baseUnitMultiplier > 0 ? this.baseUnitMultiplier : _calculateBaseUnitMultiplier(denoms);
+    const scaled = denoms.map(d => ({ ...d, value: Math.round(Number(d.value) * mul) }));
+    const target = Math.max(0, Math.round((Number(newAmount) || 0) * mul));
 
     try {
-      const mul = Number(this.baseUnitMultiplier) > 0
-        ? this.baseUnitMultiplier
-        : _calculateBaseUnitMultiplier(denominations);
-
-      const scaledDenominations = denominations.map((denom) => ({
-        ...denom,
-        value: Math.round(Number(denom.value) * mul)
-      }));
-
-      const newCoinBag = makeChange(finalScaledAmount, scaledDenominations); // { [name]: count }
-      const updateData = {};
-
-      for (const denomination of denominations) {
-        const newCount = Number(newCoinBag[denomination.name] || 0);
-        const currentCoinData = currentCoinBreakdown.find((coin) => coin.name === denomination.name);
-        const ids = currentCoinData?.itemIds || [];
-
-        if (ids.length > 0) {
-          // Atualiza o primeiro item. Remove duplicatas. Mantém placeholder quando newCount=0.
-          const firstId = ids[0];
-          updateData[`system.equipment.carried.${firstId}.count`] = newCount;
-          for (const dupId of ids.slice(1)) {
-            updateData[`system.equipment.carried.-=${dupId}`] = null;
-          }
-        } else if (newCount > 0) {
-          // Não existe item para essa denominação. Criar um.
-          const newCoinId = foundry.utils.randomID(16);
-          const completeCoinData = createCompleteGURPSCoinItem(denomination, newCount);
-          updateData[`system.equipment.carried.${newCoinId}`] = completeCoinData;
-        } // else: newCount === 0 e não há item -> não cria nada
+      const bag = makeChange(target, scaled); // { [name]: count }
+      for (const d of denoms) {
+        const cnt = Number(bag[d.name] || 0);
+        await upsertCoinGGA(actor, d, cnt);
       }
-
-      if (Object.keys(updateData).length > 0) {
-        await actor.update(updateData);
-      }
-
-      if (actor.sheet?.rendered) actor.sheet.render(false);
       this.refreshWalletApplications();
       return true;
-    } catch (error) {
-      console.error("Error updating character sheet currency:", error);
+    } catch (e) {
+      console.error("setCharacterSheetCurrency error:", e);
       return false;
     }
   }
 
   /**
-   * Adds money directly to character sheet coins using optimal distribution
-   * Reuses placeholders with count=0 and uses integer scaling.
-   * @param {Actor} actor - The actor to add money to
-   * @param {number} amount - The amount to add (can be negative; result is clamped to >= 0)
-   * @returns {Promise<void>}
+   * Incrementa ou decrementa dinheiro e reescreve distribuição.
+   * @param {Actor} actor
+   * @param {number} amount
    */
   async addMoneyToCharacterCoins(actor, amount) {
-    const denominations = game.settings.get(this.moduleId, 'currencyDenominations') || [];
-    if (!denominations.length) {
-      console.warn('No currency denominations configured for adding money to character');
-      return;
-    }
+    const denoms = game.settings.get(this.moduleId, "currencyDenominations") || [];
+    if (!denoms.length) return;
 
-    const carried = actor.system?.equipment?.carried;
-    if (!carried) {
-      console.warn(`Actor ${actor.name} has no carried equipment structure`);
-      return;
-    }
+    const list = readGGAList(actor);
+    const entries = Object.entries(list); // [id, data]
 
-    const items = flattenItemsFromObject(carried);
-    const currentCoins = {};
-    const coinItemIds = {};
+    const mul = this.baseUnitMultiplier > 0 ? this.baseUnitMultiplier : _calculateBaseUnitMultiplier(denoms);
+    const scaled = denoms.map(d => ({ ...d, value: Math.round(Number(d.value) * mul) }))
+                         .sort((a, b) => b.value - a.value);
 
-    // Consolidar itens existentes
-    for (const d of denominations) {
-      const coinItems = items.filter(it => it.data.name === d.name);
-      currentCoins[d.name] = coinItems.reduce((s, it) => s + (Number(it.data.count) || 0), 0);
-      coinItemIds[d.name] = coinItems.map(it => it.id);
-    }
-
-    // Escala inteira
-    const mul = Number(this.baseUnitMultiplier) > 0
-      ? this.baseUnitMultiplier
-      : _calculateBaseUnitMultiplier(denominations);
-
-    const scaledDenoms = denominations
-      .map(d => ({ ...d, value: Math.round(Number(d.value) * mul) }))
-      .sort((a, b) => b.value - a.value);
-
-    const currentScaledTotal = Object.entries(currentCoins).reduce((sum, [name, cnt]) => {
-      const d = scaledDenoms.find(x => x.name === name);
-      return d ? sum + (Number(cnt) * Number(d.value)) : sum;
+    // total atual escalado
+    const currentScaled = entries.reduce((sum, [_, it]) => {
+      const d = scaled.find(x => x.name === it?.name);
+      return d ? sum + (Math.round(Number(it?.count) || 0) * Number(d.value)) : sum;
     }, 0);
 
     const delta = Math.round((Number(amount) || 0) * mul);
-    const newScaledTotal = Math.max(0, currentScaledTotal + delta);
+    const nextScaled = Math.max(0, currentScaled + delta);
 
-    // Distribuição ótima
-    const bag = makeChange(newScaledTotal, scaledDenoms); // { [name]: count }
+    const bag = makeChange(nextScaled, scaled); // { [name]: count }
 
-    // Aplicar mudanças, preservando placeholder
-    const updateData = {};
-
-    for (const d of denominations) {
-      const newCount = Number(bag[d.name] || 0);
-      const ids = coinItemIds[d.name] || [];
-
-      if (!ids.length) {
-        if (newCount > 0) {
-          const id = foundry.utils.randomID(16);
-          const data = createCompleteGURPSCoinItem(d, newCount);
-          updateData[`system.equipment.carried.${id}`] = data;
-        }
-        // se newCount === 0 e não há item, não cria nada
-        continue;
-      }
-
-      // Há itens existentes. Atualiza o primeiro e remove duplicatas extras.
-      const firstId = ids[0];
-      updateData[`system.equipment.carried.${firstId}.count`] = newCount;
-
-      for (let i = 1; i < ids.length; i++) {
-        updateData[`system.equipment.carried.-=${ids[i]}`] = null;
-      }
-    }
-
-    if (Object.keys(updateData).length > 0) {
-      await actor.update(updateData);
-      if (actor.sheet?.rendered) actor.sheet.render(false);
+    for (const d of denoms) {
+      const cnt = Number(bag[d.name] || 0);
+      await upsertCoinGGA(actor, d, cnt);
     }
   }
 
   /**
-   * Initializes missing currency denominations for all actors without affecting existing coins
-   * Ensures each actor has a placeholder item (count=0) for every denomination.
-   * @returns {Promise<void>}
+   * Garante placeholder (count=0) para toda denominação ausente em todos os atores-jogador.
    */
   async initializeMissingActorCoins() {
-    const denominations = game.settings.get(this.moduleId, "currencyDenominations") || [];
-    if (!denominations.length) {
-      ui.notifications.warn('No currency denominations configured. Please configure currency settings first.');
+    const denoms = game.settings.get(this.moduleId, "currencyDenominations") || [];
+    if (!denoms.length) {
+      ui.notifications.warn('No currency denominations configured. Configure as moedas primeiro.');
       return;
     }
-
-    let processedActors = 0;
-    let totalCoinsAdded = 0;
 
     for (const actor of game.actors.contents) {
       if (actor.type !== 'character' || !actor.isOwner) continue;
 
-      const carried = actor.system?.equipment?.carried;
-      if (!carried) {
-        console.warn(`Actor ${actor.name} has no carried equipment structure`);
-        continue;
-      }
+      const list = readGGAList(actor);
+      const names = new Set(Object.values(list).map(it => it?.name).filter(Boolean));
 
-      const carriedItems = flattenItemsFromObject(carried);
-      let actorCoinsAdded = 0;
-      const updateData = {};
-
-      for (const denomination of denominations) {
-        const existingCoins = carriedItems.filter(it => it.data.name === denomination.name);
-        if (existingCoins.length > 0) continue;
-
-        const newCoinId = foundry.utils.randomID(16);
-        const completeCoinData = createCompleteGURPSCoinItem(denomination, 0);
-        updateData[`system.equipment.carried.${newCoinId}`] = completeCoinData;
-        actorCoinsAdded++;
-      }
-
-      if (Object.keys(updateData).length > 0) {
-        await actor.update(updateData);
-        processedActors++;
-        totalCoinsAdded += actorCoinsAdded;
+      for (const d of denoms) {
+        if (!names.has(d.name)) {
+          await upsertCoinGGA(actor, d, 0);
+        }
       }
     }
-
     this.refreshWalletApplications();
-    console.log(`Initialized missing coins for ${processedActors} actors, added ${totalCoinsAdded} new coin items total.`);
   }
 
   /**
-   * Refreshes any open wallet-related applications
-   * @returns {void}
+   * Atualiza janelas relacionadas.
    */
   refreshWalletApplications() {
-    Object.values(ui.windows).forEach((app) => {
-      if (
-        app.constructor.name === 'PlayerWalletApplication' ||
-        app.constructor.name === 'VendorDisplayApplication' ||
-        app.constructor.name === 'MoneyManagementApplication'
-      ) {
+    for (const app of Object.values(ui.windows)) {
+      const k = app?.constructor?.name;
+      if (k === 'PlayerWalletApplication' || k === 'VendorDisplayApplication' || k === 'MoneyManagementApplication') {
         app.render(false);
       }
-    });
+    }
   }
 }

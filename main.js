@@ -52,8 +52,13 @@ export default class VendorWalletSystem {
     registerModuleSettings(this.ID);
     this.registerSocketListeners();
     
-    // Initialize currency manager
-    this.currencyManager = new CurrencyManager(this.ID);
+    // Initialize currency manager with settings
+    const currencySettings = {
+      useModuleCurrencySystem: game.settings.get(this.ID, 'useModuleCurrencySystem'),
+      currencyDenominations: game.settings.get(this.ID, 'currencyDenominations'),
+      currencySymbol: game.settings.get(this.ID, 'currencySymbol')
+    };
+    this.currencyManager = new CurrencyManager(this.ID, currencySettings);
     
     // Initialize vendor data manager
     this.vendorDataManager = new VendorDataManager(this.ID, this.SOCKET);
@@ -68,8 +73,61 @@ export default class VendorWalletSystem {
       });
       Handlebars.registerHelper('join', (arr, sep) => Array.isArray(arr) ? arr.join(sep) : '');
     }
+    
+    // Expose public API immediately after initialization
+    this.exposePublicAPI();
   }
 
+  /**
+   * Exposes the public API for external access
+   * @returns {void}
+   */
+  static exposePublicAPI() {
+    const publicApi = {
+      // Main system controller
+      system: VendorWalletSystem,
+      
+      // Application classes for external use
+      applications: {
+        PlayerWalletApplication,
+        GMToolsApplication,
+        SellItemsApplication,
+        VendorCreationApplication,
+        VendorEditApplication,
+        VendorItemEditApplication,
+        CurrencySettingsApplication,
+        VendorDisplayApplication,
+        VendorManagerApplication,
+        MoneyManagementApplication,
+      },
+      
+      // Utility functions
+      utils: {
+        findItemInCarried: Utils.findItemInCarried,
+        getItemFromPath: Utils.getItemFromPath,
+        flattenItemsFromObject: Utils.flattenItemsFromObject,
+      },
+      
+      // Convenience methods for common operations
+      formatCurrency: (amount) => VendorWalletSystem.formatCurrency(amount),
+      parseCurrency: (value) => VendorWalletSystem.parseCurrency(value),
+      getVendors: () => VendorWalletSystem.getVendors(),
+      getVendor: (vendorId) => VendorWalletSystem.getVendor(vendorId),
+      updateVendor: (vendorId, vendorData) => VendorWalletSystem.updateVendor(vendorId, vendorData),
+      deleteVendor: (vendorId) => VendorWalletSystem.deleteVendor(vendorId),
+      updateItemQuantityInVendor: (vendorId, vendorItemId, change) => VendorWalletSystem.updateItemQuantityInVendor(vendorId, vendorItemId, change),
+      findVendorByItemUuid: (itemUuid) => VendorWalletSystem.findVendorByItemUuid(itemUuid),
+      openAllAvailableVendors: () => VendorWalletSystem.openAllAvailableVendors(),
+      initializeMissingActorCoins: () => VendorWalletSystem.initializeMissingActorCoins(),
+      refreshCurrencySettings: () => VendorWalletSystem.refreshCurrencySettings(),
+    };
+    
+    // Expose API following Foundry VTT best practices
+    game.modules.get(VendorWalletSystem.ID).api = publicApi;
+    
+    // Also make it globally accessible for convenience
+    globalThis.VendorWalletSystem = VendorWalletSystem;
+  }
 
   /**
    * Registers socket event listeners for real-time communication
@@ -151,9 +209,24 @@ export default class VendorWalletSystem {
       ui.notifications.error('Failed to initialize actor coins. Check console for details.');
     }
   }
+
+  /**
+   * Refreshes currency manager settings when they change
+   * @returns {void}
+   */
+  static refreshCurrencySettings() {
+    if (this.currencyManager) {
+      const newSettings = {
+        useModuleCurrencySystem: game.settings.get(this.ID, 'useModuleCurrencySystem'),
+        currencyDenominations: game.settings.get(this.ID, 'currencyDenominations'),
+        currencySymbol: game.settings.get(this.ID, 'currencySymbol')
+      };
+      this.currencyManager.refreshSettings(newSettings);
+    }
+  }
 }
 
-// Make all classes and utilities globally accessible for macros and external scripts
+
 
 // Initialize the system when FoundryVTT is ready
 Hooks.once('init', () => {
@@ -170,24 +243,6 @@ Hooks.once('init', () => {
   
   // Initialize item drop handling
   initializeItemDropHandling();
-  
-  // Make all classes and utilities globally accessible for macros and external scripts
-  window.VendorWalletSystem = VendorWalletSystem;
-  window.PlayerWalletApplication = PlayerWalletApplication;
-  window.GMToolsApplication = GMToolsApplication;
-  window.SellItemsApplication = SellItemsApplication;
-  window.VendorCreationApplication = VendorCreationApplication;
-  window.VendorEditApplication = VendorEditApplication;
-  window.VendorItemEditApplication = VendorItemEditApplication;
-  window.CurrencySettingsApplication = CurrencySettingsApplication;
-  window.VendorDisplayApplication = VendorDisplayApplication;
-  window.VendorManagerApplication = VendorManagerApplication;
-  window.MoneyManagementApplication = MoneyManagementApplication;
-
-  // Make utility functions globally available for compatibility
-  window.findItemInCarried = Utils.findItemInCarried;
-  window.getItemFromPath = Utils.getItemFromPath;
-  window.flattenItemsFromObject = Utils.flattenItemsFromObject;
 });
 
 // /shop sem dependências (Foundry v13 core)
@@ -197,9 +252,9 @@ Hooks.on("chatMessage", (chatLog, message, chatData) => {
 
   // ação do comando
   if (game.user.isGM) {
-    new window.GMToolsApplication().render(true);
+    new GMToolsApplication().render(true);
   } else {
-    window.VendorWalletSystem.openAllAvailableVendors();
+    VendorWalletSystem.openAllAvailableVendors();
   }
 
   return false; // bloqueia processamento padrão e a mensagem no chat
@@ -210,7 +265,7 @@ Hooks.on("chatMessage", (chatLog, message, chatData) => {
 
   // ação do comando
   
-new window.SellItemsApplication().render(true); 
+  new SellItemsApplication().render(true); 
 
   return false; // bloqueia processamento padrão e a mensagem no chat
 });
