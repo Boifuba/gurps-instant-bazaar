@@ -1,0 +1,191 @@
+<div class="player-wallet-content">
+
+  <!-- Character Selection Dropdown -->
+  <div class="character-dropdown-wrapper dropdown">
+    <div class="dropdown-toggle">
+      {{#if selectedActor.id}}
+        <div class="selected-character-info">
+          {{!-- <span class="actor-name">{{selectedActor.name}}</span>
+          <span class="actor-wallet">{{formatCurrency selectedActor.wallet}}</span> --}}
+        </div>
+      {{else}}
+        <div class="selected-character-info">
+          <span class="actor-name">Select Character</span>
+          <span class="actor-wallet">No wallet</span>
+        </div>
+      {{/if}}
+
+  {{#if selectedActor.id}}
+  <details class="wallet-accordion">
+    <summary class="wallet-summary">
+      <span class="wallet-title">{{selectedActor.name}}: {{formatCurrency selectedActor.wallet}}</span>
+      <i class="fas fa-chevron-down accordion-icon"></i>
+    </summary>
+    <div class="wallet-details-content">
+      <h3>Select Character</h3>
+      <div class="character-selection-section">
+        {{#if userActors}}
+          <div class="character-list">
+            {{#each userActors}}
+            <div class="character-item {{#if (eq id ../selectedActor.id)}}selected{{/if}}">
+              <label class="character-label">
+                <input type="radio" name="selectedActor" value="{{id}}" class="actor-selection-radio" {{#if (eq id ../selectedActor.id)}}checked{{/if}}>
+                <div class="character-info">
+                  <strong>{{name}}</strong>
+                  <div class="character-wallet">{{formatCurrency wallet}}</div>
+                </div>
+              </label>
+            </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <div class="no-characters-message">
+            <p>No characters found! Please ensure you have a character assigned with proper permissions.</p>
+          </div>
+        {{/if}}
+      </div>
+      
+      {{#unless useModuleCurrency}}
+        {{#if selectedActor.coinBreakdown}}
+        <div class="coin-breakdown">
+          <h4>Coin Details:</h4>
+          <div class="coin-list">
+            {{#each selectedActor.coinBreakdown}}
+            <div class="coin-item">
+              <span class="coin-count">{{count}}</span>
+              <span class="coin-name">{{name}}</span>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+        {{else}}
+        <div class="no-coins-message">
+          <p>No coin breakdown available for character sheet currency.</p>
+        </div>
+        {{/if}}
+      {{else}}
+      <div class="no-coins-message">
+        <p>Coin breakdown is only available when using character sheet currency.</p>
+      </div>
+      {{/unless}}
+    </div>
+  </details>
+  {{/if}}
+
+  {{#if isVendorSelected}}
+    <!-- Single vendor item display -->
+    {{#if vendor}}
+      <div class="vendor-header">
+        {{#if vendor.image}}
+          <img src="{{vendor.image}}" alt="{{vendor.name}}" class="vendor-image" />
+        {{/if}}
+        <div class="vendor-header-controls">
+          <button type="button" class="secondary back-to-vendors">← Back to Vendors</button>
+        </div>
+      </div>
+
+      {{#unless isGM}}
+        <!-- Purchase controls for players - moved above search -->
+        <div class="purchase-controls-section">
+          <div class="purchase-summary">
+            <div class="purchase-info">
+              <span class="selected-count">Selected: <span id="selectedCount">0</span> items</span>
+              <span class="total-price">Total: <span id="totalPrice">{{formatCurrency 0}}</span></span>
+            </div>
+            <div class="purchase-actions">
+              <button type="button" id="purchaseSelected" class="primary purchase-btn" disabled>
+                <i class="fas fa-shopping-cart"></i> Purchase Selected
+              </button>
+              <button type="button" id="clearSelection" class="secondary clear-btn">
+                <i class="fas fa-times"></i> Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+      {{/unless}}
+
+      <!-- Search functionality - moved directly above items -->
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="itemSearch" class="search-input" placeholder="Search items..." value="{{searchTerm}}" />
+          <button type="button" id="clearSearch" class="clear-search-btn hidden">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      {{#if vendor.items}}
+        <!-- Items list -->
+        <div class="item-list-container">
+          <div class="item-list">
+            {{#each vendor.items}}
+              <div class="vendor-item-card" data-vendor-item-id="{{id}}">
+                <div class="item-details">
+                  {{#unless ../isGM}}
+                    <div class="item-selection">
+                      <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}" />
+                      <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" {{#if quantity}}max="{{quantity}}"{{/if}} />
+                    </div>
+                  {{/unless}}
+                  
+                  <div class="item-info">
+                    <h4 class="item-name">{{name}}</h4>
+                    <div class="item-meta">
+                      <span class="item-price">{{formatCurrency price}}</span>
+                      {{#if weight}}
+                        <span class="item-weight">{{weight}} lbs</span>
+                      {{/if}}
+                      {{#if quantity}}
+                        <span class="item-stock">({{quantity}} available)</span>
+                      {{/if}}
+                      {{#if pageref}}
+                        <span class="item-pageref">{{pageref}}</span>
+                      {{/if}}
+                    </div>
+                  </div>
+                  
+                  {{#if ../isGM}}
+                    <div class="item-actions">
+                      <button type="button" class="edit-item-btn secondary" data-item-id="{{id}}">
+                        <i class="fas fa-edit"></i> Edit
+                      </button>
+                    </div>
+                  {{/if}}
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+      {{else}}
+        <p class="no-items">No items available from this vendor.</p>
+      {{/if}}
+    {{else}}
+      <p>Vendor not found.</p>
+    {{/if}}
+  {{else}}
+    <!-- All vendors list display -->
+    <h3>Available Vendors</h3>
+    <div class="vendor-list">
+      {{#each vendors}}
+        <div class="vendor-item" data-vendor-id="{{id}}">
+          {{#if image}}
+            <div class="vendor-thumbnail">
+              <img src="{{image}}" alt="{{name}}" />
+            </div>
+          {{/if}}
+          <div class="vendor-info">
+            <strong>{{name}}</strong>
+            <br>
+            <small>{{itemCount}} items available</small>
+          </div>
+          <button type="button" class="primary" data-vendor-id="{{id}}">View Items</button>
+        </div>
+      {{/each}}
+      
+      {{#unless vendors}}
+        <p>No vendors available at the moment.</p>
+      {{/unless}}
+    </div>
+  {{/if}}
+</div>

@@ -1,0 +1,44 @@
+{
+  "id": "gurps-instant-bazaar",
+  "title": "GURPS Instant Bazaar",
+  "description": "User wallet system and vendors with random items",
+  "version": "1.0.6",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+ "authors": [
+    {
+      "id": "boifuba",
+      "name": "Boifubá", 
+      "discord": "boifuba",
+      "email": "cefasheli@gmail.com"      
+    }
+  ],
+  "esmodules": [
+    "scripts/constants.js",
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles.css"
+  ],
+   "packs": [
+    {
+      "name": "gurps-instant-bazaar",
+      "label": "GURPS Instant Bazaar",
+      "path": "packs/gurps-instant-bazaar",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "gurps",
+      "flags": {}
+    }
+  ],
+  "socket": true,
+  "manifest": "https://raw.githubusercontent.com/Boifuba/gurps-instant-bazaar/refs/heads/main/module.json",
+  "download": "https://github.com/Boifuba/gurps-instant-bazaar/releases/download/1.0.6/gurps-instant-bazaar.zip"
+}
+
+

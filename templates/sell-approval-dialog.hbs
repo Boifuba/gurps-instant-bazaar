@@ -1,0 +1,42 @@
+<form>
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <h3><i class="fas fa-coins"></i> Approve Sale</h3>
+      <p><strong>{{actorName}}</strong> ({{userName}}) wants to sell:</p>
+    </div>
+
+    <div class="item-list-section">
+      <h4>Items:</h4>
+      <ul class="dialog-item-list">
+        {{#each items}}
+        <li>{{quantity}}x {{name}} - {{formatCurrency price}}</li>
+        {{/each}}
+      </ul>
+    </div>
+
+    <div class="total-section">
+      <p><strong>Total Item Value:</strong> <span class="total-value">{{formatCurrency totalValue}}</span></p>
+    </div>
+
+    <div class="form-group slider-group">
+      <label for="sellPercentage">Sell Percentage:</label>
+      <div class="slider-controls">
+        <input type="range" id="sellPercentageSlider" min="0" max="100" step="1" value="{{automaticSellPercentage}}">
+        <div class="percentage-display">
+          <input type="number" id="sellPercentage" value="{{automaticSellPercentage}}" min="0" max="100" step="1">
+          <span>%</span>
+        </div>
+      </div>
+      <p class="final-payment-display">Final Payment: <span id="finalPaymentDisplay">{{formatCurrency finalPayment}}</span></p>
+    </div>
+  </div>
+
+  <div class="form-group dialog-buttons">
+    <button type="button" class="primary" data-action="approve">
+      <i class="fas fa-check"></i> Approve
+    </button>
+    <button type="button" class="secondary" data-action="decline">
+      <i class="fas fa-times"></i> Decline
+    </button>
+  </div>
+</form>

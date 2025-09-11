@@ -1,0 +1,91 @@
+<form>
+  <div class="form-group">
+    <label for="name">Vendor Name:</label>
+    <input type="text" id="name" name="name" value="{{vendor.name}}" required>
+  </div>
+
+  <div class="form-group">
+    <label for="vendorImage">Vendor Image:</label>
+    <div class="form-fields">
+      <input type="text" id="vendorImage" name="vendorImage" value="{{vendor.image}}" placeholder="Path to image">
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="vendorImage">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="quantity">Number of Items:</label>
+        <input type="number" id="quantity" name="quantity" value="{{vendor.quantity}}" min="1" max="100">
+      </div>
+      <div class="form-field">
+        <label for="compendium">Compendium:</label>
+        <select id="compendium" name="compendium" required>
+          <option value="">Select a compendium</option>
+          {{#each compendiums}}
+          <option value="{{id}}" {{#if (eq id ../vendor.compendium)}}selected{{/if}}>{{name}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="minValue">Minimum Value:</label>
+        <input type="text" id="minValue" name="minValue" value="{{formatCurrency vendor.minValue}}">
+      </div>
+      <div class="form-field">
+        <label for="maxValue">Maximum Value:</label>
+        <input type="text" id="maxValue" name="maxValue" value="{{formatCurrency vendor.maxValue}}">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="stockMin">Stock Min:</label>
+        <input type="number" id="stockMin" name="stockMin" value="{{vendor.stockMin}}" min="0">
+      </div>
+      <div class="form-field">
+        <label for="stockMax">Stock Max:</label>
+        <input type="number" id="stockMax" name="stockMax" value="{{vendor.stockMax}}" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="tlFilter">TL Filter:</label>
+        <input type="text" id="tlFilter" name="tlFilter" value="{{join vendor.tlFilter ','}}" placeholder="ex.: 7,8^,9">
+      </div>
+      <div class="form-field">
+        <label for="lcFilter">LC Filter:</label>
+        <input type="number" id="lcFilter" name="lcFilter" value="{{vendor.lcFilter}}" min="0" placeholder="LC value">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>
+      <input type="checkbox" name="regenerateItems" id="regenerateItems">
+      Regenerate items with new settings
+    </label>
+  </div>
+
+  <div class="form-group">
+    <div class="form-fields form-buttons-right">
+      <button type="submit" class="primary" data-action="update">
+        <i class="fas fa-save"></i> Update Vendor
+      </button>
+      <button type="button" class="secondary" data-action="cancel">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+    </div>
+  </div>
+</form>

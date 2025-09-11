@@ -1,0 +1,81 @@
+<form>
+  <div class="form-group">
+    <label for="name">Vendor Name:</label>
+    <input type="text" id="name" name="name" required>
+  </div>
+
+  <div class="form-group">
+    <label for="vendorImage">Vendor Image:</label>
+    <div class="form-fields">
+      <input type="text" id="vendorImage" name="vendorImage" placeholder="Path to image">
+      <button type="button" class="file-picker" data-type="imagevideo" data-target="vendorImage">
+        <i class="fas fa-file-import fa-fw"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="quantity">Number of Items:</label>
+        <input type="number" id="quantity" name="quantity" value="10" min="1" max="100">
+      </div>
+      <div class="form-field">
+        <label for="stockMin">Stock Min:</label>
+        <input type="number" id="stockMin" name="stockMin" value="1" min="0">
+      </div>
+      <div class="form-field">
+        <label for="stockMax">Stock Max:</label>
+        <input type="number" id="stockMax" name="stockMax" value="10" min="0">
+      </div>
+      <div class="form-field">
+        <label for="compendium">Compendium:</label>
+        <select id="compendium" name="compendium" required>
+          <option value="">Select a compendium</option>
+          {{#each compendiums}}
+          <option value="{{id}}">{{name}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="minValue">Minimum Value:</label>
+
+        <input type="text" id="minValue" name="minValue" value="{{formatCurrency 0}}">
+      </div>
+      <div class="form-field">
+        <label for="maxValue">Maximum Value:</label>
+        <input type="text" id="maxValue" name="maxValue" value="{{formatCurrency 999999}}">
+
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group stacked">
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="tlFilter">TL Filter:</label>
+        <input type="text" id="tlFilter" name="tlFilter" placeholder="ex.: 7,8^,9">
+      </div>
+      <div class="form-field">
+        <label for="lcFilter">LC Filter:</label>
+        <input type="number" id="lcFilter" name="lcFilter" min="0" placeholder="LC value">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="form-fields">
+      <button type="submit" class="primary" data-action="create" style="flex:1">
+        <i class="fas fa-store"></i> Create Vendor
+      </button>
+        <button type="button" class="secondary" style="flex:1" data-action="cancel">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+    </div>
+  </div>
+  </form>
