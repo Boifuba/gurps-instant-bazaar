@@ -20,6 +20,8 @@ import VendorCreationApplication from './vendor-creation-app.js';
 import VendorEditApplication from './vendor-edit-app.js';
 import VendorItemEditApplication from './vendor-item-edit-app.js';
 import CurrencySettingsApplication from './currency-settings-app.js';
+import GemDistributionApplication from './gem-distribution-app.js';
+import GemManager from './gem-manager.js';
 import * as Utils from './utils.js';
 import { SOCKET_EVENTS } from './socket-events.js';
 import PurchaseApprovalDialog from './purchase-approval-dialog-app.js';
@@ -47,6 +49,9 @@ export default class VendorWalletSystem {
 
   /** @type {TransactionManager} Transaction manager instance */
   static transactionManager = null;
+
+  /** @type {GemManager} Gem manager instance */
+  static gemManager = null;
 
   /** Static getters for centralized settings access */
   static getUseModuleCurrencySystem() {
@@ -95,6 +100,9 @@ export default class VendorWalletSystem {
     /** Initialize transaction manager */
     this.transactionManager = new TransactionManager(this.ID, this.SOCKET, this.currencyManager, this.vendorDataManager);
     
+    /** Initialize gem manager */
+    this.gemManager = new GemManager(this.ID);
+    
     if (typeof Handlebars !== 'undefined') {
       /** Register the formatCurrency helper to ensure it's always available */
       Handlebars.registerHelper('formatCurrency', (amount) => {
@@ -128,6 +136,7 @@ export default class VendorWalletSystem {
         VendorDisplayApplication,
         VendorManagerApplication,
         MoneyManagementApplication,
+        GemDistributionApplication,
         PurchaseApprovalDialog,
         SellApprovalDialog,
       },
@@ -151,6 +160,11 @@ export default class VendorWalletSystem {
       openAllAvailableVendors: () => VendorWalletSystem.openAllAvailableVendors(),
       initializeMissingActorCoins: () => VendorWalletSystem.initializeMissingActorCoins(),
       refreshCurrencySettings: () => VendorWalletSystem.refreshCurrencySettings(),
+      
+      /** Gem management methods (old) */
+      // TODO: Remove distributeGems and getCurrentGemsSummary after new gem system is implemented
+      distributeGems: (actorId, targetValue) => VendorWalletSystem.gemManager.distributeGemsToActor(actorId, targetValue),
+      getCurrentGemsSummary: (actorId) => VendorWalletSystem.gemManager.getCurrentGemsSummary(actorId),
     };
     
     /** Expose API following Foundry VTT best practices */

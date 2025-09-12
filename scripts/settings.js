@@ -3,7 +3,8 @@
  * @description Handles all module settings registration for FoundryVTT
  */
 
-import { DEFAULT_CURRENCY_DENOMINATIONS } from './constants.js';
+import { DEFAULT_CURRENCY_DENOMINATIONS, DEFAULT_GEM_VARIATIONS } from './constants.js';
+import { gemValues, caratSizes } from './gem-data.js';
 
 /**
  * Registers all module settings with FoundryVTT
@@ -93,5 +94,43 @@ export function registerModuleSettings(moduleId) {
     config: true,
     type: Boolean,
     default: false
+  });
+
+  game.settings.register(moduleId, 'gemBaseValues', {
+    name: 'Gem Base Values',
+    scope: 'world',
+    config: false,
+    type: Object,
+    default: gemValues
+  });
+
+  game.settings.register(moduleId, 'gemCaratSizes', {
+    name: 'Gem Carat Sizes',
+    scope: 'world',
+    config: false,
+    type: Array,
+    default: caratSizes
+  });
+
+  game.settings.register(moduleId, 'gemVariations', {
+    name: 'Gem Variations Data',
+    scope: 'world',
+    config: false,
+    type: Array,
+    default: DEFAULT_GEM_VARIATIONS
+  });
+
+  game.settings.register(moduleId, 'numberOfGemVariationsToUse', {
+    name: 'Minimum Gem Types for Distribution',
+    hint: 'When distributing gems, the minimum number of different gem types to include (ensures variety).',
+    scope: 'world',
+    config: true,
+    type: Number,
+    default: 5,
+    range: {
+      min: 1,
+      max: 15,
+      step: 1
+    }
   });
 }

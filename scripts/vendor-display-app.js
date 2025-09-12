@@ -29,7 +29,6 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
     },
     position: {
       width: 500,
-      height: 600
     },
     classes: ['gurps-instant-bazaar']
   };

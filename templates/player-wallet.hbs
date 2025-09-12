@@ -22,7 +22,7 @@
       <i class="fas fa-chevron-down accordion-icon"></i>
     </summary>
     <div class="wallet-details-content">
-      <h3>Select Character</h3>
+      {{!-- <h3>Select Character</h3> --}}
       <div class="character-selection-section">
         {{#if userActors}}
           <div class="character-list">
@@ -51,7 +51,7 @@
           <h4>Coin Details:</h4>
           <div class="coin-list">
             {{#each selectedActor.coinBreakdown}}
-            <div class="coin-item">
+            <div class="coin-item tag">
               <span class="coin-count">{{count}}</span>
               <span class="coin-name">{{name}}</span>
             </div>
@@ -93,10 +93,10 @@
               <span class="total-price">Total: <span id="totalPrice">{{formatCurrency 0}}</span></span>
             </div>
             <div class="purchase-actions">
-              <button type="button" id="purchaseSelected" class="primary purchase-btn" disabled>
+              <button type="button" id="purchaseSelected" class="primary purchase-btn boi" disabled>
                 <i class="fas fa-shopping-cart"></i> Purchase Selected
               </button>
-              <button type="button" id="clearSelection" class="secondary clear-btn">
+              <button type="button" id="clearSelection" class="secondary clear-btn boi">
                 <i class="fas fa-times"></i> Clear Selection
               </button>
             </div>
@@ -107,8 +107,8 @@
       <!-- Search functionality - moved directly above items -->
       <div class="search-container">
         <div class="search-input-wrapper">
-          <i class="fas fa-search search-icon"></i>
-          <input type="text" id="itemSearch" class="search-input" placeholder="Search items..." value="{{searchTerm}}" />
+          {{!-- <i class="fas fa-search search-icon"></i> --}}
+          <input type="text" id="itemSearch" class="search-input boi-input" placeholder="Search items..." value="{{searchTerm}}" />
           <button type="button" id="clearSearch" class="clear-search-btn hidden">
             <i class="fas fa-times"></i>
           </button>
@@ -125,7 +125,7 @@
                   {{#unless ../isGM}}
                     <div class="item-selection">
                       <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}" />
-                      <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" {{#if quantity}}max="{{quantity}}"{{/if}} />
+                      <input type="number" class="item-quantity-input boi-input" data-item-id="{{id}}" value="1" min="1" {{#if quantity}}max="{{quantity}}"{{/if}} />
                     </div>
                   {{/unless}}
                   
@@ -147,7 +147,7 @@
                   
                   {{#if ../isGM}}
                     <div class="item-actions">
-                      <button type="button" class="edit-item-btn secondary" data-item-id="{{id}}">
+                      <button type="button" class="edit-item-btn boi" data-item-id="{{id}}">
                         <i class="fas fa-edit"></i> Edit
                       </button>
                     </div>
@@ -165,7 +165,7 @@
     {{/if}}
   {{else}}
     <!-- All vendors list display -->
-    <h3>Available Vendors</h3>
+    <h3 class="titles">Available Vendors</h3>
     <div class="vendor-list">
       {{#each vendors}}
         <div class="vendor-item" data-vendor-id="{{id}}">
@@ -175,11 +175,11 @@
             </div>
           {{/if}}
           <div class="vendor-info">
-            <strong>{{name}}</strong>
+            <strong class="b-strong item-name">{{name}}</strong>
             <br>
             <small>{{itemCount}} items available</small>
           </div>
-          <button type="button" class="primary" data-vendor-id="{{id}}">View Items</button>
+          <button type="button" class="primary boi" data-vendor-id="{{id}}">View Items</button>
         </div>
       {{/each}}
       

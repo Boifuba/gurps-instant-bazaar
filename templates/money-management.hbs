@@ -12,14 +12,13 @@
   {{/unless}}
 
   <div class="form-group" style="margin-bottom: 1rem; padding: 1rem; border: 2px solid var(--color-border-highlight); border-radius: 8px; background-color: var(--color-bg-option);">
-    <label for="allMoneyInput" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Apply to All Actors:</label>
+    <label for="allMoneyInput" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">All Actors:</label>
     <div style="display: flex; gap: 0.5rem; align-items: center;">
       <input type="number" id="allMoneyInput" class="all-money-input" value="0" step="1" style="flex: 1;" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
       <button type="button" class="primary" data-action="apply-to-all" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
-        <i class="fas fa-users"></i> Apply to All
+        <i class="fas fa-users"></i> Apply
       </button>
     </div>
-    <small style="color: var(--color-text-dark-secondary); font-style: italic;">Enter a value to add/subtract from all actor wallets at once.</small>
   </div>
 
   <div class="user-list">

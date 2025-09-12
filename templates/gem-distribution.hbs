@@ -1,0 +1,51 @@
+<div class="gem-distribution-container">
+  {{#if hasActors}}
+  <div class="gem-distribution-form">
+    <div class="form-group">
+      <label for="selectedActor">Select Character:</label>
+      <select name="selectedActor" id="selectedActor" required>
+        <option value="">Choose a character...</option>
+        {{#each actors}}
+        <option value="{{id}}">{{name}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="targetValue">Target Value:</label>
+      <input type="number" name="targetValue" id="targetValue" min="0.01" step="0.01" placeholder="Enter target value" required>
+    </div>
+
+    <div class="form-group">
+      <label for="minGemTypes">Minimum Gem Types:</label>
+      <input type="number" name="minGemTypes" id="minGemTypes" min="1" max="{{maxAvailableGemTypes}}" value="{{defaultGemTypes}}" step="1" required>
+
+    </div>
+
+    <div class="form-group">
+      <label for="maxGemTypes">Maximum Gem Types:</label>
+      <input type="number" name="maxGemTypes" id="maxGemTypes" min="1" max="{{maxAvailableGemTypes}}" step="1" placeholder="Leave empty for no limit">
+
+    </div>
+
+    <div class="gem-types-info">
+      <p><strong>Available gem types:</strong> {{maxAvailableGemTypes}}</p>
+
+    </div>
+    
+    <div class="form-actions">
+      <button type="submit" data-action="distribute-gems" class="primary">
+        <i class="fas fa-gem"></i> Distribute Gems
+      </button>
+      <button type="button" data-action="cancel" class="secondary">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+    </div>
+  </div>
+  {{else}}
+  <div class="no-actors">
+    <p><i class="fas fa-exclamation-triangle"></i> No player characters found.</p>
+    <p>Make sure there are characters with player owners in the world.</p>
+  </div>
+  {{/if}}
+</div>

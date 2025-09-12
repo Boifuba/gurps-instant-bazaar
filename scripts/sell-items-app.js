@@ -134,7 +134,7 @@ export default class SellItemsApplication extends foundry.applications.api.Handl
             name: itemData.name,
             price: price,
             quantity: quantity,
-            weight: itemData.weight || 0,
+            weight: parseFloat((itemData.weight || 0).toFixed(4)),
             pageref: itemData.pageref || '',
             uuid: itemData.uuid || `${actor.id}.${entry.id}`
           });

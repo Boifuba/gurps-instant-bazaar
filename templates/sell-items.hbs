@@ -22,7 +22,7 @@
       <i class="fas fa-chevron-down accordion-icon"></i>
     </summary>
     <div class="wallet-details-content">
-      <h3>Select Character</h3>
+      {{!-- <h3>Select Character</h3> --}}
       <div class="character-selection-section">
         {{#if userActors}}
           <div class="character-list">
@@ -74,8 +74,8 @@
 
   <div class="search-container">
     <div class="search-input-wrapper">
-      <i class="fas fa-search search-icon"></i>
-      <input type="text" id="itemSearch" class="search-input" placeholder="Search items..." value="{{searchTerm}}" />
+      {{!-- <i class="fas fa-search search-icon"></i> --}}
+      <input type="text" id="itemSearch" class="search-input boi-input" placeholder="Search items..." value="{{searchTerm}}" />
       <button type="button" id="clearSearch" class="clear-search-btn hidden">
         <i class="fas fa-times"></i>
       </button>
@@ -94,10 +94,10 @@
         {{/if}}
       </div>
       <div class="sell-actions">
-        <button type="button" id="sellSelected" class="primary sell-btn" disabled>
+        <button type="button" id="sellSelected" class="primary sell-btn boi" disabled>
           <i class="fas fa-coins"></i> Sell Selected
         </button>
-        <button type="button" id="clearSelection" class="secondary clear-btn">
+        <button type="button" id="clearSelection" class="secondary clear-btn boi">
           <i class="fas fa-times"></i> Clear Selection
         </button>
       </div>
@@ -111,7 +111,7 @@
           <div class="item-details">
             <div class="item-selection">
               <input type="checkbox" class="item-checkbox" data-item-id="{{id}}" data-price="{{price}}" />
-              <input type="number" class="item-quantity-input" data-item-id="{{id}}" value="1" min="1" max="{{quantity}}" />
+              <input type="number" class="item-quantity-input boi-input" data-item-id="{{id}}" value="1" min="1" max="{{quantity}}" />
             </div>
             
             <div class="item-info">

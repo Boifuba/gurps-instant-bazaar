@@ -7,6 +7,7 @@ import MoneyManagementApplication from './money-management-app.js';
 import VendorCreationApplication from './vendor-creation-app.js';
 import VendorManagerApplication from './vendor-manager-app.js';
 import CurrencySettingsApplication from './currency-settings-app.js';
+import GemDistributionApplication from './gem-distribution-app.js';
 
 /**
  * @class GMToolsApplication
@@ -15,7 +16,7 @@ import CurrencySettingsApplication from './currency-settings-app.js';
  */
 export default class GMToolsApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
-    id: 'gm-tools',
+    id: 'gm-tools-bazaar',
     tag: 'form',
     window: {
       title: 'GM Tools',
@@ -63,6 +64,9 @@ export default class GMToolsApplication extends foundry.applications.api.Handleb
         break;
       case 'initialize-actor-coins':
         VendorWalletSystem.initializeMissingActorCoins();
+        break;
+      case 'gem-distribution':
+        new GemDistributionApplication().render(true);
         break;
     }
   }
