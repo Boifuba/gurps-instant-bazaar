@@ -1,5 +1,5 @@
 /**
- * @file Constants for the GURPS Instant Bazaar module
+ * @file Constants for the  Instant Bazaar module
  * @description Centralized constants to ensure consistency across the module
  */
 

@@ -1,6 +1,6 @@
 [![Donate](https://img.shields.io/badge/Donate-Sponsor%20on%20GitHub-black?logo=github)](https://github.com/sponsors/Boifuba)
 
-# GURPS Instant Bazaar
+#  Instant Bazaar
 
 A comprehensive FoundryVTT module that provides a complete vendor and wallet management system for Game Masters and players.
 

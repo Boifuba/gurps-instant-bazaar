@@ -25,7 +25,7 @@
    "packs": [
     {
       "name": "gurps-instant-bazaar",
-      "label": "GURPS Instant Bazaar",
+      "label": " Instant Bazaar",
       "path": "packs/gurps-instant-bazaar",
       "type": "Macro",
       "ownership": {

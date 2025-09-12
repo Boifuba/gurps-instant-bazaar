@@ -1,5 +1,5 @@
 /**
- * @file Socket event constants for the GURPS Instant Bazaar module
+ * @file Socket event constants for the  Instant Bazaar module
  * @description Centralized constants for socket event types to ensure consistency and reduce typos
  */
 

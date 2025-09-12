@@ -691,15 +691,17 @@ display: flex;
   padding-top: 250px;
 }
 
-#player-wallet  .window-content {
+/* #player-wallet  .window-content {
   background-image: url('/modules/gurps-instant-bazaar/img/vendor.jpg');
   background-size: cover;
   background-position: top;
   background-repeat: no-repeat;
   width: 100%;
-}
+} */
 
-#sell-items  .window-content {
+#sell-items,
+#player-wallet,
+#vendor-manager  .window-content {
   background-image: url('/modules/gurps-instant-bazaar/img/vendor.jpg');
   background-size: cover;
   background-position: top;

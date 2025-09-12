@@ -37,7 +37,7 @@ export default class PlayerWalletApplication extends foundry.applications.api.Ha
     id: 'player-wallet',
     tag: 'div',
     window: {
-      title: 'GURPS Instant Bazaar',
+      title: 'Instant Bazaar',
       icon: 'fas fa-wallet'
     },
     position: {
@@ -316,9 +316,9 @@ export default class PlayerWalletApplication extends foundry.applications.api.Ha
       /** @description Reset to default title */
       const titleElement = this.element.closest('.window-app')?.querySelector('.window-title');
       if (titleElement) {
-        titleElement.textContent = 'GURPS Instant Bazaar';
+        titleElement.textContent = 'Instant Bazaar';
       }
-      this.options.window.title = 'GURPS Instant Bazaar';
+      this.options.window.title = 'Instant Bazaar';
     }
   }
 

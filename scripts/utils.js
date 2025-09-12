@@ -1,5 +1,5 @@
 /**
- * @file Utility functions for the GURPS Instant Bazaar module
+ * @file Utility functions for the  Instant Bazaar module
  * @description Common utility functions used across multiple files
  */
 
