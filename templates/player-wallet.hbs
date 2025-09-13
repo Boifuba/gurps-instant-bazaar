@@ -19,7 +19,7 @@
   <details class="wallet-accordion">
     <summary class="wallet-summary">
       <span class="wallet-title">{{selectedActor.name}}: {{formatCurrency selectedActor.wallet}}</span>
-      <i class="fas fa-chevron-down accordion-icon"></i>
+      <i class="fas fa-chevron-down accordion-icon boi-destaque"></i>
     </summary>
     <div class="wallet-details-content">
       {{!-- <h3>Select Character</h3> --}}
@@ -31,7 +31,7 @@
               <label class="character-label">
                 <input type="radio" name="selectedActor" value="{{id}}" class="actor-selection-radio" {{#if (eq id ../selectedActor.id)}}checked{{/if}}>
                 <div class="character-info">
-                  <strong>{{name}}</strong>
+                  <strong class="boi-destaque-forte">{{name}}</strong>
                   <div class="character-wallet">{{formatCurrency wallet}}</div>
                 </div>
               </label>
@@ -89,8 +89,8 @@
         <div class="purchase-controls-section">
           <div class="purchase-summary">
             <div class="purchase-info">
-              <span class="selected-count">Selected: <span id="selectedCount">0</span> items</span>
-              <span class="total-price">Total: <span id="totalPrice">{{formatCurrency 0}}</span></span>
+              <span class="selected-count boi-destaque">Selected: <span id="selectedCount">0</span> items</span>
+              <span class="total-price boi-texto">Total: <span id="totalPrice">{{formatCurrency 0}}</span></span>
             </div>
             <div class="purchase-actions">
               <button type="button" id="purchaseSelected" class="primary purchase-btn boi" disabled>
@@ -120,7 +120,7 @@
         <div class="item-list-container">
           <div class="item-list">
             {{#each vendor.items}}
-              <div class="vendor-item-card" data-vendor-item-id="{{id}}">
+              <div class="vendor-item-card boi-destaque" data-vendor-item-id="{{id}}">
                 <div class="item-details">
                   {{#unless ../isGM}}
                     <div class="item-selection">
@@ -177,7 +177,7 @@
           <div class="vendor-info">
             <strong class="b-strong item-name">{{name}}</strong>
             <br>
-            <small>{{itemCount}} items available</small>
+            <small class="boi-destaque">{{itemCount}} items available</small>
           </div>
           <button type="button" class="primary boi" data-vendor-id="{{id}}">View Items</button>
         </div>

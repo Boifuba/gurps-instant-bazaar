@@ -182,19 +182,19 @@ export default class CurrencySettingsApplication extends foundry.applications.ap
     newField.innerHTML = `
       <div class="form-fields">
         <div class="form-field">
-          <label>Coin Name:</label>
-          <input type="text" name="coinName" placeholder="e.g., Gold Coin" value="${name}" required>
+          <label class="boi-destaque-forte">Coin Name:</label>
+          <input type="text" name="coinName" placeholder="e.g., Gold Coin" value="${name}" required class="boi-input">
         </div>
         <div class="form-field">
-          <label>Value per Coin:</label>
-          <input type="number" name="coinValue" placeholder="e.g., 100" min="0.01" step="0.01" value="${value || 0.01}" required>
+          <label class="boi-destaque-forte">Value per Coin:</label>
+          <input type="number" name="coinValue" placeholder="e.g., 100" min="0.01" step="0.01" value="${value || 0.01}" required class="boi-input">
         </div>
         <div class="form-field">
-          <label>Weight per Coin:</label>
-          <input type="number" name="coinWeight" placeholder="0.004" min="0" step="0.001" value="${weight || 0}" required>
+          <label class="boi-destaque-forte">Weight per Coin:</label>
+          <input type="number" name="coinWeight" placeholder="0.004" min="0" step="0.001" value="${weight || 0}" required class="boi-input">
         </div>
-        <button type="button" class="secondary remove-coin-denomination" title="Remove Coin">
-          <i class="fas fa-trash"></i>
+        <button type="button" class="secondary boi-button-small" title="Remove Coin">
+          <i class="fas fa-trash "></i>
         </button>
       </div>
     `;

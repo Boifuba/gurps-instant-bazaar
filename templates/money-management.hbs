@@ -6,16 +6,16 @@
   {{else}}
   {{#unless hasDenominations}}
   <div class="warning-message" style="margin-bottom: 1rem;">
-    <p><strong>No Currency Denominations:</strong> You must configure at least one currency denomination in Currency Settings before managing player wallets.</p>
+    <p><strong class="boi-destaque-forte">No Currency Denominations:</strong> You must configure at least one currency denomination in Currency Settings before managing player wallets.</p>
   </div>
   {{/unless}}
   {{/unless}}
 
   <div class="form-group" style="margin-bottom: 1rem; padding: 1rem; border: 2px solid var(--color-border-highlight); border-radius: 8px; background-color: var(--color-bg-option);">
-    <label for="allMoneyInput" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">All Actors:</label>
+    <label for="allMoneyInput" class="data-application-part boi-destaque-forte" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">All Actors:</label>
     <div style="display: flex; gap: 0.5rem; align-items: center;">
-      <input type="number" id="allMoneyInput" class="all-money-input" value="0" step="1" style="flex: 1;" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
-      <button type="button" class="primary" data-action="apply-to-all" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+      <input type="number" id="allMoneyInput" class="all-money-input boi-input" value="0" step="1" style="flex: 1;" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+      <button type="button" class="primary boi-button-small" data-action="apply-to-all" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
         <i class="fas fa-users"></i> Apply
       </button>
     </div>
@@ -25,16 +25,16 @@
   {{#each actors}}
   <div class="user-item" data-actor-id="{{id}}">
     <div>
-      <strong>{{name}}</strong>
+      <strong class="boi-destaque-forte">{{name}}</strong>
       <br>
-      <small>Wallet: {{formatCurrency wallet}}</small>
+      <small class="boi-destaque">Wallet: {{formatCurrency wallet}}</small>
       {{#unless ../useModuleCurrency}}
       <br>
-      <small style="font-style: italic; color: #666;">From character sheet</small>
+      <small  style="font-style: italic; color: #666; ">From character sheet</small>
       {{/unless}}
     </div>
     <div class="user-money-controls">
-      <input type="number" class="money-input" name="amount-{{id}}" value="0" step="1" {{#unless ../hasDenominations}}{{#unless ../useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+      <input type="number" class="money-input boi-input" name="amount-{{id}}" value="0" step="1" {{#unless ../hasDenominations}}{{#unless ../useModuleCurrency}}disabled{{/unless}}{{/unless}}>
     </div>
   </div>
   {{/each}}
@@ -44,10 +44,10 @@
   {{/unless}}
   </div>
 
-  <div class="button-row">
-    <button type="button" class="primary" data-action="update-wallets" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
-      {{#unless hasDenominations}}{{#unless useModuleCurrency}}Configure Currency First{{else}}Update Individual Wallets{{/unless}}{{else}}Update Individual Wallets{{/unless}}
+  <div class="boi-button-group">
+    <button type="button" class="primary boi " data-action="update-wallets" {{#unless hasDenominations}}{{#unless useModuleCurrency}}disabled{{/unless}}{{/unless}}>
+      {{#unless hasDenominations}}{{#unless useModuleCurrency}}Configure Currency First{{else}}Update Individual Wallets{{/unless}}{{else}}Update All Wallets{{/unless}}
     </button>
-      <button type="button" class="secondary" data-action="cancel">Cancel</button>
+      <button type="button" class="secondary boi" data-action="cancel">Cancel</button>
     </div>
 </div>

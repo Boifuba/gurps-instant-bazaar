@@ -3,41 +3,41 @@
   <div class="gem-distribution-form">
     <div class="form-group">
       <label for="selectedActor">Select Character:</label>
-      <select name="selectedActor" id="selectedActor" required>
+      <select name="selectedActor" id="selectedActor" required class="boi-input">
         <option value="">Choose a character...</option>
         {{#each actors}}
         <option value="{{id}}">{{name}}</option>
         {{/each}}
       </select>
     </div>
-
     <div class="form-group">
       <label for="targetValue">Target Value:</label>
-      <input type="number" name="targetValue" id="targetValue" min="0.01" step="0.01" placeholder="Enter target value" required>
+      <input type="number" name="targetValue" id="targetValue" min="0.01" step="0.01" placeholder="Enter target value" required class="boi-input">
     </div>
+<div class="form-fields">
 
     <div class="form-group">
       <label for="minGemTypes">Minimum Gem Types:</label>
-      <input type="number" name="minGemTypes" id="minGemTypes" min="1" max="{{maxAvailableGemTypes}}" value="{{defaultGemTypes}}" step="1" required>
+      <input type="number" name="minGemTypes" id="minGemTypes" min="1" max="{{maxAvailableGemTypes}}" value="{{defaultGemTypes}}" step="1"  placeholder="3" required class="boi-input">
 
     </div>
 
     <div class="form-group">
       <label for="maxGemTypes">Maximum Gem Types:</label>
-      <input type="number" name="maxGemTypes" id="maxGemTypes" min="1" max="{{maxAvailableGemTypes}}" step="1" placeholder="Leave empty for no limit">
+      <input type="number" name="maxGemTypes" id="maxGemTypes" min="1" max="{{maxAvailableGemTypes}}" step="1" placeholder="5" class="boi-input">
 
     </div>
-
+</div>
     <div class="gem-types-info">
-      <p><strong>Available gem types:</strong> {{maxAvailableGemTypes}}</p>
+      <p><strong class="boi-destaque-forte">Available gem types:</strong> {{maxAvailableGemTypes}}</p>
 
     </div>
     
     <div class="form-actions">
-      <button type="submit" data-action="distribute-gems" class="primary">
+      <button type="submit" data-action="distribute-gems" class="primary boi">
         <i class="fas fa-gem"></i> Distribute Gems
       </button>
-      <button type="button" data-action="cancel" class="secondary">
+      <button type="button" data-action="cancel" class="secondary boi">
         <i class="fas fa-times"></i> Cancel
       </button>
     </div>

@@ -1,3 +1,17 @@
+
+
+.boi-destaque {
+  color: #4A2C17;
+}
+
+.boi-destaque-forte {
+color: brown;
+}
+.boi-text {
+  color:#4A2C17
+}  
+
+
 .gurps-instant-bazaar {
   font-family: 'Signika', sans-serif;
 }
@@ -68,7 +82,7 @@
 .no-characters-message {
   text-align: center;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   background-color: var(--color-bg-option);
 }
@@ -102,10 +116,10 @@
 }
 
 vendor-header h2 {
-    margin: 0;
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: brown;
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: brown;
 }
 
 .vendor-image {
@@ -119,7 +133,7 @@ vendor-header h2 {
 
 .back-to-vendors {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -180,7 +194,7 @@ vendor-header h2 {
 .wallet-details-content {
   padding: 0 0.75rem 0.75rem 0.75rem;
   border-top: 1px solid brown;
-  
+
 }
 
 /* Purchase Controls Section */
@@ -189,7 +203,7 @@ vendor-header h2 {
   border: 2px solid brown;
   border-radius: 8px;
   margin-bottom: 10px;
-  
+
 }
 
 .purchase-summary {
@@ -221,10 +235,11 @@ vendor-header h2 {
 
 
 
-.purchase-btn, .clear-btn {
+.purchase-btn,
+.clear-btn {
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
@@ -233,7 +248,7 @@ vendor-header h2 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  scale: 0.8 ;
+  scale: 0.8;
 }
 
 .purchase-btn:disabled {
@@ -257,7 +272,7 @@ vendor-header h2 {
 .form-actions button {
   flex: 1;
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
@@ -303,7 +318,7 @@ vendor-header h2 {
 .search-input {
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.25rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   font-size: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -333,20 +348,20 @@ vendor-header h2 {
 }
 
 .clear-search-btn:hover {
-  background-color: var(--color-border);
+  background-color: brown;
   color: #333;
 }
 
 /* Item List Container */
 .item-list-container {
-display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    max-height: 500px;
-    overflow-y: auto;
-    border: 1px solid brown;
-    border-radius: 4px;
-    padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid brown;
+  border-radius: 4px;
+  padding: 0.5rem;
 }
 
 .item-list {
@@ -357,17 +372,17 @@ display: flex;
 
 /* Vendor Item Card */
 .vendor-item-card {
-    padding: 0.4rem;
-    border: 1px solid #8f34004a;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    background-color: #d9c09f;
-    display: flex;
-    align-items: center;
-    
-    margin: 2px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    
+  padding: 0.4rem;
+  border: 1px solid #8f34004a;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background-color: #d9c09f;
+  display: flex;
+  align-items: center;
+
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
 }
 
 .vendor-item-card:hover {
@@ -376,7 +391,7 @@ display: flex;
 }
 
 .vendor-item-card.selected {
-  border-color: var(--color-border-success);
+  border-color: brown;
   border-width: 2px;
   background-color: var(--color-bg-option);
 }
@@ -405,7 +420,7 @@ display: flex;
 .item-quantity-input {
   width: 50px;
   padding: 0.25rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   text-align: center;
   font-size: 0.9rem;
@@ -419,11 +434,11 @@ display: flex;
 }
 
 .item-name {
-    font-weight: bold;
-    font-size: 1.6rem;
-    margin: 0;
-    line-height: 1.3;
-    color: brown;
+  font-weight: bold;
+  font-size: 1.6rem;
+  margin: 0;
+  line-height: 1.3;
+  color: brown;
 }
 
 .item-meta {
@@ -466,7 +481,7 @@ display: flex;
 
 .edit-item-btn {
   padding: 0.5rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -524,7 +539,7 @@ display: flex;
 
 .vendor-item button {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -550,7 +565,7 @@ display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
 }
 
@@ -563,24 +578,19 @@ display: flex;
 .money-input {
   width: 80px;
   padding: 0.25rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   text-align: center;
 }
 
 /* Vendor Creation Styles */
-.form-group {
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
 
 .form-group label {
   display: block;
   margin-bottom: 0;
   font-weight: bold;
   min-width: 120px;
+  color: #4A2C17;
 }
 
 .form-group label small {
@@ -592,10 +602,10 @@ display: flex;
   margin-top: 0.25rem;
 }
 
-.form-group input,
+/* .form-group input,
 .form-group select {
   flex: 1;
-}
+} */
 
 .form-group.stacked .form-fields {
   display: grid;
@@ -609,9 +619,9 @@ display: flex;
   align-items: end;
 }
 
-.form-fields button {
+/* .form-fields button {
   flex: 1;
-}
+} */
 
 .file-picker {
   padding: 0.5rem;
@@ -633,7 +643,7 @@ display: flex;
 
 .vendor-actions button {
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
@@ -664,15 +674,18 @@ display: flex;
   text-transform: uppercase;
   font-size: 0.75rem;
   padding: 0.1rem 0;
+  color: #4A2C17
 }
 
 .vendor-status.active {
   border-bottom: 2px solid;
+  color:brown;
 }
 
 .vendor-status.inactive {
   border-bottom: 2px dashed;
   opacity: 0.8;
+  color: #654321;
 }
 
 /* GM Tools Styles */
@@ -699,15 +712,31 @@ display: flex;
   width: 100%;
 } */
 
+/* #vendor-display .window-content .player-wallet {
+  background-image: url(/modules/gurps-instant-bazaar/img/vendor.jpg);
+  background-size: cover;
+  background-position: top;
+  background-repeat: no-repeat;
+  width: 100%;
+} */
+
+
 #sell-items,
+#currency-settings,
+#money-management,
 #player-wallet,
-#vendor-manager  .window-content {
+#vendor-display,
+#vendor-creation,
+#vendor-edit,
+#vendor-item-edit,
+#gem-distribution,
+#vendor-manager .window-content {
   background-image: url('/modules/gurps-instant-bazaar/img/vendor.jpg');
   background-size: cover;
   background-position: top;
   background-repeat: no-repeat;
   width: 100%;
-}
+  }
 
 
 .button-row {
@@ -729,7 +758,7 @@ display: flex;
   margin-right: 0.5rem;
 }
 
- 
+
 button.secondary:hover {
   opacity: 1;
 }
@@ -744,10 +773,25 @@ button.secondary:hover {
     opacity: 1;
     transform: translateX(0);
   }
+
   100% {
     opacity: 0;
     transform: translateX(-100%);
   }
+}
+.boi-button-group{
+  display: flex;
+  gap: 8px; /* opcional */
+  font-size: 12px;
+}
+
+.boi-button-group > * {
+  flex: 1 1 0; /* cresce igualmente */
+  min-width: 0; /* evita overflow de conteúdo */
+}
+
+label .gem-distribution-form {
+  color: #4A2C17;
 }
 
 /* Drag feedback */
@@ -758,10 +802,10 @@ button.secondary:hover {
 
 /* Currency Settings Styles */
 .coin-denominations-container {
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   padding: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .coin-denomination-item {
@@ -777,20 +821,6 @@ button.secondary:hover {
   grid-template-columns: 1fr 1fr 1fr auto;
   gap: 0.5rem;
   align-items: end;
-}
-
-.coin-denomination-item .remove-coin-denomination {
-  padding: 0.5rem;
-  border: 1px solid var(--color-border-dark);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: fit-content;
-}
-
-.coin-denomination-item .remove-coin-denomination:hover {
-  border-width: 2px;
-  background-color: var(--color-bg-danger);
 }
 
 .notes {
@@ -835,14 +865,14 @@ button.secondary:hover {
 }
 
 .coin-item {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid brown;
-    border-radius: 4px;
-    font-size: 1rem;
-    color: brown;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid brown;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: brown;
 }
 
 .coin-count {
@@ -924,7 +954,8 @@ button.secondary:hover {
   font-size: 1.1rem;
 }
 
-.approval-note, .auto-sell-note {
+.approval-note,
+.auto-sell-note {
   font-size: 0.9rem;
   font-style: italic;
   color: var(--color-text-dark-secondary);
@@ -934,10 +965,11 @@ button.secondary:hover {
   display: flex;
 }
 
-.sell-btn, .clear-btn {
+.sell-btn,
+.clear-btn {
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
@@ -960,21 +992,21 @@ button.secondary:hover {
   border-width: 2px;
   transform: translateY(-1px);
 }
-    
+
 
 /* Sell Item Card */
 .sell-item-card {
- 
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.4rem;
-border: 1px solid #8f34004a;
+  border: 1px solid #8f34004a;
   border-radius: 4px;
   transition: all 0.2s ease;
   background-color: #d9c09f;
-    margin: 2px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
 }
 
@@ -985,7 +1017,7 @@ border: 1px solid #8f34004a;
 }
 
 .sell-item-card.selected {
-  border-color: var(--color-border-success);
+  border-color: brown;
   border-width: 2px;
   background-color: var(--color-bg-option);
 }
@@ -1014,7 +1046,7 @@ border: 1px solid #8f34004a;
 .sell-item-card .item-quantity-input {
   width: 50px;
   padding: 0.25rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   text-align: center;
   font-size: 0.9rem;
@@ -1043,11 +1075,11 @@ border: 1px solid #8f34004a;
 .sell-item-card .item-price {
   font-weight: bold;
   font-size: 1rem;
-  color: var(--color-text-highlight);
+  
 }
 
 .sell-item-card .item-weight {
-  color: var(--color-text-dark-secondary);
+  color: var(--boi-destaque);
 }
 
 .sell-item-card .item-quantity {
@@ -1082,16 +1114,9 @@ border: 1px solid #8f34004a;
 }
 
 
-
-/* New class for hiding elements */
 .hidden {
   display: none;
 }
-
-/* Dialog Application Styles */
-/* .dialog-app .dialog-content {
-  padding: 1rem;
-} */
 
 .dialog-app .dialog-header {
   margin-bottom: 1rem;
@@ -1159,7 +1184,7 @@ border: 1px solid #8f34004a;
 .dialog-app .slider-group {
   margin-bottom: 1rem;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   background-color: var(--color-bg-option);
 }
@@ -1194,7 +1219,7 @@ border: 1px solid #8f34004a;
 .dialog-app .percentage-display input[type="number"] {
   width: 60px;
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid brown;
   border-radius: 4px;
   text-align: center;
   font-weight: bold;
@@ -1223,12 +1248,12 @@ border: 1px solid #8f34004a;
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid brown;
 }
 
 .dialog-app .dialog-buttons button {
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid brown;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
@@ -1245,19 +1270,17 @@ border: 1px solid #8f34004a;
 
 .dialog-app .dialog-buttons button.primary {
   min-width: 120px;
+  
 }
 
 .dialog-app .dialog-buttons button.secondary {
   min-width: 100px;
 }
 
-.boi {
-    /* border: none; */
-    outline: none;
+.boi-button-small {
     cursor: pointer;
-    font-family: Arial, sans-serif;
-    padding: 25px 24px;
-    font-size: 16px;
+    padding: 15px 10px;
+    font-size: 12px;
     font-weight: bold;
     background: linear-gradient(to bottom, #A0522D 0%, #8B4513 50%, #654321 100%);
     color: #F5DEB3;
@@ -1266,15 +1289,32 @@ border: 1px solid #8f34004a;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.6);
     transition: all 0.1s 
 ease;
-    position: relative;
-    top: 0;
-    /* height: 30px; */
+    margin-bottom: 8px;
+}
+
+
+
+.boi {
+  outline: none;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  padding: 18px ;
+  font-size: 14px;
+  font-weight: bold;
+  background: linear-gradient(to bottom, #A0522D 0%, #8B4513 50%, #654321 100%);
+  color: #F5DEB3;
+  border-radius: 8px;
+  border: 2px solid #4A2C17;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.6);
+  transition: all 0.1s ease;
+  position: relative;
+  top: 0;
 }
 
 /* Efeito hover */
 .boi:hover {
   background: linear-gradient(to bottom, #B8651F 0%, #9B4E1A 50%, #7A4B2A 100%);
-  box-shadow: 
+  box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 2px 6px rgba(0, 0, 0, 0.4),
     0 0 8px rgba(184, 101, 31, 0.3);
@@ -1284,37 +1324,23 @@ ease;
 /* Efeito de apertar */
 .boi:active {
   top: 2px;
-  box-shadow: 
+  box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 1px 2px rgba(0, 0, 0, 0.3);
   transform: scale(0.98);
 }
 
 
-#vendor-display .window-content .player-wallet {
-    background-image: url(/modules/gurps-instant-bazaar/img/vendor.jpg);
-    background-size: cover;
-    background-position: top;
-    background-repeat: no-repeat;
-    width: 100%;
-}
-
-
-
-
 .boi-input {
-    background: rgba(245, 245, 245, 0.37);
-    border: 1px solid brown;
-    border-radius: 6px;
-    padding: 12px 16px;
-    font-size: 16px;
-    color: brown !important;
-    outline: none;
-    /* box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2); */
-    transition: all 0.2s 
-ease;
-margin-bottom: 6px;
-
+  background: rgba(245, 245, 245, 0.37);
+  border: 1px solid brown;
+  border-radius: 6px;
+  /* padding: 12px 16px; */
+  font-size: 16px;
+  color: brown !important;
+  outline: none;
+  transition: all 0.2s ease;
+  margin-bottom: 6px;
 }
 
 .boi-input::placeholder {
@@ -1326,7 +1352,7 @@ margin-bottom: 6px;
 .boi-input:focus {
   /* background: linear-gradient(to bottom, #A0522D, #8B4513); */
   border-color: #D2691E;
-  box-shadow: 
+  box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.3),
     0 0 8px rgba(210, 105, 30, 0.4),
     0 2px 6px rgba(0, 0, 0, 0.2);
@@ -1337,19 +1363,21 @@ margin-bottom: 6px;
   border-color: #8B4513;
 }
 
-
 .b-strong {
-    color: brown;
-    font-size: 24px;
-    font-family: var(--font-h1);
+  color: brown;
+  font-size: 24px;
+  font-family: var(--font-h1);
 }
 
 .titles {
-    color:#4A2C17;
-    font-size: 36px;
-    font-family: var(--font-h1);
-    display: flex
-;
-    text-align: center;
-    justify-content: center;
+  color: #4A2C17;
+  font-size: 36px;
+  font-family: var(--font-h1);
+  display: flex;
+  text-align: center;
+  justify-content: center;
+}
+
+.boi-scale {
+  scale: 0.8;
 }

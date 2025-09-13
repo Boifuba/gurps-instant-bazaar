@@ -19,7 +19,7 @@
   <details class="wallet-accordion">
     <summary class="wallet-summary">
       <span class="wallet-title">{{selectedActor.name}}: {{formatCurrency selectedActor.wallet}}</span>
-      <i class="fas fa-chevron-down accordion-icon"></i>
+      <i class="fas fa-chevron-down accordion-icon boi-destaque"></i>
     </summary>
     <div class="wallet-details-content">
       {{!-- <h3>Select Character</h3> --}}
@@ -31,7 +31,7 @@
               <label class="character-label">
                 <input type="radio" name="selectedActor" value="{{id}}" class="actor-selection-radio" {{#if (eq id ../selectedActor.id)}}checked{{/if}}>
                 <div class="character-info">
-                  <strong>{{name}}</strong>
+                  <strong class="boi-destaque-forte">{{name}}</strong>
                   <div class="character-wallet">{{formatCurrency wallet}}</div>
                 </div>
               </label>

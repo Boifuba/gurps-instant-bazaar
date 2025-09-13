@@ -129,11 +129,11 @@ export default class VendorDisplayApplication extends foundry.applications.api.H
       title: `Purchase ${item.name}`,
       content: `
         <div class="form-group">
-          <label>Quantity:</label>
+          <label class="boi-destaque-forte">Quantity:</label>
           <input type="number" id="quantity" value="1" min="1" ${item.quantity !== undefined ? `max="${item.quantity}"` : ''}>
         </div>
         <div class="form-group">
-          <label>Price per item:</label>
+          <label class="boi-destaque-forte">Price per item:</label>
           <span>${VendorWalletSystem.formatCurrency(item.price)}</span>
         </div>
       `,

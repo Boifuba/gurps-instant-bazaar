@@ -1,14 +1,14 @@
 <form>
   <div class="form-group">
-    <label for="name">Vendor Name:</label>
-    <input type="text" id="name" name="name" required>
+    <label for="name" class="boi-destaque-forte">Vendor Name:</label>
+    <input type="text" id="name" name="name" class="boi-input" required>
   </div>
 
   <div class="form-group">
-    <label for="vendorImage">Vendor Image:</label>
+    <label for="vendorImage" class="boi-destaque-forte">Vendor Image:</label>
     <div class="form-fields">
-      <input type="text" id="vendorImage" name="vendorImage" placeholder="Path to image">
-      <button type="button" class="file-picker" data-type="imagevideo" data-target="vendorImage">
+      <input type="text" id="vendorImage" name="vendorImage" placeholder="Path to image " class="boi-input">
+      <button type="button" class="file-picker boi-button-small" style="max-width: 20px; max-height: 10px !important; " data-type="imagevideo" data-target="vendorImage">
         <i class="fas fa-file-import fa-fw"></i>
       </button>
     </div>
@@ -17,20 +17,20 @@
   <div class="form-group stacked">
     <div class="form-fields">
       <div class="form-field">
-        <label for="quantity">Number of Items:</label>
-        <input type="number" id="quantity" name="quantity" value="10" min="1" max="100">
+        <label for="quantity" class="boi-destaque-forte">Number of Items:</label>
+        <input type="number" id="quantity" name="quantity" value="10" min="1" max="100" class="boi-input">
       </div>
       <div class="form-field">
-        <label for="stockMin">Stock Min:</label>
-        <input type="number" id="stockMin" name="stockMin" value="1" min="0">
+        <label for="stockMin" class="boi-destaque-forte">Stock Min:</label>
+        <input type="number" id="stockMin" name="stockMin" value="1" min="0" class="boi-input">
       </div>
       <div class="form-field">
-        <label for="stockMax">Stock Max:</label>
-        <input type="number" id="stockMax" name="stockMax" value="10" min="0">
+        <label for="stockMax" class="boi-destaque-forte">Stock Max:</label>
+        <input type="number" id="stockMax" name="stockMax" value="10" min="0" class="boi-input">
       </div>
       <div class="form-field">
-        <label for="compendium">Compendium:</label>
-        <select id="compendium" name="compendium" required>
+        <label for="compendium" class="boi-destaque-forte">Compendium:</label>
+        <select id="compendium" name="compendium" required class="boi-input">
           <option value="">Select a compendium</option>
           {{#each compendiums}}
           <option value="{{id}}">{{name}}</option>
@@ -43,13 +43,13 @@
   <div class="form-group stacked">
     <div class="form-fields">
       <div class="form-field">
-        <label for="minValue">Minimum Value:</label>
+        <label for="minValue" class="boi-destaque-forte">Minimum Value:</label>
 
-        <input type="text" id="minValue" name="minValue" value="{{formatCurrency 0}}">
+        <input type="text" id="minValue" name="minValue" value="{{formatCurrency 0}}" class="boi-input">
       </div>
       <div class="form-field">
-        <label for="maxValue">Maximum Value:</label>
-        <input type="text" id="maxValue" name="maxValue" value="{{formatCurrency 999999}}">
+        <label for="maxValue" class="boi-destaque-forte">Maximum Value:</label>
+        <input type="text" id="maxValue" name="maxValue" value="{{formatCurrency 999999}}" class="boi-input">
 
       </div>
     </div>
@@ -58,24 +58,25 @@
   <div class="form-group stacked">
     <div class="form-fields">
       <div class="form-field">
-        <label for="tlFilter">TL Filter:</label>
-        <input type="text" id="tlFilter" name="tlFilter" placeholder="ex.: 7,8^,9">
+        <label for="tlFilter" class="boi-destaque-forte">TL Filter:</label>
+        <input type="text" id="tlFilter" name="tlFilter" placeholder="ex.: 7,8^,9" class="boi-input">
       </div>
       <div class="form-field">
-        <label for="lcFilter">LC Filter:</label>
-        <input type="number" id="lcFilter" name="lcFilter" min="0" placeholder="LC value">
+        <label for="lcFilter" class="boi-destaque-forte">LC Filter:</label>
+        <input type="number" id="lcFilter" name="lcFilter" min="0" placeholder="LC value" class="boi-input">
       </div>
     </div>
   </div>
 
-  <div class="form-group">
-    <div class="form-fields">
-      <button type="submit" class="primary" data-action="create" style="flex:1">
+    <div class="boi-button-group">
+      
+      <button type="submit" class="primary boi" data-action="create" style="flex:1">
         <i class="fas fa-store"></i> Create Vendor
       </button>
-        <button type="button" class="secondary" style="flex:1" data-action="cancel">
+        <button type="button" class="secondary boi" style="flex:1" data-action="cancel">
           <i class="fas fa-times"></i> Cancel
         </button>
+      
     </div>
-  </div>
+
   </form>
