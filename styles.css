@@ -115,7 +115,7 @@ color: brown;
   z-index: 10;
 }
 
-vendor-header h2 {
+.vendor-header h2 {
   margin: 0;
   font-size: 2.5rem;
   font-weight: bold;
@@ -519,6 +519,7 @@ vendor-header h2 {
   border: 1px solid brown;
   border-radius: 4px;
   padding: 0.5rem;
+  color: #4A2C17;
 }
 
 .vendor-item {
@@ -585,13 +586,24 @@ vendor-header h2 {
 
 /* Vendor Creation Styles */
 
-.form-group label {
+
+#sell-items .form-group label,
+#currency-settings .form-group label,
+#money-management .form-group label,
+#player-wallet .form-group label,
+#vendor-display .form-group label,
+#vendor-creation .form-group label,
+#vendor-edit .form-group label,
+#vendor-item-edit .form-group label,
+#gem-distribution .form-group label,
+#vendor-manager .window-content .form-group label {
   display: block;
   margin-bottom: 0;
   font-weight: bold;
   min-width: 120px;
   color: #4A2C17;
 }
+
 
 .form-group label small {
   display: block;
@@ -890,6 +902,7 @@ label .gem-distribution-form {
   padding: 1rem;
   font-style: italic;
   opacity: 0.7;
+  color: #4A2C17;
 }
 
 .no-coins-message p {
@@ -946,7 +959,7 @@ label .gem-distribution-form {
 }
 
 .selected-count {
-  color: var(--color-text-highlight);
+  color: #4A2C17;
 }
 
 .total-value {
@@ -1106,11 +1119,12 @@ label .gem-distribution-form {
 .accordion-icon {
   font-size: 0.8rem;
   transition: transform 0.2s ease;
-  color: var(--color-text-dark-secondary);
+  color: #4A2C17;
 }
 
 .wallet-accordion[open] .accordion-icon {
   transform: rotate(180deg);
+   color: #4A2C17;
 }
 
 

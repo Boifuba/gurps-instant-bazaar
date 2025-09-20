@@ -290,6 +290,27 @@ Hooks.once('init', () => {
   initializeItemDropHandling();
 });
 
+/** Add Scene Control Button for Vendor System */
+Hooks.on("getSceneControlButtons", (controls) => {
+  const tokenControls = controls.tokens;
+  if (tokenControls && tokenControls.tools) {
+    tokenControls.tools["gurps-instant-bazaar-button"] = {
+      name: "gurps-instant-bazaar-button",
+      title: game.user.isGM ? "GM Tools - Vendor Management" : "Available Vendors",
+      icon: "fas fa-shopping-cart",
+      button: true,
+      onClick: () => {
+        if (game.user.isGM) {
+          new GMToolsApplication().render(true);
+        } else {
+          VendorWalletSystem.openAllAvailableVendors();
+        }
+      },
+      visible: game.settings.get(VendorWalletSystem.ID, 'showSceneButton'),
+    };
+  }
+});
+
 /** /shop command without dependencies (Foundry v13 core) */
 Hooks.on("chatMessage", (chatLog, message, chatData) => {
   const txt = String(message).trim();

@@ -272,6 +272,17 @@ We welcome suggestions for new features! Consider:
 - Potential implementation complexity
 
 ---
+## Looking more modules for GURPS?
+
+- [Instant Bazaar](https://github.com/Boifuba/gurps-instant-bazaar)
+- [Instant Defaults](https://github.com/Boifuba/gurps-instant-defaults)
+- [Instant Counter](https://github.com/Boifuba/gurps-counter)
+- [Mookinator](https://github.com/Boifuba/mookinator)
+- [Size Matters](https://github.com/Boifuba/size-matters)
+- [Grapple Party](https://github.com/Boifuba/gurps-grapple-party)
+- [Roll Stats](https://github.com/Boifuba/gurps-rolls-stats)
+
+
 
 ### Support the Project
 

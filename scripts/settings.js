@@ -133,4 +133,13 @@ export function registerModuleSettings(moduleId) {
       step: 1
     }
   });
+
+  game.settings.register(moduleId, 'showSceneButton', {
+    name: 'Show Scene Control Button',
+    hint: 'Display the vendor system button in the scene controls toolbar.',
+    scope: 'world',
+    config: true,
+    type: Boolean,
+    default: true
+  });
 }
